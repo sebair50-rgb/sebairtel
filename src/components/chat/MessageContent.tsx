@@ -37,7 +37,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
         });
     };
 
-     const containsCodeBlock = (text?: string) => {
+    const containsCodeBlock = (text?: string) => {
         if (!text) return false;
         return /```(\w+)?\n([\s\S]+?)```/.test(text);
     }
@@ -70,7 +70,6 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
         case 'audio':
             return (
                 <div className={cn("flex items-center gap-2", isOwnMessage ? "w-48 md:w-64" : "w-48 md:w-64")}>
-                    <Music2 className="text-primary flex-shrink-0" />
                     <audio src={message.src} controls className="w-full h-10" />
                 </div>
             );
