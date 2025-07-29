@@ -4,7 +4,7 @@ import * as React from 'react';
 import {cn} from '@/lib/utils';
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
-  ({className, onChange, ...props}, ref) => {
+  ({className, onChange, onInput, ...props}, ref) => {
     const internalRef = React.useRef<HTMLTextAreaElement>(null);
     React.useImperativeHandle(ref, () => internalRef.current!, []);
 
@@ -14,8 +14,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
         textarea.style.height = 'auto';
         textarea.style.height = `${textarea.scrollHeight}px`;
       }
-      if (onChange) {
-        onChange(event);
+      if (onInput) {
+        onInput(event);
       }
     };
     
