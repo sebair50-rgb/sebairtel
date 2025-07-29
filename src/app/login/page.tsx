@@ -25,16 +25,14 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (!userCredential.user.emailVerified) {
-          await auth.signOut();
-          toast({ variant: "destructive", title: "الحساب غير مؤكد", description: "الرجاء التحقق من بريدك الإلكتروني لتفعيل حسابك." });
-          setIsLoading(false);
-          return;
-      }
+      // AuthProvider will handle redirection based on verification status
       toast({ title: "تم تسجيل الدخول بنجاح", description: "أهلاً بك مجدداً!" });
-      router.push('/');
     } catch (error: any) {
-      toast({ variant: "destructive", title: "خطأ في تسجيل الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        toast({ variant: "destructive", title: "خطأ في تسجيل الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة." });
+      } else {
+        toast({ variant: "destructive", title: "خطأ في تسجيل الدخول", description: "حدث خطأ غير متوقع." });
+      }
       console.error(error);
     } finally {
       setIsLoading(false);

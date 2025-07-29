@@ -8,6 +8,8 @@ export interface User {
   isFriend?: boolean;
   requestSent?: boolean;
   email?: string;
+  phone?: string;
+  dob?: string;
 }
 
 export interface Message {

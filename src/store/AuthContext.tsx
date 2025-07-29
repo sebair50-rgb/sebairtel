@@ -23,10 +23,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      if (user && (pathname === '/login' || pathname === '/signup')) {
-        router.push('/');
-      } else if (!user && pathname !== '/login' && pathname !== '/signup') {
-        router.push('/login');
+      
+      const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+
+      if (user) {
+        // User is logged in
+        if (user.emailVerified) {
+          if (isAuthPage) {
+            router.push('/');
+          }
+        } else {
+          // User is logged in but email not verified
+          if (pathname !== '/signup/verify-email') {
+             router.push('/signup/verify-email');
+          }
+        }
+      } else {
+        // User is not logged in
+        if (!isAuthPage) {
+          router.push('/login');
+        }
       }
     });
 

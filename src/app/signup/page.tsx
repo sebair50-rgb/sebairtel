@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,41 +12,39 @@ import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/shared/Logo';
-import { doc, setDoc } from 'firebase/firestore';
-import type { User } from '@/lib/types';
 
 export default function SignupPage() {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+        toast({ variant: "destructive", title: "كلمتا المرور غير متطابقتين", description: "الرجاء التأكد من تطابق كلمتي المرور." });
+        return;
+    }
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      const newUser: User = {
-        id: userCredential.user.uid,
-        name: name,
-        avatar: name.charAt(0) || 'م',
-        email: email,
-      };
-      await setDoc(doc(db, "users", userCredential.user.uid), newUser);
-
       await sendEmailVerification(userCredential.user);
       
-      await auth.signOut(); // Sign out the user until they verify their email
+      // Don't sign out, user needs to be logged in for the next steps
+      // await auth.signOut(); 
 
       toast({ 
         title: "تم إنشاء الحساب بنجاح", 
-        description: "لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. الرجاء تفعيل حسابك لتتمكن من تسجيل الدخول.",
-        duration: 10000 // Show toast longer
+        description: "لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. الرجاء تفعيل حسابك.",
+        duration: 10000
       });
-      router.push('/login');
+      
+      // Redirect to the verification page
+      router.push('/signup/verify-email');
+
     } catch (error: any) {
         if(error.code === 'auth/email-already-in-use') {
              toast({ variant: "destructive", title: "خطأ في إنشاء الحساب", description: "هذا البريد الإلكتروني مستخدم بالفعل." });
@@ -69,15 +67,11 @@ export default function SignupPage() {
             <div className="flex justify-center mb-4">
               <Logo />
             </div>
-          <CardTitle className="text-2xl">إنشاء حساب</CardTitle>
-          <CardDescription>أدخل معلوماتك لإنشاء حساب جديد</CardDescription>
+          <CardTitle className="text-2xl">إنشاء حساب (الخطوة 1 من 3)</CardTitle>
+          <CardDescription>أدخل بريدك الإلكتروني وكلمة المرور</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>
           <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">الاسم</Label>
-              <Input id="name" placeholder="الاسم الكامل" required value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
             <div className="grid gap-2">
               <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input id="email" type="email" placeholder="mail@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -86,10 +80,14 @@ export default function SignupPage() {
               <Label htmlFor="password">كلمة المرور</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
+             <div className="grid gap-2">
+              <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
+              <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'جارِ إنشاء الحساب...' : 'إنشاء حساب'}
+              {isLoading ? 'جارِ الإنشاء...' : 'إنشاء ومتابعة'}
             </Button>
             <p className="mt-4 text-xs text-center text-muted-foreground">
               لديك حساب بالفعل؟{' '}
