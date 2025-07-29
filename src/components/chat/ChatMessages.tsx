@@ -17,46 +17,44 @@ interface ChatMessagesProps {
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (viewportRef.current) {
-        setTimeout(() => {
-            if (viewportRef.current) {
-                viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
-            }
-        }, 100);
-    }
-  }, [messages.length]);
+    // We use a timeout to ensure the DOM has updated before scrolling.
+    setTimeout(() => {
+        if (viewportRef.current) {
+            viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
+        }
+    }, 0);
+  }, [messages]);
 
 
   return (
     <ScrollArea className="flex-1" viewportRef={viewportRef}>
-        <div className="flex flex-col-reverse p-4 md:p-6">
+        <div className="p-4 md:p-6">
         <div className={cn("flex flex-col gap-1")}>
             {messages.map((message, index) => {
-            const nextMessage = messages[index - 1]; // We are reversed
-            const prevMessage = messages[index + 1];
-            const isOwnMessage = message.user === currentUser.name;
+                const prevMessage = messages[index - 1];
+                const nextMessage = messages[index + 1];
+                const isOwnMessage = message.user === currentUser.name;
 
-            const isFirstInGroup = !nextMessage || nextMessage.user !== message.user;
-            const isLastInGroup = !prevMessage || prevMessage.user !== message.user;
+                const isFirstInGroup = !prevMessage || prevMessage.user !== message.user;
+                const isLastInGroup = !nextMessage || nextMessage.user !== message.user;
 
-            return (
-                <MessageItem
-                key={message.id}
-                message={message}
-                isOwnMessage={isOwnMessage}
-                isFirstInGroup={isFirstInGroup}
-                isLastInGroup={isLastInGroup}
-                onDelete={() => onDeleteMessage(message.id)}
-                onReply={() => onReply(message)}
-                onEdit={() => onEditMessage(message)}
-                onLike={() => onLikeMessage(message.id)}
-                allMessages={messages}
-                />
-            )
+                return (
+                    <MessageItem
+                        key={message.id}
+                        message={message}
+                        isOwnMessage={isOwnMessage}
+                        isFirstInGroup={isFirstInGroup}
+                        isLastInGroup={isLastInGroup}
+                        onDelete={() => onDeleteMessage(message.id)}
+                        onReply={() => onReply(message)}
+                        onEdit={() => onEditMessage(message)}
+                        onLike={() => onLikeMessage(message.id)}
+                        allMessages={messages}
+                    />
+                )
             })}
         </div>
       </div>
