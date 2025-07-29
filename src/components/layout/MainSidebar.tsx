@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { MessageCircle, Users, Sun, Moon, Settings, User } from 'lucide-react';
+import { MessageCircle, Users, Sun, Moon, Settings, User, Brain } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import NewSebairTelLogo from '@/components/shared/Logo';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -17,8 +17,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   const { darkMode, toggleDarkMode, currentUser } = useAppContext();
 
   const navItems = [
-    { name: 'community', icon: MessageCircle, label: 'المجتمع' },
+    { name: 'community', icon: MessageCircle, label: 'المحادثات' },
     { name: 'social', icon: Users, label: 'الاجتماعي' },
+    { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
 

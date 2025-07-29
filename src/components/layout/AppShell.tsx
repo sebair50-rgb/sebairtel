@@ -9,8 +9,9 @@ import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
 import UsersView from '@/components/users/UsersView';
 import { cn } from '@/lib/utils';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, MessageCircle } from 'lucide-react';
 import { Button } from '../ui/button';
+import AIView from '../ai/AIView';
 
 const AppShell = () => {
   const { chats } = useAppContext();
@@ -19,7 +20,7 @@ const AppShell = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const renderContent = () => {
-    if (selectedChatId) {
+    if (activeTab === 'community' && selectedChatId) {
       const chat = chats.find(c => c.id === selectedChatId);
       if (chat) return <ChatView key={chat.id} chat={chat} onBack={() => setSelectedChatId(null)} />;
     }
@@ -31,6 +32,8 @@ const AppShell = () => {
         return <UsersView />;
       case 'settings':
         return <SettingsView />;
+      case 'ai':
+        return <AIView />;
       case 'community':
       default:
         return (
@@ -42,6 +45,8 @@ const AppShell = () => {
         );
     }
   };
+  
+    const showChatList = activeTab === 'community';
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
@@ -49,16 +54,18 @@ const AppShell = () => {
       
       <div className={cn(
         "transition-all duration-300 ease-in-out",
-        isSidebarOpen ? "w-80 border-l" : "w-0"
+        isSidebarOpen && showChatList ? "w-80 border-l" : "w-0"
       )}>
-        <div className="h-full w-80">
-          <ChatList
-            selectedChatId={selectedChatId}
-            setSelectedChatId={setSelectedChatId}
-            isSidebarOpen={isSidebarOpen}
-            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          />
-        </div>
+        {showChatList && (
+            <div className="h-full w-80">
+            <ChatList
+                selectedChatId={selectedChatId}
+                setSelectedChatId={setSelectedChatId}
+                isSidebarOpen={isSidebarOpen}
+                toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            />
+            </div>
+        )}
       </div>
       
       <main className="flex-1 flex flex-col">
@@ -69,27 +76,29 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           {/* Mobile sidebar overlay */}
-          {isSidebarOpen && (
+          {isSidebarOpen && showChatList && (
               <div
                   onClick={() => setIsSidebarOpen(false)}
                   className="fixed inset-0 z-30 bg-black/50 md:hidden"
               />
           )}
           {/* Mobile sidebar content */}
-          <div className={cn(
-            "fixed top-0 right-0 h-full w-80 bg-card border-l z-40 transition-transform duration-300 ease-in-out md:hidden",
-            isSidebarOpen ? "translate-x-0" : "translate-x-full"
-          )}>
-             <ChatList
-                selectedChatId={selectedChatId}
-                setSelectedChatId={(id) => {
-                  setSelectedChatId(id);
-                  setIsSidebarOpen(false);
-                }}
-                isSidebarOpen={isSidebarOpen}
-                toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-              />
-          </div>
+          {showChatList && (
+            <div className={cn(
+                "fixed top-0 right-0 h-full w-80 bg-card border-l z-40 transition-transform duration-300 ease-in-out md:hidden",
+                isSidebarOpen ? "translate-x-0" : "translate-x-full"
+            )}>
+                <ChatList
+                    selectedChatId={selectedChatId}
+                    setSelectedChatId={(id) => {
+                    setSelectedChatId(id);
+                    setIsSidebarOpen(false);
+                    }}
+                    isSidebarOpen={isSidebarOpen}
+                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                />
+            </div>
+          )}
           
           <div className="flex-1 overflow-y-auto">
             {renderContent()}
