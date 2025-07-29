@@ -38,10 +38,17 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   const handleSendMessage = (text: string, media?: { type: 'image' | 'video' | 'file' | 'audio', src: string, fileInfo: any }) => {
         if (!text.trim() && !media) return;
 
+        const containsCodeBlock = (text?: string) => {
+            if (!text) return false;
+            return /```(\w+)?\n([\s\S]+?)```/.test(text);
+        }
+
         if (editingMessage) {
-             updateMessage(chat.id, editingMessage.id, { ...editingMessage, text });
+             const messageType = containsCodeBlock(text) ? 'code' : (media ? media.type : 'text');
+             updateMessage(chat.id, editingMessage.id, { ...editingMessage, text, type: messageType });
              setEditingMessage(null);
         } else {
+             const messageType = containsCodeBlock(text) ? 'code' : (media ? media.type : 'text');
              const newMessage: Message = {
                 id: Date.now(),
                 user: currentUser.name,
@@ -49,7 +56,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
                 text,
                 time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
                 status: 'sent',
-                type: media ? media.type : 'text',
+                type: messageType,
                 src: media?.src,
                 fileInfo: media?.fileInfo,
             };
