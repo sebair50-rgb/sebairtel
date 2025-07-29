@@ -33,19 +33,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   isTyping,
   chat,
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
-    }
-  }, [newMessage]);
-  
   useEffect(() => {
       const lastMessage = chat.messages[chat.messages.length - 1];
       if (lastMessage?.suggestions) {
@@ -135,7 +127,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <Smile />
           </Button>
           <Textarea
-            ref={textareaRef}
             placeholder="اكتب رسالة..."
             value={newMessage}
             onChange={handleTyping}
@@ -154,6 +145,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
           </Button>
         </div>
         <div className="flex gap-1">
+             <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={handleSendCode} disabled={!newMessage.trim()}>
+                <Code />
+             </Button>
              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
                 {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
              </Button>
