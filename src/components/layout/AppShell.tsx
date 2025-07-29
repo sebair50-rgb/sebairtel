@@ -13,9 +13,10 @@ import AppsView from '../apps/AppsView';
 import { useAuth } from '@/store/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import CallsView from '../calls/CallsView';
 
 const AppShell = () => {
-  const { chats, currentUser } = useAppContext();
+  const { currentUser } = useAppContext();
   const { user: authUser } = useAuth();
   const router = useRouter();
 
@@ -38,6 +39,8 @@ const AppShell = () => {
         return <AIView />;
       case 'apps':
         return <AppsView />;
+      case 'contact':
+        return <CallsView />;
       default:
         return <SocialFeed />;
     }

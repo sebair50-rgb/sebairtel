@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Users, Settings, Brain, AppWindow } from 'lucide-react';
+import { Users, Settings, Brain, AppWindow, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   const navItems = [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'social', icon: Users, label: 'المجتمع' },
+    { name: 'contact', icon: MessageSquare, label: 'تواصل' },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
