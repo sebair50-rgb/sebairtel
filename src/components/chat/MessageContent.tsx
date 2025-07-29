@@ -36,9 +36,11 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         });
     };
 
-    const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
-    const parts = message.text ? message.text.split(codeBlockRegex) : [];
-    
+    const containsCodeBlock = (text?: string) => {
+        if (!text) return false;
+        return /```(\w+)?\n([\s\S]+?)```/.test(text);
+    }
+
     switch (message.type) {
         case 'image':
             return (
@@ -74,24 +76,35 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
                     </div>
                 </div>
             );
-        default: // text or code
-            return (
-                <div className="whitespace-pre-wrap break-words">
-                  {parts.length > 1 && message.text?.startsWith('```') ? (
-                    parts.map((part, index) => {
-                      if (index % 3 === 2) { // This is the code content
-                        const lang = parts[index - 1] || 'js';
-                        return <CodeBlock key={index} code={part} language={lang} />;
-                      } else if (index % 3 === 0 && part) { // This is regular text
-                        return <span key={index}>{renderTextWithLinks(part)}</span>;
-                      }
-                      return null; // This is the language part or empty string
-                    })
-                  ) : (
-                    message.text ? renderTextWithLinks(message.text) : null
-                  )}
-                </div>
-              );
+        case 'code':
+            const codeMatch = message.text?.match(/```(\w+)?\n([\s\S]+?)```/);
+            if (codeMatch) {
+                 const lang = codeMatch[1] || 'js';
+                 const code = codeMatch[2];
+                 return <CodeBlock code={code} language={lang} />;
+            }
+            // Fallback for malformed code messages
+             return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
+        default: // text
+             if (containsCodeBlock(message.text)) {
+                const parts = message.text!.split(/(```(?:\w+)?\n(?:[\s\S]+?)```)/);
+                return (
+                     <div className="whitespace-pre-wrap break-words">
+                        {parts.map((part, index) => {
+                            if (containsCodeBlock(part)) {
+                                const codeMatch = part.match(/```(\w+)?\n([\s\S]+?)```/);
+                                if (codeMatch) {
+                                    const lang = codeMatch[1] || 'js';
+                                    const code = codeMatch[2];
+                                    return <CodeBlock key={index} code={code} language={lang} />;
+                                }
+                            }
+                            return <span key={index}>{renderTextWithLinks(part)}</span>;
+                        })}
+                    </div>
+                )
+             }
+             return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
     }
 };
 
