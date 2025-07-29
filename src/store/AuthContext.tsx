@@ -3,8 +3,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
       
@@ -28,18 +29,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (user) {
         // User is logged in
-        if (user.emailVerified) {
-          if (isAuthPage) {
-            router.push('/');
-          }
-        } else {
-          // User is logged in but email not verified
+        if (!user.emailVerified) {
+          // If email is not verified, they should be on the verify page
           if (pathname !== '/signup/verify-email') {
              router.push('/signup/verify-email');
           }
+        } else {
+          // Email is verified, check if profile is complete
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (!userDoc.exists() || !userDoc.data().dob) {
+            // Profile is not complete, send to complete profile page
+            if (pathname !== '/signup/complete-profile') {
+                router.push('/signup/complete-profile');
+            }
+          } else {
+            // Profile is complete, send to main app
+            if (isAuthPage) {
+              router.push('/');
+            }
+          }
         }
       } else {
-        // User is not logged in
+        // User is not logged in, send to login unless they are already on an auth page
         if (!isAuthPage) {
           router.push('/login');
         }

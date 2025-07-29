@@ -24,7 +24,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       // AuthProvider will handle redirection based on verification status
       toast({ title: "تم تسجيل الدخول بنجاح", description: "أهلاً بك مجدداً!" });
     } catch (error: any) {

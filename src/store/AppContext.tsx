@@ -51,21 +51,32 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
   const [darkMode, setDarkMode] = useState(false);
 
+  // Effect to create or fetch user profile from Firestore
   useEffect(() => {
     if (authUser) {
       const userDocRef = doc(db, 'users', authUser.uid);
-      const unsubscribe = onSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-          setCurrentUser({ id: doc.id, ...doc.data() } as User);
+      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentUser({ id: docSnap.id, ...docSnap.data() } as User);
+        } else if (authUser.displayName) {
+          // If the user doc doesn't exist, create it (e.g., first login after signup)
+          const newUser: User = {
+            id: authUser.uid,
+            name: authUser.displayName,
+            email: authUser.email || '',
+            avatar: authUser.displayName.charAt(0).toUpperCase() || 'U',
+          };
+          setDoc(userDocRef, newUser).then(() => {
+            setCurrentUser(newUser);
+          });
         }
-        // If doc doesn't exist, it will be created on signup.
-        // We no longer create it here to avoid race conditions.
       });
       return () => unsubscribe();
     } else {
       setCurrentUser(null);
     }
   }, [authUser]);
+
 
   useEffect(() => {
     if (!currentUser) return;
@@ -99,6 +110,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              return {
                  id: doc.id,
                  ...data,
+                 name: data.userInfo[Object.keys(data.userInfo).find(uid => uid !== currentUser.id)!].name,
+                 avatar: data.userInfo[Object.keys(data.userInfo).find(uid => uid !== currentUser.id)!].avatar,
              } as Chat;
         });
         setChats(chatsData);
@@ -133,7 +146,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const chatRef = doc(db, 'chats', chatId);
     const messagesColRef = collection(chatRef, 'messages');
     
-    const messageDoc = await addDoc(messagesColRef, {
+    await addDoc(messagesColRef, {
         ...messageData,
         timestamp: serverTimestamp(),
     });
@@ -150,6 +163,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const chatsRef = collection(db, "chats");
       // Sort UIDs to create a consistent chat ID between two users
       const sortedUsers = [currentUser.id, otherUserId].sort();
+      // Check if a chat already exists between these two users.
       const q = query(chatsRef, where('users', '==', sortedUsers));
 
       const querySnapshot = await getDocs(q);
@@ -158,7 +172,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return querySnapshot.docs[0].id;
       }
       
-      // Create a new chat
+      // Create a new chat if it doesn't exist
       const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
       if (!otherUserDoc.exists()) return null;
       const otherUser = otherUserDoc.data() as User;
@@ -177,6 +191,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               }
           },
           lastMessageTimestamp: serverTimestamp(),
+          // Initialize other fields
+          lastMessageText: '',
+          unreadCount: 0,
       };
       
       const newChatRef = await addDoc(chatsRef, newChatData);

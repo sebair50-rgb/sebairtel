@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -31,11 +32,11 @@ export default function SignupPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      // Update the user's profile with the name immediately
+      await updateProfile(userCredential.user, { displayName: name });
+      
       await sendEmailVerification(userCredential.user);
       
-      // Don't sign out, user needs to be logged in for the next steps
-      // await auth.signOut(); 
-
       toast({ 
         title: "تم إنشاء الحساب بنجاح", 
         description: "لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. الرجاء تفعيل حسابك.",
@@ -67,11 +68,15 @@ export default function SignupPage() {
             <div className="flex justify-center mb-4">
               <Logo />
             </div>
-          <CardTitle className="text-2xl">إنشاء حساب (الخطوة 1 من 3)</CardTitle>
-          <CardDescription>أدخل بريدك الإلكتروني وكلمة المرور</CardDescription>
+          <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
+          <CardDescription>أدخل بياناتك للانضمام إلينا</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>
           <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+                <Label htmlFor="name">الاسم الكامل</Label>
+                <Input id="name" placeholder="مثال: أحمد محمد" required value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input id="email" type="email" placeholder="mail@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />

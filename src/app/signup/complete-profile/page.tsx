@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { User } from '@/lib/types';
 import { Button } from "@/components/ui/button";
@@ -29,15 +29,27 @@ export default function CompleteProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/login');
-      } else if (!user.emailVerified) {
-        toast({ variant: 'destructive', title: 'الحساب غير مفعل', description: 'الرجاء تفعيل حسابك أولاً.' });
-        router.replace('/signup/verify-email');
-      }
+    if (!loading && user) {
+        // Pre-fill name from auth if available
+        if (user.displayName) {
+            setName(user.displayName);
+        }
+        // Check if profile is already complete
+        const userDocRef = doc(db, 'users', user.uid);
+        getDoc(userDocRef).then(docSnap => {
+            if (docSnap.exists() && docSnap.data().name) {
+                // Profile seems complete, maybe redirect home?
+                // For now, we allow them to update it.
+                const data = docSnap.data();
+                setName(data.name || '');
+                setPhone(data.phone || '');
+                if (data.dob) {
+                    setDob(new Date(data.dob));
+                }
+            }
+        });
     }
-  }, [user, loading, router, toast]);
+  }, [user, loading]);
 
   const handleProfileCompletion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +69,7 @@ export default function CompleteProfilePage() {
         phone: phone,
         dob: dob.toISOString(),
       };
-      await setDoc(doc(db, "users", user.uid), newUser);
+      await setDoc(doc(db, "users", user.uid), newUser, { merge: true });
 
       toast({ 
         title: "اكتمل الملف الشخصي!", 
@@ -87,8 +99,8 @@ export default function CompleteProfilePage() {
             <div className="flex justify-center mb-4">
               <UserCheck className="w-16 h-16 text-primary" />
             </div>
-          <CardTitle className="text-2xl">استكمال الملف الشخصي (الخطوة 3 من 3)</CardTitle>
-          <CardDescription>أخبرنا المزيد عن نفسك.</CardDescription>
+          <CardTitle className="text-2xl">استكمال الملف الشخصي</CardTitle>
+          <CardDescription>أخبرنا المزيد عن نفسك لإنهاء الإعداد.</CardDescription>
         </CardHeader>
         <form onSubmit={handleProfileCompletion}>
           <CardContent className="grid gap-4">
@@ -140,4 +152,3 @@ export default function CompleteProfilePage() {
     </div>
   );
 }
-
