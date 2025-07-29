@@ -151,37 +151,42 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
       <div className="flex items-end gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-muted rounded-full px-4 py-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({description: "Emoji picker coming soon!"})}>
-            <Smile />
-          </Button>
-          <Textarea
-            ref={textareaRef}
-            placeholder="اكتب رسالة..."
-            value={newMessage}
-            onChange={handleTyping}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onSendMessage();
-              }
-            }}
-            className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base"
-          />
-          <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fileInputRef.current?.click()}>
-            <Paperclip />
-          </Button>
-        </div>
-        <div className="flex gap-1">
-             <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={handleSendCode} disabled={!newMessage.trim()}>
-                <Code />
-             </Button>
-             <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
-                {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
-             </Button>
-             <Button size="icon" className="h-10 w-10 shrink-0" onClick={onSendMessage}>
+         <div className="flex-1 flex items-center gap-2 bg-muted rounded-full px-2 py-1">
+           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({description: "Emoji picker coming soon!"})}>
+             <Smile />
+           </Button>
+           <Textarea
+             ref={textareaRef}
+             placeholder="اكتب رسالة..."
+             value={newMessage}
+             onChange={handleTyping}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' && !e.shiftKey) {
+                 e.preventDefault();
+                 onSendMessage();
+               }
+             }}
+             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base"
+           />
+           <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fileInputRef.current?.click()}>
+             <Paperclip />
+           </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({description: "Voice messages coming soon!"})}>
+                <Mic />
+            </Button>
+         </div>
+         <div className="flex items-center gap-1">
+             <Button
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={onSendMessage}
+                disabled={!newMessage.trim() && !attachment}
+             >
                  <ArrowUp />
+             </Button>
+              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
+                {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
              </Button>
         </div>
       </div>

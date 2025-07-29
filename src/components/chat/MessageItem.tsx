@@ -19,6 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 interface MessageItemProps {
   message: Message;
   isOwnMessage: boolean;
+  isFirstInGroup: boolean;
+  isLastInGroup: boolean;
   onDelete: () => void;
   onReply: () => void;
   onEdit: () => void;
@@ -32,7 +34,7 @@ const MessageStatus: React.FC<{ status: Message['status'] }> = ({ status }) => {
   return <Check size={16} className="text-muted-foreground" />;
 };
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDelete, onReply, onEdit, onLike, allMessages }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirstInGroup, isLastInGroup, onDelete, onReply, onEdit, onLike, allMessages }) => {
   const { toast } = useToast();
 
   const handleDownload = () => {
@@ -57,20 +59,38 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
 
   return (
-    <div className={cn("flex items-end gap-2", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
-      <Avatar className="w-8 h-8 self-end flex-shrink-0">
-        <AvatarFallback>{message.avatar}</AvatarFallback>
-      </Avatar>
-      <div className={cn("group relative max-w-[80%] lg:max-w-[70%]", isOwnMessage ? "items-end" : "items-start")}>
+    <div className={cn(
+        "flex items-end gap-2 group", 
+        isOwnMessage ? "flex-row-reverse" : "flex-row",
+        !isLastInGroup && 'mb-0.5'
+    )}>
+      <div className="w-8 flex-shrink-0 self-end">
+        {isLastInGroup ? (
+            <Avatar className="w-8 h-8">
+                <AvatarFallback>{message.avatar}</AvatarFallback>
+            </Avatar>
+        ) : (
+            <div className="w-8 h-8" />
+        )}
+      </div>
+
+      <div className={cn(
+          "relative max-w-[80%] lg:max-w-[70%]",
+           isOwnMessage ? "items-end" : "items-start"
+      )}>
         <div
           className={cn(
-            "p-3 rounded-2xl w-fit",
+            "p-3 w-fit",
             isOwnMessage
-              ? "bg-primary text-primary-foreground rounded-br-md"
-              : "bg-card text-card-foreground border rounded-bl-md"
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-card-foreground border",
+            isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-t-2xl rounded-br-2xl rounded-bl-md' : 'rounded-t-2xl rounded-bl-2xl rounded-br-md'),
+            !isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-r-2xl rounded-l-md' : 'rounded-l-2xl rounded-r-md'),
+            !isFirstInGroup && isLastInGroup && (isOwnMessage ? 'rounded-b-2xl rounded-tr-2xl rounded-tl-md' : 'rounded-b-2xl rounded-tl-2xl rounded-tr-md'),
+            isFirstInGroup && isLastInGroup && 'rounded-2xl'
           )}
         >
-          {!isOwnMessage && <p className="text-xs font-semibold mb-1 text-primary">{message.user}</p>}
+          {!isOwnMessage && isFirstInGroup && <p className="text-xs font-semibold mb-1 text-primary">{message.user}</p>}
           
           {repliedToMessage && (
             <div className="p-2 mb-2 border-r-2 border-primary/50 bg-black/10 rounded-md text-sm">
@@ -82,7 +102,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           <MessageContent message={message} />
           {message.likes && message.likes > 0 && (
              <div className={cn(
-                 "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm",
+                 "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm z-10",
                  isOwnMessage ? "left-2" : "right-2"
              )}>
                 <span>{message.likes}</span>
@@ -90,12 +110,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
              </div>
           )}
         </div>
-        <div className={cn("flex items-center gap-2 mt-1 text-xs text-muted-foreground", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
-          <span>{message.time}</span>
-          {isOwnMessage && <MessageStatus status={message.status} />}
-        </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center", isOwnMessage ? "-left-[5.5rem] md:-left-20" : "-right-[5.5rem] md:-right-20")}>
+        {isLastInGroup && (
+             <div className={cn("flex items-center gap-2 mt-1 text-xs text-muted-foreground", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
+              <span>{message.time}</span>
+              {isOwnMessage && <MessageStatus status={message.status} />}
+            </div>
+        )}
+        
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20", isOwnMessage ? "-left-[5.5rem] md:-left-20" : "-right-[5.5rem] md:-right-20")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
               <Heart size={18} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>
@@ -120,7 +143,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
                         <span>تنزيل</span>
                     </DropdownMenuItem>
                 )}
-                {isOwnMessage && message.type === 'text' && (
+                {isOwnMessage && (message.type === 'text' || message.text) && (
                   <DropdownMenuItem onClick={onEdit}>
                     <Edit className="ml-2 h-4 w-4" />
                     <span>تعديل</span>

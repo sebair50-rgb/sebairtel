@@ -57,7 +57,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     }
     
     if (editingMessage) {
-        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text: textToSend });
+        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text: textToSend, src: attachment?.src, fileInfo: attachment?.fileInfo, type: attachment?.type || 'text' });
         setEditingMessage(null);
     } else {
         let message: Omit<Message, 'id'>;
@@ -89,12 +89,21 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setEditingMessage(message);
     setNewMessage(message.text || '');
     setReplyingTo(null);
-    setAttachment(null);
+    if (message.type !== 'text') {
+        setAttachment({
+            type: message.type,
+            src: message.src,
+            fileInfo: message.fileInfo,
+        });
+    } else {
+        setAttachment(null);
+    }
   }
 
   const cancelEdit = () => {
     setEditingMessage(null);
     setNewMessage('');
+    setAttachment(null);
   }
 
   const handleDeleteMessage = (messageId: number) => {
