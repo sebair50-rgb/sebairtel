@@ -4,7 +4,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Code } from 'lucide-react';
+import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Code, Edit } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -20,6 +20,8 @@ interface MessageInputProps {
   setReplyingTo: React.Dispatch<React.SetStateAction<Message | null>>;
   isTyping: boolean;
   chat: Chat;
+  editingMessage: Message | null;
+  cancelEdit: () => void;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -32,8 +34,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   setReplyingTo,
   isTyping,
   chat,
+  editingMessage,
+  cancelEdit,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -46,6 +51,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
           setSuggestions([]);
       }
   }, [chat.messages]);
+
+  useEffect(() => {
+    if (editingMessage && textareaRef.current) {
+        textareaRef.current.focus();
+    }
+  }, [editingMessage]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,6 +114,20 @@ const MessageInput: React.FC<MessageInputProps> = ({
               ))}
           </div>
       )}
+      {editingMessage && (
+        <div className="flex justify-between items-center p-2 mb-2 bg-muted rounded-md text-sm">
+            <div className='flex items-center gap-2'>
+                <Edit className="w-4 h-4 text-primary" />
+                <div>
+                    <p className="font-semibold">تعديل رسالة</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-xs">{editingMessage.text || 'مرفق'}</p>
+                </div>
+            </div>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}>
+            <X size={16} />
+          </Button>
+        </div>
+      )}
       {replyingTo && (
         <div className="flex justify-between items-center p-2 mb-2 bg-muted rounded-md">
           <div className="text-sm">
@@ -127,6 +152,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <Smile />
           </Button>
           <Textarea
+            ref={textareaRef}
             placeholder="اكتب رسالة..."
             value={newMessage}
             onChange={handleTyping}

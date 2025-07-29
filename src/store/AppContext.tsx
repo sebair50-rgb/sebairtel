@@ -19,6 +19,7 @@ interface AppContextType {
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   addMessage: (chatId: number, message: Message) => void;
   deleteMessage: (chatId: number, messageId: number) => void;
+  updateMessage: (chatId: number, messageId: number, updatedMessage: Message) => void;
   posts: Post[];
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
   addPost: (post: Pick<Post, 'content' | 'media'>) => void;
@@ -86,6 +87,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       )
     );
   };
+  
+  const updateMessage = (chatId: number, messageId: number, updatedMessage: Message) => {
+      setChats(prevChats =>
+          prevChats.map(chat =>
+              chat.id === chatId
+                  ? { ...chat, messages: chat.messages.map(m => m.id === messageId ? updatedMessage : m) }
+                  : chat
+          )
+      );
+  };
 
 
   const addPost = (postData: Pick<Post, 'content' | 'media'>) => {
@@ -115,6 +126,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setChats,
     addMessage,
     deleteMessage,
+    updateMessage,
     posts,
     setPosts,
     addPost,

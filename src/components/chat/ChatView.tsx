@@ -25,7 +25,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage: contextAddMessage, deleteMessage, currentUser, setChats } = useAppContext();
+  const { addMessage: contextAddMessage, deleteMessage, currentUser, setChats, updateMessage } = useAppContext();
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState('');
   const [attachment, setAttachment] = useState<Pick<Message, 'type' | 'src' | 'fileInfo'> | null>(null);
@@ -34,6 +34,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     setIsBlocked(chat.isBlocked || false);
@@ -54,27 +55,47 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       toast({ variant: 'destructive', title: "لا يمكن إرسال الرسالة", description: "لقد قمت بحظر هذا المستخدم." });
       return;
     }
-
-    let message: Omit<Message, 'id'>;
-    const baseMessage = {
-      user: currentUser.name,
-      time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-      avatar: currentUser.avatar,
-      status: 'sent',
-      replyTo: replyingTo ? replyingTo.id : null,
-    };
-
-    if (attachment) {
-      message = { ...baseMessage, ...attachment, text: textToSend } as Omit<Message, 'id'>;
-    } else {
-      message = { ...baseMessage, type: 'text', text: textToSend } as Omit<Message, 'id'>;
-    }
     
-    contextAddMessage(chat.id, { ...message, id: Date.now() });
+    if (editingMessage) {
+        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text: textToSend });
+        setEditingMessage(null);
+    } else {
+        let message: Omit<Message, 'id'>;
+        const baseMessage = {
+          user: currentUser.name,
+          time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+          avatar: currentUser.avatar,
+          status: 'sent',
+          replyTo: replyingTo ? replyingTo.id : null,
+          likes: 0,
+          isLiked: false,
+        };
+
+        if (attachment) {
+          message = { ...baseMessage, ...attachment, text: textToSend } as Omit<Message, 'id'>;
+        } else {
+          message = { ...baseMessage, type: 'text', text: textToSend } as Omit<Message, 'id'>;
+        }
+        
+        contextAddMessage(chat.id, { ...message, id: Date.now() });
+    }
+
     setNewMessage('');
     setAttachment(null);
     setReplyingTo(null);
   };
+
+  const handleEditMessage = (message: Message) => {
+    setEditingMessage(message);
+    setNewMessage(message.text || '');
+    setReplyingTo(null);
+    setAttachment(null);
+  }
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setNewMessage('');
+  }
 
   const handleDeleteMessage = (messageId: number) => {
     deleteMessage(chat.id, messageId);
@@ -105,6 +126,15 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       }
   }
 
+    const handleLikeMessage = (messageId: number) => {
+        const message = chat.messages.find(m => m.id === messageId);
+        if (message) {
+            const isLiked = !message.isLiked;
+            const likes = isLiked ? (message.likes || 0) + 1 : (message.likes || 1) - 1;
+            updateMessage(chat.id, messageId, { ...message, isLiked, likes });
+        }
+    }
+
   return (
     <div className="flex flex-col h-full bg-background">
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
@@ -113,6 +143,8 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
         currentUser={currentUser}
         onDeleteMessage={handleDeleteMessage}
         onReply={setReplyingTo}
+        onEditMessage={handleEditMessage}
+        onLikeMessage={handleLikeMessage}
       />
       {isBlocked ? (
          <div className="p-4 text-center text-sm text-muted-foreground border-t">
@@ -129,6 +161,8 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
           setReplyingTo={setReplyingTo}
           isTyping={isTyping}
           chat={chat}
+          editingMessage={editingMessage}
+          cancelEdit={cancelEdit}
         />
       )}
        {showConfirmation && (

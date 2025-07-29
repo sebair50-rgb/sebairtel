@@ -11,9 +11,11 @@ interface ChatMessagesProps {
   currentUser: User;
   onDeleteMessage: (messageId: number) => void;
   onReply: (message: Message) => void;
+  onEditMessage: (message: Message) => void;
+  onLikeMessage: (messageId: number) => void;
 }
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply }) => {
+const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,6 +37,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDe
             isOwnMessage={message.user === currentUser.name}
             onDelete={() => onDeleteMessage(message.id)}
             onReply={() => onReply(message)}
+            onEdit={() => onEditMessage(message)}
+            onLike={() => onLikeMessage(message.id)}
             allMessages={messages}
           />
         ))}

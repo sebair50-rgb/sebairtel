@@ -5,7 +5,7 @@ import React from 'react';
 import type { Message } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, CornerDownRight, Download, Edit, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Check, CheckCheck, CornerDownRight, Download, Edit, MoreHorizontal, Trash2, Heart, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import {
@@ -21,6 +21,8 @@ interface MessageItemProps {
   isOwnMessage: boolean;
   onDelete: () => void;
   onReply: () => void;
+  onEdit: () => void;
+  onLike: () => void;
   allMessages: Message[];
 }
 
@@ -30,7 +32,7 @@ const MessageStatus: React.FC<{ status: Message['status'] }> = ({ status }) => {
   return <Check size={16} className="text-muted-foreground" />;
 };
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDelete, onReply, allMessages }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDelete, onReply, onEdit, onLike, allMessages }) => {
   const { toast } = useToast();
 
   const handleDownload = () => {
@@ -42,6 +44,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
     a.click();
     document.body.removeChild(a);
   };
+
+  const handleShare = () => {
+    let shareContent = message.text || '';
+    if (message.type === 'image' || message.type === 'video' || message.type === 'file') {
+        shareContent = `[مرفق: ${message.fileInfo?.name}] ${message.text || ''}`.trim();
+    }
+    navigator.clipboard.writeText(shareContent);
+    toast({ description: "تم نسخ محتوى الرسالة!" });
+  }
 
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
 
@@ -69,13 +80,25 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           )}
 
           <MessageContent message={message} />
+          {message.likes && message.likes > 0 && (
+             <div className={cn(
+                 "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm",
+                 isOwnMessage ? "left-2" : "right-2"
+             )}>
+                <span>{message.likes}</span>
+                <Heart className={cn("w-3 h-3", message.isLiked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
+             </div>
+          )}
         </div>
         <div className={cn("flex items-center gap-2 mt-1 text-xs text-muted-foreground", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
           <span>{message.time}</span>
           {isOwnMessage && <MessageStatus status={message.status} />}
         </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity", isOwnMessage ? "-left-10" : "-right-10")}>
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center", isOwnMessage ? "-left-20" : "-right-20")}>
+           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
+              <Heart size={18} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
+           </Button>
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
@@ -87,23 +110,27 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
                   <CornerDownRight className="ml-2 h-4 w-4" />
                   <span>رد</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleShare}>
+                  <Share2 className="ml-2 h-4 w-4" />
+                  <span>مشاركة</span>
+                </DropdownMenuItem>
                 {(message.type === 'image' || message.type === 'video' || message.type === 'file') && (
                     <DropdownMenuItem onClick={handleDownload}>
                         <Download className="ml-2 h-4 w-4" />
                         <span>تنزيل</span>
                     </DropdownMenuItem>
                 )}
-                {isOwnMessage && (
-                  <>
-                  <DropdownMenuItem onClick={() => toast({description: "سيتم تفعيل تعديل الرسائل قريباً"})}>
+                {isOwnMessage && message.type === 'text' && (
+                  <DropdownMenuItem onClick={onEdit}>
                     <Edit className="ml-2 h-4 w-4" />
                     <span>تعديل</span>
                   </DropdownMenuItem>
+                )}
+                {isOwnMessage && (
                   <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
                     <Trash2 className="ml-2 h-4 w-4" />
                     <span>حذف</span>
                   </DropdownMenuItem>
-                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

@@ -36,6 +36,8 @@ export interface Message {
       type: string;
     };
     suggestions?: string[];
+    likes?: number;
+    isLiked?: boolean;
 }
   
 

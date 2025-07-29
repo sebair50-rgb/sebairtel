@@ -26,11 +26,11 @@ export const initialChats: Chat[] = [
       unreadCount: 2,
       lastMessageTime: '10:40ص',
       messages: [
-        { id: 1, user: 'أحمد محمد', avatar: '👨‍💻', text: 'أهلاً! كيف حالك؟', time: '10:30ص', status: 'seen', type: 'text' },
-        { id: 2, user: 'أنت', avatar: '👤', text: 'بخير الحمد لله، ماذا عنك؟', time: '10:32ص', status: 'seen', type: 'text' },
-        { id: 3, user: 'أحمد محمد', avatar: '👨‍💻', text: 'بخير أيضاً. هل يمكنك مراجعة هذا الكود؟\n```js\nconsole.log("Hello, World!");\n```', time: '10:35ص', status: 'seen', type: 'text' },
-        { id: 4, user: 'أحمد محمد', avatar: '👨‍💻', text: 'وهذه صورة للتصميم الجديد.', time: '10:38ص', type: 'image', src: 'https://placehold.co/400x300', fileInfo: { name: 'design.png', size: 120 * 1024, type: 'image/png' }, status: 'delivered' },
-        { id: 5, user: 'أحمد محمد', avatar: '👨‍💻', text: 'انتظر ردك.', time: '10:39ص', status: 'delivered', type: 'text', suggestions: ["بالتأكيد، سألقي نظرة", "يبدو جيداً!", "سأعود إليك قريباً"] },
+        { id: 1, user: 'أحمد محمد', avatar: '👨‍💻', text: 'أهلاً! كيف حالك؟', time: '10:30ص', status: 'seen', type: 'text', likes: 2, isLiked: true },
+        { id: 2, user: 'أنت', avatar: '👤', text: 'بخير الحمد لله، ماذا عنك؟', time: '10:32ص', status: 'seen', type: 'text', likes: 0, isLiked: false },
+        { id: 3, user: 'أحمد محمد', avatar: '👨‍💻', text: 'بخير أيضاً. هل يمكنك مراجعة هذا الكود؟\n```js\nconsole.log("Hello, World!");\n```', time: '10:35ص', status: 'seen', type: 'text', likes: 0, isLiked: false },
+        { id: 4, user: 'أحمد محمد', avatar: '👨‍💻', text: 'وهذه صورة للتصميم الجديد.', time: '10:38ص', type: 'image', src: 'https://placehold.co/400x300', fileInfo: { name: 'design.png', size: 120 * 1024, type: 'image/png' }, status: 'delivered', likes: 1, isLiked: false },
+        { id: 5, user: 'أحمد محمد', avatar: '👨‍💻', text: 'انتظر ردك.', time: '10:39ص', status: 'delivered', type: 'text', suggestions: ["بالتأكيد، سألقي نظرة", "يبدو جيداً!", "سأعود إليك قريباً"], likes: 0, isLiked: false },
       ],
     },
     {
@@ -39,8 +39,8 @@ export const initialChats: Chat[] = [
       avatar: '👩‍🎨',
       lastMessageTime: 'بالأمس',
       messages: [
-        { id: 1, user: 'سارة أحمد', avatar: '👩‍🎨', text: 'شكراً على المساعدة اليوم!', time: '8:15م', status: 'seen', type: 'text' },
-        { id: 2, user: 'أنت', avatar: '👤', text: 'العفو! في الخدمة دائماً.', time: '8:17م', status: 'seen', type: 'text' },
+        { id: 1, user: 'سارة أحمد', avatar: '👩‍🎨', text: 'شكراً على المساعدة اليوم!', time: '8:15م', status: 'seen', type: 'text', likes: 5, isLiked: true },
+        { id: 2, user: 'أنت', avatar: '👤', text: 'العفو! في الخدمة دائماً.', time: '8:17م', status: 'seen', type: 'text', likes: 0, isLiked: false },
       ],
     },
      {
@@ -50,7 +50,7 @@ export const initialChats: Chat[] = [
       lastMessageTime: '12:00م',
       isBlocked: true,
       messages: [
-        { id: 1, user: 'محمد العلي', avatar: '👨‍💼', text: 'مرحباً', time: '11:50ص', status: 'seen', type: 'text' },
+        { id: 1, user: 'محمد العلي', avatar: '👨‍💼', text: 'مرحباً', time: '11:50ص', status: 'seen', type: 'text', likes: 0, isLiked: false },
       ],
     },
 ];
