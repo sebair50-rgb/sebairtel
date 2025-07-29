@@ -38,13 +38,13 @@ const SocialFeed = () => {
             <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
                 <h1 className="text-2xl font-bold">المجتمع</h1>
                 <Tabs defaultValue="posts" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
-                        <TabsTrigger value="posts">العامة</TabsTrigger>
-                        <TabsTrigger value="live"><Video className="inline-block md:hidden" /><span className="hidden md:inline">بث مباشر</span></TabsTrigger>
-                        <TabsTrigger value="friends"><Users className="inline-block md:hidden" /><span className="hidden md:inline">الأصدقاء</span></TabsTrigger>
-                        <TabsTrigger value="market"><ShoppingCart className="inline-block md:hidden" /><span className="hidden md:inline">السوق</span></TabsTrigger>
-                        <TabsTrigger value="services"><Briefcase className="inline-block md:hidden" /><span className="hidden md:inline">خدماتي</span></TabsTrigger>
-                        <TabsTrigger value="news"><Newspaper className="inline-block md:hidden" /><span className="hidden md:inline">الأخبار</span></TabsTrigger>
+                    <TabsList className="w-full justify-start overflow-x-auto">
+                        <TabsTrigger value="posts">المنشورات العامة</TabsTrigger>
+                        <TabsTrigger value="live">بث مباشر</TabsTrigger>
+                        <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+                        <TabsTrigger value="market">السوق</TabsTrigger>
+                        <TabsTrigger value="services">خدماتي</TabsTrigger>
+                        <TabsTrigger value="news">الأخبار</TabsTrigger>
                     </TabsList>
                     <TabsContent value="posts" className="mt-6">
                          <div className="space-y-6">
