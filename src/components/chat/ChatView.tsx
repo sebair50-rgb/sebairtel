@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Chat, Message } from '@/lib/types';
 import { useAppContext } from '@/store/AppContext';
 import ChatHeader from './ChatHeader';
@@ -35,34 +35,27 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-  const handleSendMessage = (text: string, media?: { type: 'image' | 'video' | 'file' | 'audio', src: string, fileInfo: any }) => {
-        if (!text.trim() && !media) return;
+  const handleSendMessage = useCallback((text: string, options: { type: Message['type'], media?: any }) => {
+    if (!text.trim() && !options.media) return;
 
-        const containsCodeBlock = (text?: string) => {
-            if (!text) return false;
-            return /```(\w+)?\n([\s\S]+?)```/.test(text);
-        }
-
-        if (editingMessage) {
-             const messageType = containsCodeBlock(text) ? 'code' : (media ? media.type : 'text');
-             updateMessage(chat.id, editingMessage.id, { ...editingMessage, text, type: messageType });
-             setEditingMessage(null);
-        } else {
-             const messageType = containsCodeBlock(text) ? 'code' : (media ? media.type : 'text');
-             const newMessage: Message = {
-                id: Date.now(),
-                user: currentUser.name,
-                avatar: currentUser.avatar,
-                text,
-                time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-                status: 'sent',
-                type: messageType,
-                src: media?.src,
-                fileInfo: media?.fileInfo,
-            };
-            addMessage(chat.id, newMessage);
-        }
-    };
+    if (editingMessage) {
+        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text, type: options.type });
+        setEditingMessage(null);
+    } else {
+        const newMessage: Message = {
+            id: Date.now(),
+            user: currentUser.name,
+            avatar: currentUser.avatar,
+            text,
+            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+            status: 'sent',
+            type: options.type,
+            src: options.media?.src,
+            fileInfo: options.media?.fileInfo,
+        };
+        addMessage(chat.id, newMessage);
+    }
+  }, [addMessage, currentUser, chat.id, editingMessage, updateMessage]);
 
 
   const handleDeleteMessage = (messageId: number) => {

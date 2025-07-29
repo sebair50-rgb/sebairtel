@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Play } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Code2, SendHorizonal } from 'lucide-react';
 import { Card } from '../ui/card';
 import type { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -12,16 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
-    onSendMessage: (text: string, media?: any) => void;
+    onSendMessage: (text: string, options: { type: Message['type'], media?: any }) => void;
     editingMessage: Message | null;
     onCancelEdit: () => void;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessage, onCancelEdit }) => {
     const [text, setText] = useState('');
+    const [isCodeMode, setIsCodeMode] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isTyping, setIsTyping] = useState(false);
     const { toast } = useToast();
 
     // Audio recording state
@@ -30,23 +30,15 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
 
-
     useEffect(() => {
         if (editingMessage) {
             setText(editingMessage.text || '');
+            setIsCodeMode(editingMessage.type === 'code');
             textareaRef.current?.focus();
         } else {
             setText('');
         }
     }, [editingMessage]);
-
-     useEffect(() => {
-        const typingTimeout = setTimeout(() => {
-            setIsTyping(false);
-        }, 1000);
-
-        return () => clearTimeout(typingTimeout);
-    }, [text]);
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -58,7 +50,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
             const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : 'file');
             const fileInfo = { name: file.name, size: file.size, type: file.type };
             
-            onSendMessage(text, { type: fileType, src: fileDataUrl, fileInfo });
+            onSendMessage(text, { type: fileType, media: { src: fileDataUrl, fileInfo } });
             setText('');
         };
         reader.readAsDataURL(file);
@@ -66,10 +58,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
     const handleSend = useCallback(() => {
         if (text.trim()) {
-            onSendMessage(text);
+            onSendMessage(text, { type: isCodeMode ? 'code' : 'text' });
             setText('');
+            if (isCodeMode) setIsCodeMode(false);
         }
-    }, [onSendMessage, text]);
+    }, [onSendMessage, text, isCodeMode]);
     
     const startRecording = useCallback(async () => {
         if (recordedAudio) setRecordedAudio(null);
@@ -87,8 +80,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 const audioUrl = URL.createObjectURL(audioBlob);
                 setRecordedAudio({ src: audioUrl, blob: audioBlob });
-                
-                // Stop all tracks to release microphone
                 stream.getTracks().forEach(track => track.stop());
             };
 
@@ -122,7 +113,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     const handleSendAudio = useCallback(() => {
         if (recordedAudio) {
             const fileInfo = { name: `recording_${Date.now()}.webm`, size: recordedAudio.blob.size, type: recordedAudio.blob.type };
-            onSendMessage("", { type: 'audio', src: recordedAudio.src, fileInfo });
+            onSendMessage("", { type: 'audio', media: { src: recordedAudio.src, fileInfo } });
             setRecordedAudio(null);
         }
     }, [recordedAudio, onSendMessage]);
@@ -137,11 +128,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
             handleSend();
         }
     }, [handleSend]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value);
-        setIsTyping(true);
-    };
 
     const hasContent = text.trim().length > 0;
 
@@ -159,20 +145,29 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                 </div>
             )}
             
-            {recordedAudio ? (
-                 <Card className="flex items-center gap-2 p-2 rounded-2xl shadow-sm bg-card">
-                    <Button variant="ghost" size="icon" className="text-destructive rounded-full" onClick={handleCancelAudio}>
-                        <Trash2 />
-                    </Button>
-                    <div className="flex-1">
-                        <audio src={recordedAudio.src} controls className="w-full h-10" />
-                    </div>
-                    <Button size="icon" className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" onClick={handleSendAudio}>
-                        <Send />
-                    </Button>
-                 </Card>
-            ) : (
-                <Card className="flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card">
+            <AnimatePresence>
+            {recordedAudio && (
+                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+                    <Card className="flex items-center gap-2 p-2 rounded-2xl shadow-sm bg-card">
+                        <Button variant="ghost" size="icon" className="text-destructive rounded-full" onClick={handleCancelAudio}>
+                            <Trash2 />
+                        </Button>
+                        <div className="flex-1">
+                            <audio src={recordedAudio.src} controls className="w-full h-10" />
+                        </div>
+                        <Button size="icon" className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" onClick={handleSendAudio}>
+                            <Send />
+                        </Button>
+                    </Card>
+                 </motion.div>
+            )}
+
+            {!recordedAudio && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+                <Card className={cn(
+                    "flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card transition-all",
+                    isCodeMode && "flex-row-reverse"
+                )}>
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -180,17 +175,25 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                         className="hidden"
                         accept="image/*,video/*,audio/*,application/*,text/*"
                     />
-                    <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
-                        <Smile />
-                    </Button>
+                    <div className="flex">
+                        <Button variant="ghost" size="icon" className={cn("text-muted-foreground rounded-full", isCodeMode && "text-primary bg-primary/10")} onClick={() => setIsCodeMode(!isCodeMode)}>
+                            <Code2 />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
+                            <Smile />
+                        </Button>
+                    </div>
                     <Textarea
                         ref={textareaRef}
-                        placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
+                        placeholder={isRecording ? "جارِ التسجيل..." : (isCodeMode ? "اكتب الكود هنا..." : "اكتب رسالة...")}
                         value={text}
-                        onChange={handleInputChange}
+                        onChange={(e) => setText(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
+                        className={cn(
+                            "flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2",
+                             isCodeMode && "direction-ltr text-left font-code"
+                        )}
                         disabled={isRecording}
                     />
                     {!hasContent && !isRecording && (
@@ -209,22 +212,22 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                         >
                             <Button 
                                 size="icon" 
-                                className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" 
+                                className={cn(
+                                    "bg-primary hover:bg-primary/90 rounded-full w-12 h-12",
+                                     isCodeMode && hasContent && "rounded-lg"
+                                )}
                                 onClick={hasContent ? handleSend : handleMicClick}
                                 disabled={!hasContent && isRecording && !mediaRecorderRef.current}
                             >
-                                {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
+                                {hasContent ? (isCodeMode ? <SendHorizonal/> : <Send />) : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
                             </Button>
                         </motion.div>
                     </AnimatePresence>
                 </Card>
+                </motion.div>
             )}
+            </AnimatePresence>
 
-             {isTyping && !text && (
-                <div className="text-xs text-muted-foreground text-center pt-1 animate-pulse">
-                    جارِ الكتابة...
-                </div>
-            )}
         </div>
     );
 };
