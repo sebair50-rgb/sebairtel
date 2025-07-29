@@ -18,6 +18,7 @@ interface MessageInputProps {
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessage, onCancelEdit }) => {
     const [text, setText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isTyping, setIsTyping] = useState(false);
 
     useEffect(() => {
@@ -36,6 +37,22 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
         return () => clearTimeout(typingTimeout);
     }, [text]);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const fileDataUrl = event.target?.result as string;
+            const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : 'file');
+            const fileInfo = { name: file.name, size: file.size, type: file.type };
+            
+            // For now, we allow sending files without text, but you might want to change this
+            onSendMessage('', { type: fileType, src: fileDataUrl, fileInfo });
+        };
+        reader.readAsDataURL(file);
+    };
 
     const handleSend = () => {
         if (text.trim()) {
@@ -70,6 +87,12 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                 </div>
             )}
             <Card className="flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card">
+                 <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                />
                 <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
                     <Smile />
                 </Button>
@@ -82,7 +105,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                     rows={1}
                     className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
                 />
-                <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
+                <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={() => fileInputRef.current?.click()}>
                     <Paperclip />
                 </Button>
 
