@@ -4,11 +4,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Smile, Paperclip, Mic, Send, X, Square } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Play } from 'lucide-react';
 import { Card } from '../ui/card';
 import type { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
     onSendMessage: (text: string, media?: any) => void;
@@ -25,6 +26,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
     // Audio recording state
     const [isRecording, setIsRecording] = useState(false);
+    const [recordedAudio, setRecordedAudio] = useState<{ src: string; blob: Blob; } | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
 
@@ -70,6 +72,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     };
     
     const startRecording = async () => {
+        if (recordedAudio) setRecordedAudio(null);
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorderRef.current = new MediaRecorder(stream);
@@ -82,8 +86,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
             mediaRecorderRef.current.onstop = () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 const audioUrl = URL.createObjectURL(audioBlob);
-                const fileInfo = { name: `recording_${Date.now()}.webm`, size: audioBlob.size, type: audioBlob.type };
-                onSendMessage("", { type: 'audio', src: audioUrl, fileInfo });
+                setRecordedAudio({ src: audioUrl, blob: audioBlob });
                 
                 // Stop all tracks to release microphone
                 stream.getTracks().forEach(track => track.stop());
@@ -116,6 +119,18 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
         }
     };
 
+    const handleSendAudio = () => {
+        if (recordedAudio) {
+            const fileInfo = { name: `recording_${Date.now()}.webm`, size: recordedAudio.blob.size, type: recordedAudio.blob.type };
+            onSendMessage("", { type: 'audio', src: recordedAudio.src, fileInfo });
+            setRecordedAudio(null);
+        }
+    }
+
+    const handleCancelAudio = () => {
+        setRecordedAudio(null);
+    }
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -143,52 +158,68 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                     </Button>
                 </div>
             )}
-            <Card className="flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card">
-                 <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    accept="image/*,video/*,audio/*,application/*,text/*"
-                />
-                <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
-                    <Smile />
-                </Button>
-                <Textarea
-                    ref={textareaRef}
-                    placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
-                    value={text}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    rows={1}
-                    className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
-                    disabled={isRecording}
-                />
-                {!hasContent && !isRecording && (
-                    <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={() => fileInputRef.current?.click()}>
-                        <Paperclip />
+            
+            {recordedAudio ? (
+                 <Card className="flex items-center gap-2 p-2 rounded-2xl shadow-sm bg-card">
+                    <Button variant="ghost" size="icon" className="text-destructive rounded-full" onClick={handleCancelAudio}>
+                        <Trash2 />
                     </Button>
-                )}
-                
-                <AnimatePresence mode="popLayout">
-                    <motion.div
-                        key={hasContent ? 'send' : 'mic'}
-                        initial={{ scale: 0, opacity: 0, y: 10 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0, opacity: 0, y: 10 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                         <Button 
-                            size="icon" 
-                            className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" 
-                            onClick={hasContent ? handleSend : handleMicClick}
-                            disabled={!hasContent && isRecording && !mediaRecorderRef.current}
-                         >
-                            {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
+                    <div className="flex-1">
+                        <audio src={recordedAudio.src} controls className="w-full h-10" />
+                    </div>
+                    <Button size="icon" className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" onClick={handleSendAudio}>
+                        <Send />
+                    </Button>
+                 </Card>
+            ) : (
+                <Card className="flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept="image/*,video/*,audio/*,application/*,text/*"
+                    />
+                    <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
+                        <Smile />
+                    </Button>
+                    <Textarea
+                        ref={textareaRef}
+                        placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
+                        value={text}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        rows={1}
+                        className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
+                        disabled={isRecording}
+                    />
+                    {!hasContent && !isRecording && (
+                        <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={() => fileInputRef.current?.click()}>
+                            <Paperclip />
                         </Button>
-                    </motion.div>
-                </AnimatePresence>
-            </Card>
+                    )}
+                    
+                    <AnimatePresence mode="popLayout">
+                        <motion.div
+                            key={hasContent ? 'send' : 'mic'}
+                            initial={{ scale: 0, opacity: 0, y: 10 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0, opacity: 0, y: 10 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Button 
+                                size="icon" 
+                                className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" 
+                                onClick={hasContent ? handleSend : handleMicClick}
+                                disabled={!hasContent && isRecording && !mediaRecorderRef.current}
+                            >
+                                {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
+                            </Button>
+                        </motion.div>
+                    </AnimatePresence>
+                </Card>
+            )}
+
              {isTyping && !text && (
                 <div className="text-xs text-muted-foreground text-center pt-1 animate-pulse">
                     جارِ الكتابة...
