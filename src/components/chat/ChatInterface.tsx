@@ -10,31 +10,33 @@ import { MessageSquare } from 'lucide-react';
 
 const ChatInterface = () => {
   const { chats } = useAppContext();
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(chats[0]?.id || null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
+  // Automatically select the first chat on desktop if none is selected
+  React.useEffect(() => {
+    if (window.innerWidth >= 768 && !selectedChatId && chats.length > 0) {
+      setSelectedChatId(chats[0].id);
+    }
+  }, [chats, selectedChatId]);
+  
   return (
-    <div className="flex h-full w-full border rounded-lg overflow-hidden">
+    <div className="flex h-full w-full border-t md:border-t-0 md:border rounded-lg overflow-hidden">
       <div
         className={cn(
-          "bg-card border-l transition-all duration-300 ease-in-out",
-          isSidebarOpen ? "w-full md:w-80 lg:w-96" : "w-0",
-          !selectedChat && "w-full",
-          "md:flex flex-col"
+          "bg-card border-l transition-transform duration-300 ease-in-out md:flex md:flex-col md:w-80 lg:w-96",
+          selectedChatId !== null ? "w-0 -translate-x-full md:w-80 lg:w-96 md:translate-x-0" : "w-full translate-x-0"
         )}
       >
         <ChatList
           selectedChatId={selectedChatId}
           setSelectedChatId={setSelectedChatId}
-          isSidebarOpen={isSidebarOpen}
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
       </div>
       <div className={cn(
-          "flex-1 flex-col",
-          selectedChat ? "flex" : "hidden md:flex"
+          "flex-1 flex-col transition-transform duration-300 ease-in-out",
+          selectedChatId !== null ? "w-full flex translate-x-0" : "w-0 -translate-x-full hidden md:flex"
       )}>
         {selectedChat ? (
           <ChatView
@@ -55,4 +57,3 @@ const ChatInterface = () => {
 };
 
 export default ChatInterface;
-

@@ -1,10 +1,9 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageSquare, Phone, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ChatInterface from '../chat/ChatInterface';
 import CallsList from './CallsList';
 import UsersView from '../users/UsersView';
@@ -46,7 +45,7 @@ const CallsView = () => {
                         </TabsTrigger>
                     </TabsList>
                 </div>
-                <TabsContent value="chats" className="mt-6 flex-1">
+                <TabsContent value="chats" className="mt-2 flex-1">
                     <ChatInterface />
                 </TabsContent>
                 <TabsContent value="calls" className="mt-6 flex-1">
