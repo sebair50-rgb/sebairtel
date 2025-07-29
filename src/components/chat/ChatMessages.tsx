@@ -17,27 +17,24 @@ interface ChatMessagesProps {
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-        const scrollViewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if(scrollViewport) {
-             scrollViewport.scrollTop = scrollViewport.scrollHeight;
-        }
+    if (viewportRef.current) {
+      viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
     }
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1" ref={scrollAreaRef}>
-      <div className="p-4 md:p-6 flex flex-col-reverse gap-1">
-        {messages.slice().reverse().map((message, index) => {
-          const originalIndex = messages.length - 1 - index;
-          const prevMessage = messages[originalIndex - 1];
-          const nextMessage = messages[originalIndex + 1];
+    <ScrollArea className="flex-1" viewportRef={viewportRef}>
+      <div className="p-4 md:p-6 space-y-1">
+        {messages.map((message, index) => {
+          const prevMessage = messages[index - 1];
+          const nextMessage = messages[index + 1];
           const isOwnMessage = message.user === currentUser.name;
 
-          const isFirstInGroup = !nextMessage || nextMessage.user !== message.user;
-          const isLastInGroup = !prevMessage || prevMessage.user !== message.user;
+          const isFirstInGroup = !prevMessage || prevMessage.user !== message.user;
+          const isLastInGroup = !nextMessage || nextMessage.user !== message.user;
 
           return (
             <MessageItem
