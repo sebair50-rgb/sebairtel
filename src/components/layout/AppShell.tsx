@@ -93,9 +93,8 @@ const AppShell = () => {
     }
   };
   
-    const showChatList = activeTab === 'community' && communityTab === 'chats';
-    const isChatViewActive = showChatList && selectedChatId !== null;
-
+  const showChatList = activeTab === 'community';
+  const isChatViewActive = communityTab === 'chats' && selectedChatId !== null;
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
@@ -104,6 +103,8 @@ const AppShell = () => {
         "w-full md:w-80",
         !showChatList && "hidden",
         isChatViewActive ? "hidden md:flex" : "flex",
+        (isChatViewActive && showChatList) && "hidden md:flex",
+        communityTab !== 'chats' && "hidden md:flex",
         isSidebarOpen ? "md:w-80" : "md:w-0"
       )}>
         <ChatList
@@ -114,11 +115,18 @@ const AppShell = () => {
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             activeTab={communityTab}
-            setActiveTab={setCommunityTab}
+            setActiveTab={(tab) => {
+              setCommunityTab(tab);
+              setSelectedChatId(null);
+            }}
         />
       </div>
       
-      <main className={cn("flex-1 flex flex-col overflow-hidden", { "pb-16 md:pb-0": !isChatViewActive })}>
+      <main className={cn(
+        "flex-1 flex flex-col overflow-hidden",
+        { "pb-16 md:pb-0": !isChatViewActive },
+        { "hidden": isChatViewActive && !isSidebarOpen && communityTab === 'chats'}
+      )}>
           <div className="md:hidden p-2 border-b flex items-center">
               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                   <PanelLeft />
@@ -126,7 +134,10 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           
-          <div className={cn("flex-1 flex overflow-y-auto", { "hidden": isChatViewActive && isSidebarOpen })}>
+          <div className={cn(
+              "flex-1 flex overflow-y-auto",
+              { "hidden": isChatViewActive && isSidebarOpen  }
+          )}>
             {renderContent()}
           </div>
       </main>

@@ -60,36 +60,36 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {filteredChats.map(chat => (
-            <button
-              key={chat.id}
-              onClick={() => setSelectedChatId(chat.id)}
-              className={cn(
-                'w-full flex items-center gap-3 p-3 rounded-lg text-right transition-colors',
-                selectedChatId === chat.id
-                  ? 'bg-primary/10 text-primary-foreground'
-                  : 'hover:bg-muted'
-              )}
-            >
-              <Avatar>
-                <AvatarFallback>{chat.avatar}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <h3 className="font-semibold truncate">{chat.name}</h3>
-                <p className="text-sm text-muted-foreground truncate">
-                    {chat.messages[chat.messages.length - 1]?.text?.split('\n')[0] || '...'}
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
-                <span>{chat.lastMessageTime}</span>
-                {chat.unreadCount && chat.unreadCount > 0 && (
-                  <Badge variant="default" className="bg-accent text-accent-foreground h-5 w-5 p-0 flex items-center justify-center">
-                    {chat.unreadCount}
-                  </Badge>
+            {activeTab === 'chats' && filteredChats.map(chat => (
+                <button
+                key={chat.id}
+                onClick={() => setSelectedChatId(chat.id)}
+                className={cn(
+                    'w-full flex items-center gap-3 p-3 rounded-lg text-right transition-colors',
+                    selectedChatId === chat.id
+                    ? 'bg-primary/10 text-primary-foreground'
+                    : 'hover:bg-muted'
                 )}
-              </div>
-            </button>
-          ))}
+                >
+                <Avatar>
+                    <AvatarFallback>{chat.avatar}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                    <h3 className="font-semibold truncate">{chat.name}</h3>
+                    <p className="text-sm text-muted-foreground truncate">
+                        {chat.messages[chat.messages.length - 1]?.text?.split('\n')[0] || '...'}
+                    </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+                    <span>{chat.lastMessageTime}</span>
+                    {chat.unreadCount && chat.unreadCount > 0 && (
+                    <Badge variant="default" className="bg-accent text-accent-foreground h-5 w-5 p-0 flex items-center justify-center">
+                        {chat.unreadCount}
+                    </Badge>
+                    )}
+                </div>
+                </button>
+            ))}
         </div>
       </ScrollArea>
     </div>
