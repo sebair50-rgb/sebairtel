@@ -14,7 +14,7 @@ export interface Message {
     text?: string;
     time: string;
     status: 'sent' | 'delivered' | 'seen';
-    type: 'text' | 'image' | 'video' | 'file' | 'audio';
+    type: 'text' | 'image' | 'video' | 'file' | 'audio' | 'code';
     src?: string;
     fileInfo?: {
       name: string;

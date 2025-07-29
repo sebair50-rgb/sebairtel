@@ -6,6 +6,7 @@ import type { Message } from '@/lib/types';
 import { FileIcon, Music2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import CodeBlock from './CodeBlock';
 
 interface MessageContentProps {
   message: Message;
@@ -77,6 +78,9 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                     </div>
                 </div>
             );
+        case 'code':
+            if (!message.text) return null;
+            return <CodeBlock code={message.text} />;
         default: // text
              return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
     }

@@ -35,11 +35,15 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-  const handleSendMessage = useCallback((text: string, options: { type: Message['type'], media?: any }) => {
+    const handleSendMessage = useCallback((text: string, options: { type: Message['type'], media?: any }) => {
     if (!text.trim() && !options.media) return;
 
+    // Detect if the message is a code block
+    const isCode = text.trim().startsWith('```') && text.trim().endsWith('```');
+    const messageType = isCode ? 'code' : options.type;
+
     if (editingMessage) {
-        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text, type: options.type });
+        updateMessage(chat.id, editingMessage.id, { ...editingMessage, text, type: messageType });
         setEditingMessage(null);
     } else {
         const newMessage: Message = {
@@ -49,7 +53,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
             text,
             time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
             status: 'sent',
-            type: options.type,
+            type: messageType,
             src: options.media?.src,
             fileInfo: options.media?.fileInfo,
         };
