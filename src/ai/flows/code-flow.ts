@@ -44,7 +44,7 @@ const codeProcessingPrompt = ai.definePrompt({
   name: 'codeProcessingPrompt',
   input: { schema: CodeProcessingInputSchema },
   output: { schema: CodeProcessingOutputSchema },
-  prompt: `{{getPromptForTask task}}
+  prompt: `{{{systemPrompt}}}
 
   Here is the code:
   \`\`\`
@@ -53,8 +53,6 @@ const codeProcessingPrompt = ai.definePrompt({
 
   Provide your response in a clear, well-formatted markdown. If you provide code, use markdown code blocks.
   `,
-  // Register the helper function
-  helpers: { getPromptForTask },
 });
 
 const codeProcessingFlow = ai.defineFlow(
@@ -64,7 +62,8 @@ const codeProcessingFlow = ai.defineFlow(
     outputSchema: CodeProcessingOutputSchema,
   },
   async (input) => {
-    const { output } = await codeProcessingPrompt(input);
+    const systemPrompt = getPromptForTask(input.task);
+    const { output } = await codeProcessingPrompt({ ...input, systemPrompt });
     return output!;
   }
 );
