@@ -4,7 +4,7 @@
 import React from 'react';
 import type { Message } from '@/lib/types';
 import CodeBlock from '@/components/shared/CodeBlock';
-import { FileIcon, X } from 'lucide-react';
+import { FileIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -42,18 +42,26 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     switch (message.type) {
         case 'image':
             return (
-                <div>
-                    <Image src={message.src!} alt={message.fileInfo?.name || 'Image'} width={300} height={200} className="rounded-lg max-w-full h-auto" />
-                    {message.text && <p className="text-sm mt-2 whitespace-pre-wrap">{message.text}</p>}
+                <div className="space-y-2">
+                    {message.src && (
+                      <Image 
+                        src={message.src} 
+                        alt={message.fileInfo?.name || 'Image'} 
+                        width={300} 
+                        height={200} 
+                        className="rounded-lg max-w-full h-auto bg-black/10" 
+                      />
+                    )}
+                    {message.text && <p className="text-sm whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
                 </div>
             );
         case 'video':
             return (
-                <div>
+                <div className="space-y-2">
                     <video src={message.src} controls className="rounded-lg max-w-full h-auto bg-black">
                         متصفحك لا يدعم عرض الفيديو.
                     </video>
-                    {message.text && <p className="text-sm mt-2 whitespace-pre-wrap">{message.text}</p>}
+                    {message.text && <p className="text-sm mt-2 whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
                 </div>
             );
         case 'file':
@@ -69,15 +77,19 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         default: // text or code
             return (
                 <div className="whitespace-pre-wrap break-words">
-                  {parts.map((part, index) => {
-                    if (index % 3 === 2) { // This is the code content
-                      const lang = parts[index-1] || 'js';
-                      return <CodeBlock key={index} code={part} language={lang} />;
-                    } else if (index % 3 === 0) { // This is regular text
-                      return <span key={index}>{renderTextWithLinks(part)}</span>;
-                    }
-                    return null; // This is the language part, handled above
-                  })}
+                  {parts.length > 1 && message.text?.startsWith('```') ? (
+                    parts.map((part, index) => {
+                      if (index % 3 === 2) { // This is the code content
+                        const lang = parts[index - 1] || 'js';
+                        return <CodeBlock key={index} code={part} language={lang} />;
+                      } else if (index % 3 === 0 && part) { // This is regular text
+                        return <span key={index}>{renderTextWithLinks(part)}</span>;
+                      }
+                      return null; // This is the language part or empty string
+                    })
+                  ) : (
+                    message.text ? renderTextWithLinks(message.text) : null
+                  )}
                 </div>
               );
     }

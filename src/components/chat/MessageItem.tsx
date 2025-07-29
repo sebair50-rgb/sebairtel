@@ -60,9 +60,9 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
 
   return (
     <div className={cn(
-        "flex items-end gap-2 group", 
+        "flex items-start gap-2 group w-full", 
         isOwnMessage ? "flex-row-reverse" : "flex-row",
-        !isLastInGroup && 'mb-0.5'
+        !isLastInGroup ? 'mb-0.5' : 'mb-2'
     )}>
       <div className="w-8 flex-shrink-0 self-end">
         {isLastInGroup ? (
@@ -70,12 +70,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
                 <AvatarFallback>{message.avatar}</AvatarFallback>
             </Avatar>
         ) : (
-            <div className="w-8 h-8" />
+            <div className="w-8" />
         )}
       </div>
 
       <div className={cn(
-          "relative max-w-[80%] lg:max-w-[70%]",
+          "relative flex flex-col max-w-[80%] lg:max-w-[70%]",
            isOwnMessage ? "items-end" : "items-start"
       )}>
         <div
@@ -84,10 +84,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
             isOwnMessage
               ? "bg-primary text-primary-foreground"
               : "bg-card text-card-foreground border",
-            isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-t-2xl rounded-br-2xl rounded-bl-md' : 'rounded-t-2xl rounded-bl-2xl rounded-br-md'),
-            !isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-r-2xl rounded-l-md' : 'rounded-l-2xl rounded-r-md'),
-            !isFirstInGroup && isLastInGroup && (isOwnMessage ? 'rounded-b-2xl rounded-tr-2xl rounded-tl-md' : 'rounded-b-2xl rounded-tl-2xl rounded-tr-md'),
-            isFirstInGroup && isLastInGroup && 'rounded-2xl'
+            'rounded-2xl',
+            isFirstInGroup && (isOwnMessage ? 'rounded-tr-md' : 'rounded-tl-md'),
+            isLastInGroup && (isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md'),
+            !isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-r-md' : 'rounded-l-md'),
+            isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-tr-md rounded-br-2xl' : 'rounded-tl-md rounded-bl-2xl'),
+            !isFirstInGroup && isLastInGroup && (isOwnMessage ? 'rounded-br-md rounded-tr-2xl' : 'rounded-bl-md rounded-tl-2xl'),
           )}
         >
           {!isOwnMessage && isFirstInGroup && <p className="text-xs font-semibold mb-1 text-primary">{message.user}</p>}
