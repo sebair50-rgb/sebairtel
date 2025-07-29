@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/shared/Logo';
+import { doc, setDoc } from 'firebase/firestore';
+import type { User } from '@/lib/types';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -26,7 +28,15 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
+      
+      const newUser: User = {
+        id: userCredential.user.uid,
+        name: name,
+        avatar: name.charAt(0) || 'م',
+        email: email,
+      };
+      await setDoc(doc(db, "users", userCredential.user.uid), newUser);
+
       await sendEmailVerification(userCredential.user);
       
       await auth.signOut(); // Sign out the user until they verify their email

@@ -57,16 +57,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           setCurrentUser({ id: doc.id, ...doc.data() } as User);
-        } else {
-            const newUser: User = {
-                id: authUser.uid,
-                name: authUser.displayName || 'مستخدم جديد',
-                avatar: authUser.displayName?.charAt(0) || 'م',
-                email: authUser.email || ''
-            };
-            setDoc(userDocRef, newUser);
-            setCurrentUser(newUser);
         }
+        // If doc doesn't exist, it will be created on signup.
+        // We no longer create it here to avoid race conditions.
       });
       return () => unsubscribe();
     } else {
@@ -155,9 +148,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       if (!currentUser) return null;
       
       const chatsRef = collection(db, "chats");
-      const q = query(chatsRef, 
-        where('users', '==', [currentUser.id, otherUserId].sort())
-      );
+      // Sort UIDs to create a consistent chat ID between two users
+      const sortedUsers = [currentUser.id, otherUserId].sort();
+      const q = query(chatsRef, where('users', '==', sortedUsers));
 
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -171,7 +164,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const otherUser = otherUserDoc.data() as User;
       
       const newChatData = {
-          users: [currentUser.id, otherUserId].sort(),
+          users: sortedUsers,
           // Store user info for easier access, reducing lookups
           userInfo: {
               [currentUser.id]: {
