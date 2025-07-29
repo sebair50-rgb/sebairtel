@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import ChatList from './ChatList';
 import ChatView from './ChatView';
 import { useAppContext } from '@/store/AppContext';
@@ -10,26 +10,27 @@ import { MessageSquare } from 'lucide-react';
 import useIsMobile from '@/hooks/use-is-mobile';
 
 const ChatInterface = () => {
-  const { chats } = useAppContext();
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const { chats, selectedChatId, setSelectedChatId } = useAppContext();
   const isMobile = useIsMobile();
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isMobile && !selectedChatId && chats.length > 0) {
       setSelectedChatId(chats[0].id);
     }
-     if (isMobile) {
-        setSelectedChatId(null);
+    if (isMobile && selectedChatId) {
+        // When switching to mobile view with a chat open, we might want to default to showing the chat view
     }
-  }, [isMobile]);
+  }, [isMobile, selectedChatId, chats, setSelectedChatId]);
 
-  React.useEffect(() => {
-    if (!isMobile && !selectedChatId && chats.length > 0) {
-      setSelectedChatId(chats[0].id);
-    }
-  }, [chats, selectedChatId, isMobile]);
+  const handleSelectChat = (id: number) => {
+    setSelectedChatId(id);
+  };
+
+  const handleBack = () => {
+    setSelectedChatId(null);
+  };
   
   return (
     <div className="flex h-full w-full border-t md:border-t-0 md:border rounded-lg overflow-hidden">
@@ -41,7 +42,7 @@ const ChatInterface = () => {
       >
         <ChatList
           selectedChatId={selectedChatId}
-          setSelectedChatId={setSelectedChatId}
+          onSelectChat={handleSelectChat}
         />
       </div>
       <div className={cn("flex-1 flex-col", isMobile && !selectedChatId ? "hidden" : "flex")}>
@@ -49,7 +50,7 @@ const ChatInterface = () => {
           <ChatView
             key={selectedChat.id}
             chat={selectedChat}
-            onBack={() => setSelectedChatId(null)}
+            onBack={handleBack}
           />
         ) : (
           <div className="hidden md:flex flex-col items-center justify-center h-full text-center text-muted-foreground bg-background">

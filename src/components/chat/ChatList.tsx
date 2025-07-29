@@ -12,10 +12,10 @@ import { ScrollArea } from '../ui/scroll-area';
 
 interface ChatListProps {
   selectedChatId: number | null;
-  setSelectedChatId: (id: number) => void;
+  onSelectChat: (id: number) => void;
 }
 
-const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId }) => {
+const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => {
   const { chats } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -45,7 +45,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId }
             {filteredChats.map(chat => (
                 <button
                 key={chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
+                onClick={() => onSelectChat(chat.id)}
                 className={cn(
                     'w-full flex items-center gap-3 p-3 rounded-lg text-right transition-colors',
                     selectedChatId === chat.id

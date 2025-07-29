@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import useIsMobile from '@/hooks/use-is-mobile';
 
 interface MainSidebarProps {
   activeTab: string;
@@ -22,8 +23,9 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { currentUser } = useAppContext();
+  const { currentUser, selectedChatId } = useAppContext();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -38,6 +40,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
   
+  const showMobileNav = isMobile && selectedChatId === null;
 
   return (
     <>
@@ -85,23 +88,25 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
       </nav>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 right-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
-        {navItems.map((item) => (
-          <button
-            key={item.name}
-            onClick={() => setActiveTab(item.name)}
-            className={cn(
-              'flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors duration-200 text-[10px]',
-              activeTab === item.name
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            )}
-          >
-            <item.icon size={20} />
-            <span className="mt-1">{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      {showMobileNav && (
+        <nav className="fixed bottom-0 right-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
+          {navItems.map((item) => (
+            <button
+              key={item.name}
+              onClick={() => setActiveTab(item.name)}
+              className={cn(
+                'flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors duration-200 text-[10px]',
+                activeTab === item.name
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <item.icon size={20} />
+              <span className="mt-1">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
     </>
   );
 };

@@ -17,6 +17,8 @@ interface AppContextType {
   setFriendRequests: React.Dispatch<React.SetStateAction<User[]>>;
   chats: Chat[];
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
+  selectedChatId: number | null;
+  setSelectedChatId: React.Dispatch<React.SetStateAction<number | null>>;
   addMessage: (chatId: number, message: Message) => void;
   deleteMessage: (chatId: number, messageId: number) => void;
   updateMessage: (chatId: number, messageId: number, updatedMessage: Message) => void;
@@ -53,6 +55,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
   const [chats, setChats] = useState<Chat[]>(initialChats);
+  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [calls, setCalls] = useState<Call[]>(initialCalls);
@@ -124,6 +127,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setFriendRequests,
     chats,
     setChats,
+    selectedChatId,
+    setSelectedChatId,
     addMessage,
     deleteMessage,
     updateMessage,
