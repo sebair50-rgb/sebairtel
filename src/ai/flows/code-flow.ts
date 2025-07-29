@@ -42,7 +42,7 @@ const getPromptForTask = (task: CodeProcessingInput['task']) => {
 
 const codeProcessingPrompt = ai.definePrompt({
   name: 'codeProcessingPrompt',
-  input: { schema: CodeProcessingInputSchema },
+  input: { schema: CodeProcessingInputSchema.extend({ systemPrompt: z.string() }) },
   output: { schema: CodeProcessingOutputSchema },
   prompt: `{{{systemPrompt}}}
 
