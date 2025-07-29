@@ -38,7 +38,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { user: authUser } = useAuth();
   const [currentUser, setCurrentUser] = useState<User>(CURRENT_USER);
 
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
