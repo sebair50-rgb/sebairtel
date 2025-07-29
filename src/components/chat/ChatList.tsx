@@ -17,11 +17,9 @@ interface ChatListProps {
   setSelectedChatId: (id: number) => void;
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
 }
 
-const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, isSidebarOpen, toggleSidebar, activeTab, setActiveTab }) => {
+const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, isSidebarOpen, toggleSidebar }) => {
   const { chats } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -48,16 +46,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
           />
         </div>
       </div>
-      <div className="p-4 border-b">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 gap-1 h-auto">
-            <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
-            <TabsTrigger value="groups">مجموعات</TabsTrigger>
-            <TabsTrigger value="calls">المكالمات</TabsTrigger>
-            <TabsTrigger value="chats">الدردشات</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+      
       <ScrollArea className="flex-1">
         <div className="p-2">
             {filteredChats.map(chat => (

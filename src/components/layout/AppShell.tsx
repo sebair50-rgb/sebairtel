@@ -10,8 +10,7 @@ import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
 import UsersView from '@/components/users/UsersView';
 import { cn } from '@/lib/utils';
-import { PanelLeft, MessageCircle, Phone, Users as UsersIcon, List } from 'lucide-react';
-import { Button } from '../ui/button';
+import { MessageCircle, Users as UsersIcon, List } from 'lucide-react';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
 import { useAuth } from '@/store/AuthContext';
@@ -42,8 +41,13 @@ const AppShell = () => {
     await auth.signOut();
     router.push('/login');
   };
+  
+  const handleCommunityTabChange = (tab: string) => {
+    setCommunityTab(tab);
+    setSelectedChatId(null);
+  };
 
-  const renderCommunityContent = () => {
+  const renderCommunityChatContent = () => {
       if(selectedChatId) {
           const chat = chats.find(c => c.id === selectedChatId);
           if (chat) return <ChatView key={chat.id} chat={chat} onBack={() => setSelectedChatId(null)} />;
@@ -72,17 +76,25 @@ const AppShell = () => {
       case 'community':
          return (
             <div className="flex-1 flex flex-col overflow-hidden h-full">
-                <Tabs value={communityTab} onValueChange={setCommunityTab} className="w-full h-full flex flex-col">
-                    <TabsContent value="chats" className="flex-1 overflow-hidden h-full">
-                        {renderCommunityContent()}
+                <Tabs value={communityTab} onValueChange={handleCommunityTabChange} className="w-full h-full flex flex-col">
+                    <div className="flex-shrink-0 px-4 pt-4 border-b">
+                         <TabsList className="grid w-full grid-cols-4 gap-1 h-auto">
+                            <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+                            <TabsTrigger value="groups">مجموعات</TabsTrigger>
+                            <TabsTrigger value="calls">المكالمات</TabsTrigger>
+                            <TabsTrigger value="chats">الدردشات</TabsTrigger>
+                         </TabsList>
+                    </div>
+                    <TabsContent value="chats" className="flex-1 overflow-hidden h-full mt-0">
+                        {renderCommunityChatContent()}
                     </TabsContent>
-                    <TabsContent value="calls" className="flex-1 overflow-hidden h-full">
+                    <TabsContent value="calls" className="flex-1 overflow-hidden h-full mt-0">
                         <CallsView />
                     </TabsContent>
-                    <TabsContent value="groups" className="flex-1">
+                    <TabsContent value="groups" className="flex-1 mt-0">
                         <ComingSoonContent title="مجموعات الدردشة" icon={UsersIcon} />
                     </TabsContent>
-                    <TabsContent value="friends" className="flex-1">
+                    <TabsContent value="friends" className="flex-1 mt-0">
                         <ComingSoonContent title="قائمة الأصدقاء" icon={List} />
                     </TabsContent>
                 </Tabs>
@@ -93,18 +105,16 @@ const AppShell = () => {
     }
   };
   
-  const showChatList = activeTab === 'community';
-  const isChatViewActive = communityTab === 'chats' && selectedChatId !== null;
-  const showChatListSidebar = showChatList && communityTab === 'chats';
+  const showChatList = activeTab === 'community' && communityTab === 'chats';
+  const isChatViewActive = showChatList && selectedChatId !== null;
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
       <div className={cn(
         "transition-all duration-300 ease-in-out border-l md:flex flex-col",
         "w-full md:w-80",
-        !showChatListSidebar && "hidden",
+        !showChatList && "hidden",
         isChatViewActive ? "hidden md:flex" : "flex",
-        (isChatViewActive && showChatListSidebar) && "hidden md:flex",
         isSidebarOpen ? "md:w-80" : "md:w-0"
       )}>
         <ChatList
@@ -114,11 +124,6 @@ const AppShell = () => {
             }}
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            activeTab={communityTab}
-            setActiveTab={(tab) => {
-              setCommunityTab(tab);
-              setSelectedChatId(null);
-            }}
         />
       </div>
       
@@ -126,25 +131,22 @@ const AppShell = () => {
         "flex-1 flex flex-col overflow-hidden",
         { "pb-16 md:pb-0": !isChatViewActive }
       )}>
-          {activeTab === 'community' && (
-              <div className="md:hidden p-2 border-b">
-                 <ChatList
-                    selectedChatId={selectedChatId}
-                    setSelectedChatId={setSelectedChatId}
-                    isSidebarOpen={isSidebarOpen}
-                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                    activeTab={communityTab}
-                    setActiveTab={setCommunityTab}
-                />
-              </div>
-          )}
-          
           <div className={cn(
               "flex-1 flex overflow-y-auto",
-              // Hide main content on mobile if we are in chat list view
-              { "hidden": showChatListSidebar && !isChatViewActive  }
+              // Hide main content on mobile if we are in chat list view but not in a chat
+              { "hidden": showChatList && !isChatViewActive  },
+              { "flex md:hidden": activeTab === 'community' && communityTab === 'chats' && !isChatViewActive }
           )}>
-            {renderContent()}
+            { activeTab === 'community' && communityTab === 'chats' && !isChatViewActive ? (
+                 <div className="w-full">
+                     <ChatList
+                        selectedChatId={selectedChatId}
+                        setSelectedChatId={setSelectedChatId}
+                        isSidebarOpen={isSidebarOpen}
+                        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    />
+                 </div>
+            ) : renderContent() }
           </div>
       </main>
       
