@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -15,8 +16,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
 
   const navItems = [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
-    { name: 'social', icon: Users, label: 'المجتمع' },
     { name: 'contact', icon: MessageSquare, label: 'تواصل' },
+    { name: 'social', icon: Users, label: 'المجتمع' },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
