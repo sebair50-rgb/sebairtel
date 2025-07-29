@@ -29,14 +29,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDe
 
   return (
     <ScrollArea className="flex-1" ref={scrollAreaRef}>
-      <div className="p-4 md:p-6 space-y-1">
-        {messages.map((message, index) => {
-          const prevMessage = messages[index - 1];
-          const nextMessage = messages[index + 1];
+      <div className="p-4 md:p-6 flex flex-col-reverse gap-1">
+        {messages.slice().reverse().map((message, index) => {
+          const originalIndex = messages.length - 1 - index;
+          const prevMessage = messages[originalIndex - 1];
+          const nextMessage = messages[originalIndex + 1];
           const isOwnMessage = message.user === currentUser.name;
 
-          const isFirstInGroup = !prevMessage || prevMessage.user !== message.user;
-          const isLastInGroup = !nextMessage || nextMessage.user !== message.user;
+          const isFirstInGroup = !nextMessage || nextMessage.user !== message.user;
+          const isLastInGroup = !prevMessage || prevMessage.user !== message.user;
 
           return (
             <MessageItem
