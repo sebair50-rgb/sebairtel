@@ -22,8 +22,8 @@ const AppShell = () => {
   const { user: authUser } = useAuth();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState('community');
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(chats[1]?.id || null);
+  const [activeTab, setActiveTab] = useState('social');
+  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleLogout = async () => {
@@ -50,13 +50,19 @@ const AppShell = () => {
         return <AppsView />;
       case 'community':
       default:
-        return (
-            <div className="hidden md:flex flex-col items-center justify-center h-full bg-card text-center p-8">
-                <MessageCircle size={64} className="text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold">مرحباً بك في SebairTel, {currentUser.name}!</h2>
-                <p className="text-muted-foreground mt-2">اختر محادثة من القائمة للبدء.</p>
-            </div>
-        );
+        // When community is selected but no chat is open, show the welcome message on larger screens.
+        // On smaller screens this area will be hidden by the chat list.
+         if (activeTab === 'community') {
+             return (
+                <div className="hidden md:flex flex-col items-center justify-center h-full bg-card text-center p-8">
+                    <MessageCircle size={64} className="text-muted-foreground mb-4" />
+                    <h2 className="text-2xl font-bold">مرحباً بك في SebairTel, {currentUser.name}!</h2>
+                    <p className="text-muted-foreground mt-2">اختر محادثة من القائمة للبدء.</p>
+                </div>
+            );
+         }
+        // Default to social feed if for some reason activeTab is not set.
+        return <SocialFeed />;
     }
   };
   
@@ -90,7 +96,7 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           
-          <div className={cn("flex-1 overflow-y-auto", { "hidden md:block": showChatList && selectedChatId === null })}>
+          <div className={cn("flex-1 overflow-y-auto", { "hidden md:block": showChatList && selectedChatId !== null && isSidebarOpen })}>
             {renderContent()}
           </div>
       </main>
