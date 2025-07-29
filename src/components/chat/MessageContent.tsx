@@ -23,19 +23,29 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    const renderTextWithLinks = (text: string) => {
+    const renderTextWithLinksAndCode = (text: string) => {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.split(urlRegex).map((part, index) => {
-            if (part.match(urlRegex)) {
-                return (
-                    <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:opacity-80">
-                        {part}
-                    </a>
-                );
+        const codeBlockRegex = /(```[\s\S]*?```)/g;
+    
+        const parts = text.split(codeBlockRegex);
+
+        return parts.map((part, index) => {
+            if (part.match(codeBlockRegex)) {
+                return <CodeBlock key={index} code={part} />;
+            } else {
+                 return part.split(urlRegex).map((textPart, textIndex) => {
+                    if (textPart.match(urlRegex)) {
+                        return (
+                            <a key={`${index}-${textIndex}`} href={textPart} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:opacity-80">
+                                {textPart}
+                            </a>
+                        );
+                    }
+                    return textPart;
+                });
             }
-            return part;
-        });
-    };
+        })
+    }
 
     switch (message.type) {
         case 'image':
@@ -50,7 +60,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                         className="rounded-lg max-w-full h-auto bg-black/10" 
                       />
                     )}
-                    {message.text && <p className="text-sm whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
+                    {message.text && <p className="text-sm whitespace-pre-wrap">{renderTextWithLinksAndCode(message.text)}</p>}
                 </div>
             );
         case 'video':
@@ -59,7 +69,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                     <video src={message.src} controls className="rounded-lg max-w-full h-auto bg-black">
                         متصفحك لا يدعم عرض الفيديو.
                     </video>
-                    {message.text && <p className="text-sm mt-1 whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
+                    {message.text && <p className="text-sm mt-1 whitespace-pre-wrap">{renderTextWithLinksAndCode(message.text)}</p>}
                 </div>
             );
         case 'audio':
@@ -78,11 +88,8 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                     </div>
                 </div>
             );
-        case 'code':
-            if (!message.text) return null;
-            return <CodeBlock code={message.text} />;
         default: // text
-             return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
+             return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinksAndCode(message.text) : null}</div>;
     }
 };
 

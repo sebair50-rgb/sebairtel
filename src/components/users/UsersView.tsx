@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -9,23 +10,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 
 const UsersView: React.FC = () => {
-    const { users, setUsers, friendRequests, setFriendRequests } = useAppContext();
+    const { users, friendRequests, createChat, setSelectedChatId } = useAppContext();
 
-    const handleAddFriend = (userId: number) => {
-        setUsers(users.map(u => u.id === userId ? { ...u, requestSent: true } : u));
+    const handleAddFriend = (userId: string) => {
+        // Placeholder for sending friend request
+        console.log("Sending friend request to:", userId);
     };
 
-    const handleAcceptRequest = (userId: number) => {
-        const user = friendRequests.find(u => u.id === userId);
-        if (user) {
-            setUsers([...users, { ...user, isFriend: true }]);
-            setFriendRequests(friendRequests.filter(u => u.id !== userId));
-        }
+    const handleAcceptRequest = (userId: string) => {
+        console.log("Accepting friend request from:", userId);
     };
     
-    const handleDeclineRequest = (userId: number) => {
-        setFriendRequests(friendRequests.filter(u => u.id !== userId));
+    const handleDeclineRequest = (userId: string) => {
+        console.log("Declining friend request from:", userId);
     };
+
+    const handleStartChat = async (userId: string) => {
+        const chatId = await createChat(userId);
+        if (chatId) {
+            setSelectedChatId(chatId);
+            // Optionally, switch to the 'contact' tab
+        }
+    }
 
     return (
         <ScrollArea className="h-full">
@@ -66,13 +72,8 @@ const UsersView: React.FC = () => {
                                     <span className="font-semibold">{user.name}</span>
                                 </div>
                                 <div>
-                                    {user.isFriend ? (
-                                        <Button variant="outline" disabled>صديق</Button>
-                                    ) : user.requestSent ? (
-                                        <Button variant="outline" disabled>تم إرسال الطلب</Button>
-                                    ) : (
-                                        <Button onClick={() => handleAddFriend(user.id)}><UserPlus className="ml-2 h-4 w-4" /> إضافة صديق</Button>
-                                    )}
+                                    <Button onClick={() => handleStartChat(user.id)}>بدء محادثة</Button>
+                                    {/* Friend button logic can be added here */}
                                 </div>
                             </div>
                         ))}

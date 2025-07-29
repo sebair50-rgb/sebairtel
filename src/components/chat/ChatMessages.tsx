@@ -1,24 +1,43 @@
 
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Message, User } from '@/lib/types';
 import MessageItem from './MessageItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ChatMessagesProps {
-  messages: Message[];
-  currentUser: User;
-  onDeleteMessage: (messageId: number) => void;
+  chatId: string;
+  currentUser: User | null;
+  onDeleteMessage: (messageId: string) => void;
   onReply: (message: Message) => void;
   onEditMessage: (message: Message) => void;
-  onLikeMessage: (messageId: number) => void;
+  onLikeMessage: (messageId: string) => void;
 }
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+      if (!chatId) return;
+
+      const messagesColRef = collection(db, 'chats', chatId, 'messages');
+      const q = query(messagesColRef, orderBy('timestamp', 'asc'));
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+          const fetchedMessages = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+          } as Message));
+          setMessages(fetchedMessages);
+      });
+      
+      return () => unsubscribe();
+  }, [chatId]);
 
   useEffect(() => {
     // We use a timeout to ensure the DOM has updated before scrolling.
@@ -26,9 +45,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDe
         if (viewportRef.current) {
             viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
         }
-    }, 0);
+    }, 100);
   }, [messages]);
 
+
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <ScrollArea className="flex-1" viewportRef={viewportRef}>

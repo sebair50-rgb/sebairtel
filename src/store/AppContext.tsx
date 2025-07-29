@@ -1,76 +1,182 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { User, Post, Notification, Call, Chat, Message } from '@/lib/types';
-import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER, initialCalls, initialChats } from '@/lib/data';
 import { useAuth } from './AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, where, getDocs, setDoc, getDoc } from 'firebase/firestore';
 
 interface AppContextType {
   darkMode: boolean;
   toggleDarkMode: () => void;
-  currentUser: User;
+  currentUser: User | null;
   users: User[];
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   friendRequests: User[];
-  setFriendRequests: React.Dispatch<React.SetStateAction<User[]>>;
   posts: Post[];
-  setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
-  addPost: (post: Pick<Post, 'content' | 'media'>) => void;
+  addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
+  updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   notifications: Notification[];
-  setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
   calls: Call[];
-  setCalls: React.Dispatch<React.SetStateAction<Call[]>>;
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
   chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
-  selectedChatId: number | null;
-  setSelectedChatId: (id: number | null) => void;
-  addMessage: (chatId: number, message: Message) => void;
-  deleteMessage: (chatId: number, messageId: number) => void;
-  updateMessage: (chatId: number, messageId: number, updatedMessage: Partial<Message>) => void;
+  selectedChatId: string | null;
+  setSelectedChatId: (id: string | null) => void;
+  addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
+  deleteMessage: (chatId: string, messageId: string) => Promise<void>;
+  updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
+  createChat: (otherUserId: string) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { user: authUser } = useAuth();
-  const [currentUser, setCurrentUser] = useState<User>(CURRENT_USER);
-
-  const [darkMode, setDarkMode] = useState(false);
-
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
-  const [calls, setCalls] = useState<Call[]>(initialCalls);
-  const [chats, setChats] = useState<Chat[]>(initialChats);
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [calls, setCalls] = useState<Call[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  const [friendRequests, setFriendRequests] = useState<User[]>([]);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (authUser) {
-      setCurrentUser({
-        id: 100, // This might need to come from your DB for the authUser
-        name: authUser.displayName || 'أنت',
-        avatar: '👤', // Default avatar, or get from user profile
+      const userDocRef = doc(db, 'users', authUser.uid);
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          setCurrentUser({ id: doc.id, ...doc.data() } as User);
+        } else {
+            const newUser: User = {
+                id: authUser.uid,
+                name: authUser.displayName || 'مستخدم جديد',
+                avatar: '👤',
+                email: authUser.email || ''
+            };
+            setDoc(userDocRef, newUser);
+            setCurrentUser(newUser);
+        }
       });
+      return () => unsubscribe();
+    } else {
+      setCurrentUser(null);
     }
   }, [authUser]);
 
   useEffect(() => {
-    // If a chat is selected, hide mobile nav
-    const mobileNav = document.querySelector('.fixed.bottom-0');
-    if (mobileNav) {
-        if (selectedChatId !== null) {
-            mobileNav.classList.add('hidden');
-        } else {
-            mobileNav.classList.remove('hidden');
-        }
-    }
-  }, [selectedChatId]);
+    if (!currentUser) return;
+    
+    // Fetch all users
+    const usersQuery = query(collection(db, 'users'));
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(usersData.filter(u => u.id !== currentUser.id));
+    });
 
+    // Fetch posts
+    const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
+      const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      setPosts(postsData);
+    });
+
+    // Fetch chats
+    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
+    const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
+        const chatsData = snapshot.docs.map(doc => {
+             const data = doc.data();
+             return {
+                 id: doc.id,
+                 ...data,
+                 messages: data.messages || [] // Ensure messages is an array
+             } as Chat;
+        });
+        setChats(chatsData);
+    });
+    
+    return () => {
+      unsubscribeUsers();
+      unsubscribePosts();
+      unsubscribeChats();
+    };
+  }, [currentUser]);
+
+  const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
+    if (!currentUser) return;
+    await addDoc(collection(db, 'posts'), {
+        ...postData,
+        user: currentUser.name,
+        userId: currentUser.id,
+        avatar: currentUser.avatar,
+        likes: 0,
+        comments: [],
+        timestamp: serverTimestamp(),
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    });
+  };
+  
+  const updatePost = async (postId: string, data: Partial<Post>) => {
+      const postRef = doc(db, "posts", postId);
+      await updateDoc(postRef, data);
+  }
+
+  const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
+    const chatRef = doc(db, 'chats', chatId);
+    const messagesColRef = collection(chatRef, 'messages');
+    
+    await addDoc(messagesColRef, {
+        ...messageData,
+        timestamp: serverTimestamp(),
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    });
+  };
+  
+  const createChat = async (otherUserId: string): Promise<string | null> => {
+      if (!currentUser) return null;
+      
+      const chatsRef = collection(db, "chats");
+      // Check if a chat already exists
+      const q = query(chatsRef, 
+        where('users', 'array-contains', currentUser.id)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const existingChat = querySnapshot.docs.find(doc => doc.data().users.includes(otherUserId));
+
+      if (existingChat) {
+          return existingChat.id;
+      }
+      
+      // Create a new chat
+      const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
+      if (!otherUserDoc.exists()) return null;
+      const otherUser = otherUserDoc.data() as User;
+      
+      const newChatRef = await addDoc(chatsRef, {
+          users: [currentUser.id, otherUserId],
+          name: otherUser.name, // This should be dynamic based on the other user
+          avatar: otherUser.avatar, // Same as name
+          messages: [],
+          lastMessageTimestamp: serverTimestamp(),
+      });
+      
+      return newChatRef.id;
+  };
+
+  const deleteMessage = async (chatId: string, messageId: string) => {
+      const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+      await deleteDoc(msgRef);
+  };
+  
+  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
+       const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+       await updateDoc(msgRef, updatedMessage);
+  }
 
   const toggleDarkMode = () => {
     setDarkMode(prev => {
@@ -84,71 +190,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addPost = (postData: Pick<Post, 'content' | 'media'>) => {
-    const newPost: Post = {
-        id: Date.now(),
-        user: currentUser.name,
-        avatar: currentUser.avatar,
-        time: 'الآن',
-        likes: 0,
-        isLiked: false,
-        isSaved: false,
-        comments: [],
-        ...postData,
-    };
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-  };
-  
-  const addMessage = (chatId: number, message: Message) => {
-    setChats(prevChats => prevChats.map(chat =>
-      chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat
-    ));
-  };
-
-  const deleteMessage = (chatId: number, messageId: number) => {
-    setChats(prevChats => prevChats.map(chat =>
-      chat.id === chatId ? { ...chat, messages: chat.messages.filter(m => m.id !== messageId) } : chat
-    ));
-  };
-  
-  const updateMessage = (chatId: number, messageId: number, updatedMessage: Partial<Message>) => {
-    setChats(prevChats => prevChats.map(chat =>
-        chat.id === chatId
-            ? {
-                ...chat,
-                messages: chat.messages.map(message =>
-                    message.id === messageId ? { ...message, ...updatedMessage } : message
-                )
-            }
-            : chat
-    ));
-  }
-
-
   const value = {
     darkMode,
     toggleDarkMode,
     currentUser,
     users,
-    setUsers,
     friendRequests,
-    setFriendRequests,
     posts,
-    setPosts,
+    setPosts: () => {}, // Remove direct setters
     addPost,
+    updatePost,
     notifications,
-    setNotifications,
     calls,
-    setCalls,
     settings,
     setSettings,
     chats,
-    setChats,
     selectedChatId,
     setSelectedChatId,
     addMessage,
     deleteMessage,
     updateMessage,
+    createChat,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

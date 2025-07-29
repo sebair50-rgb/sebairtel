@@ -1,27 +1,31 @@
 
+import type { Timestamp } from 'firebase/firestore';
+
 export interface User {
-  id: number;
+  id: string; // Changed to string for Firestore UID
   name: string;
   avatar: string;
   isFriend?: boolean;
   requestSent?: boolean;
+  email?: string;
 }
 
 export interface Message {
-    id: number;
+    id: string; // Changed for Firestore
     user: string;
     avatar: string;
     text?: string;
     time: string;
+    timestamp: Timestamp;
     status: 'sent' | 'delivered' | 'seen';
-    type: 'text' | 'image' | 'video' | 'file' | 'audio' | 'code';
+    type: 'text' | 'image' | 'video' | 'file' | 'audio';
     src?: string;
     fileInfo?: {
       name: string;
       size: number;
       type: string;
     };
-    replyTo?: number | null;
+    replyTo?: string | null;
     likes?: number;
     isLiked?: boolean;
     suggestions?: string[];
@@ -29,12 +33,14 @@ export interface Message {
 
 
 export interface Chat {
-  id: number;
+  id: string; // Firestore document ID
   name: string;
   avatar: string;
+  users: string[]; // array of user uids
   messages: Message[];
   unreadCount?: number;
   lastMessageTime: string;
+  lastMessageTimestamp?: Timestamp;
   isMuted?: boolean;
   isBlocked?: boolean;
 }
@@ -43,11 +49,13 @@ export interface Chat {
 export interface Comment {
   user: string;
   text: string;
+  timestamp: Timestamp;
 }
 
 export interface Post {
-  id: number;
+  id: string; // Firestore document ID
   user: string;
+  userId: string;
   avatar: string;
   content: string;
   media?: {
@@ -55,26 +63,29 @@ export interface Post {
     src: string;
   } | null;
   time: string;
+  timestamp: Timestamp;
   likes: number;
-  isLiked: boolean;
-  isSaved: boolean;
+  isLiked?: boolean; // This will be client-side state
+  isSaved?: boolean; // This will be client-side state
   comments: Comment[];
 }
 
 export interface Notification {
-  id: number;
+  id: string;
   type: 'like' | 'comment' | 'request';
   user: string;
   message: string;
   time: string;
+  timestamp: Timestamp;
   isRead: boolean;
 }
 
 export interface Call {
-    id: number;
+    id: string;
     user: string;
     avatar: string;
     type: 'incoming' | 'outgoing' | 'missed';
     time: string;
+    timestamp: Timestamp;
     duration?: string;
 }

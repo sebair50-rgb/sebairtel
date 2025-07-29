@@ -23,7 +23,7 @@ const ChatInterface = () => {
     }
   }, [isMobile, selectedChatId, chats, setSelectedChatId]);
 
-  const handleSelectChat = (id: number) => {
+  const handleSelectChat = (id: string) => {
     setSelectedChatId(id);
   };
 

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Smile, Paperclip, Mic, Send, X, Square, Trash2 } from 'lucide-react';
@@ -17,7 +17,11 @@ interface MessageInputProps {
     onCancelEdit: () => void;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessage, onCancelEdit }) => {
+export interface MessageInputHandles {
+  setText: (text: string) => void;
+}
+
+const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSendMessage, editingMessage, onCancelEdit }, ref) => {
     const [text, setText] = useState('');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +32,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     const [recordedAudio, setRecordedAudio] = useState<{ src: string; blob: Blob; } | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+
+    useImperativeHandle(ref, () => ({
+      setText: (text: string) => {
+        setText(text);
+        textareaRef.current?.focus();
+      }
+    }));
 
     useEffect(() => {
         if (editingMessage) {
@@ -215,6 +226,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
         </div>
     );
-};
+});
+MessageInput.displayName = 'MessageInput';
 
 export default React.memo(MessageInput);

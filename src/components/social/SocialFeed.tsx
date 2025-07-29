@@ -10,21 +10,7 @@ import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
 
 const SocialFeed = () => {
-    const { posts, setPosts } = useAppContext();
-
-    const handleLike = (postId: number) => {
-        setPosts(prevPosts =>
-            prevPosts.map(p =>
-                p.id === postId ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p
-            )
-        );
-    };
-
-    const handleSave = (postId: number) => {
-        setPosts(prevPosts =>
-            prevPosts.map(p => (p.id === postId ? { ...p, isSaved: !p.isSaved } : p))
-        );
-    };
+    const { posts } = useAppContext();
 
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
@@ -57,8 +43,6 @@ const SocialFeed = () => {
                                     <PostCard
                                         key={post.id}
                                         post={post}
-                                        onLike={handleLike}
-                                        onSave={handleSave}
                                     />
                                 ))}
                             </div>

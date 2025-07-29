@@ -10,15 +10,30 @@ import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { useAppContext } from '@/store/AppContext';
 
 interface PostCardProps {
   post: Post;
-  onLike: (postId: number) => void;
-  onSave: (postId: number) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave }) => {
+const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
+  const { updatePost } = useAppContext();
+  const [isLiked, setIsLiked] = React.useState(post.isLiked);
+  const [isSaved, setIsSaved] = React.useState(post.isSaved);
+
+  const handleLike = () => {
+      const newLikedState = !isLiked;
+      setIsLiked(newLikedState);
+      const newLikesCount = newLikedState ? post.likes + 1 : post.likes -1;
+      updatePost(post.id, { likes: newLikesCount });
+  }
+
+  const handleSave = () => {
+    setIsSaved(!isSaved);
+    // In a real app, you'd also update the backend here
+    toast({ description: !isSaved ? "تم حفظ المنشور!" : "تمت إزالة الحفظ!" });
+  }
 
   const handleShare = () => {
     navigator.clipboard.writeText(`Check out this post by ${post.user}!`);
@@ -46,8 +61,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave }) => {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => onLike(post.id)}>
-            <Heart size={18} className={cn(post.isLiked && 'fill-red-500 text-red-500')} />
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleLike}>
+            <Heart size={18} className={cn(isLiked && 'fill-red-500 text-red-500')} />
             <span className="text-sm">{post.likes}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -60,8 +75,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave }) => {
           </Button>
 
         </div>
-        <Button variant="ghost" size="sm" onClick={() => onSave(post.id)}>
-          <Bookmark size={18} className={cn(post.isSaved && 'fill-primary text-primary')} />
+        <Button variant="ghost" size="sm" onClick={handleSave}>
+          <Bookmark size={18} className={cn(isSaved && 'fill-primary text-primary')} />
         </Button>
       </CardFooter>
     </Card>

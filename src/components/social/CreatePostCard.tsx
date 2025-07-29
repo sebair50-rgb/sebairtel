@@ -34,6 +34,8 @@ const CreatePostCard = () => {
       reader.readAsDataURL(file);
     }
   };
+  
+  if (!currentUser) return null;
 
   return (
     <Card>

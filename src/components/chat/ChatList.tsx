@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 
 interface ChatListProps {
-  selectedChatId: number | null;
-  onSelectChat: (id: number) => void;
+  selectedChatId: string | null;
+  onSelectChat: (id: string) => void;
 }
 
 const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => {
