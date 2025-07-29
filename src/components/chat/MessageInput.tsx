@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Code2, SendHorizonal } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Square, Trash2 } from 'lucide-react';
 import { Card } from '../ui/card';
 import type { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -19,7 +19,6 @@ interface MessageInputProps {
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessage, onCancelEdit }) => {
     const [text, setText] = useState('');
-    const [isCodeMode, setIsCodeMode] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
@@ -33,7 +32,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     useEffect(() => {
         if (editingMessage) {
             setText(editingMessage.text || '');
-            setIsCodeMode(editingMessage.type === 'code');
             textareaRef.current?.focus();
         } else {
             setText('');
@@ -58,11 +56,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
     const handleSend = useCallback(() => {
         if (text.trim()) {
-            onSendMessage(text, { type: isCodeMode ? 'code' : 'text' });
+            onSendMessage(text, { type: 'text' });
             setText('');
-            if (isCodeMode) setIsCodeMode(false);
         }
-    }, [onSendMessage, text, isCodeMode]);
+    }, [onSendMessage, text]);
     
     const startRecording = useCallback(async () => {
         if (recordedAudio) setRecordedAudio(null);
@@ -164,10 +161,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
 
             {!recordedAudio && (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-                <Card className={cn(
-                    "flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card transition-all",
-                    isCodeMode && "flex-row-reverse"
-                )}>
+                <Card className="flex items-end gap-2 p-2 rounded-2xl shadow-sm bg-card transition-all">
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -176,24 +170,18 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                         accept="image/*,video/*,audio/*,application/*,text/*"
                     />
                     <div className="flex">
-                        <Button variant="ghost" size="icon" className={cn("text-muted-foreground rounded-full", isCodeMode && "text-primary bg-primary/10")} onClick={() => setIsCodeMode(!isCodeMode)}>
-                            <Code2 />
-                        </Button>
                         <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
                             <Smile />
                         </Button>
                     </div>
                     <Textarea
                         ref={textareaRef}
-                        placeholder={isRecording ? "جارِ التسجيل..." : (isCodeMode ? "اكتب الكود هنا..." : "اكتب رسالة...")}
+                        placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        className={cn(
-                            "flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2",
-                             isCodeMode && "direction-ltr text-left font-code"
-                        )}
+                        className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
                         disabled={isRecording}
                     />
                     {!hasContent && !isRecording && (
@@ -212,14 +200,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                         >
                             <Button 
                                 size="icon" 
-                                className={cn(
-                                    "bg-primary hover:bg-primary/90 rounded-full w-12 h-12",
-                                     isCodeMode && hasContent && "rounded-lg"
-                                )}
+                                className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12"
                                 onClick={hasContent ? handleSend : handleMicClick}
                                 disabled={!hasContent && isRecording && !mediaRecorderRef.current}
                             >
-                                {hasContent ? (isCodeMode ? <SendHorizonal/> : <Send />) : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
+                                {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
                             </Button>
                         </motion.div>
                     </AnimatePresence>

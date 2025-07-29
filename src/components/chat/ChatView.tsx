@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { Chat, Message } from '@/lib/types';
 import { useAppContext } from '@/store/AppContext';
 import ChatHeader from './ChatHeader';

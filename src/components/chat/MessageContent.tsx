@@ -6,7 +6,6 @@ import type { Message } from '@/lib/types';
 import { FileIcon, Music2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import CodeBlock from '../shared/CodeBlock';
 
 interface MessageContentProps {
   message: Message;
@@ -36,11 +35,6 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
             return part;
         });
     };
-
-    const containsCodeBlock = (text?: string) => {
-        if (!text) return false;
-        return /```(\w+)?\n([\s\S]+?)```/.test(text);
-    }
 
     switch (message.type) {
         case 'image':
@@ -83,33 +77,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                     </div>
                 </div>
             );
-         case 'code':
-            const codeMatch = message.text?.match(/```(\w+)?\n([\s\S]+?)```/);
-            if (codeMatch) {
-                 const lang = codeMatch[1] || 'js';
-                 const code = codeMatch[2];
-                 return <CodeBlock code={code} language={lang} />;
-            }
-             return <div className="whitespace-pre-wrap break-words text-left font-code">{message.text ? renderTextWithLinks(message.text) : null}</div>;
         default: // text
-             if (containsCodeBlock(message.text)) {
-                const parts = message.text!.split(/(```(?:\w+)?\n(?:[\s\S]+?)```)/);
-                return (
-                     <div className="whitespace-pre-wrap break-words">
-                        {parts.map((part, index) => {
-                            if (containsCodeBlock(part)) {
-                                const codeMatch = part.match(/```(\w+)?\n([\s\S]+?)```/);
-                                if (codeMatch) {
-                                    const lang = codeMatch[1] || 'js';
-                                    const code = codeMatch[2];
-                                    return <CodeBlock key={index} code={code} language={lang} />;
-                                }
-                            }
-                            return <span key={index}>{renderTextWithLinks(part)}</span>;
-                        })}
-                    </div>
-                )
-             }
              return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
     }
 };
