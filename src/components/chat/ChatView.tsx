@@ -35,7 +35,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-  const handleSendMessage = (text: string, media?: { type: 'image' | 'video' | 'file', src: string, fileInfo: any }) => {
+  const handleSendMessage = (text: string, media?: { type: 'image' | 'video' | 'file' | 'audio', src: string, fileInfo: any }) => {
         if (!text.trim() && !media) return;
 
         if (editingMessage) {
@@ -147,4 +147,4 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   );
 };
 
-export default ChatView;
+export default React.memo(ChatView);
