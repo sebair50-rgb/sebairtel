@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { Message } from '@/lib/types';
-import { FileIcon } from 'lucide-react';
+import { FileIcon, Music2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import CodeBlock from '../shared/CodeBlock';
@@ -65,6 +65,13 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
                         متصفحك لا يدعم عرض الفيديو.
                     </video>
                     {message.text && <p className="text-sm mt-1 whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
+                </div>
+            );
+        case 'audio':
+            return (
+                <div className={cn("flex items-center gap-2", isOwnMessage ? "w-48 md:w-64" : "w-48 md:w-64")}>
+                    <Music2 className="text-primary flex-shrink-0" />
+                    <audio src={message.src} controls className="w-full h-10" />
                 </div>
             );
         case 'file':

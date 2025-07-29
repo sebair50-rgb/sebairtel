@@ -4,10 +4,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Smile, Paperclip, Mic, Send, X } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Square } from 'lucide-react';
 import { Card } from '../ui/card';
 import type { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessageInputProps {
     onSendMessage: (text: string, media?: any) => void;
@@ -20,6 +21,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isTyping, setIsTyping] = useState(false);
+    const { toast } = useToast();
+
+    // Audio recording state
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+
 
     useEffect(() => {
         if (editingMessage) {
@@ -48,8 +56,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
             const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : 'file');
             const fileInfo = { name: file.name, size: file.size, type: file.type };
             
-            // For now, we allow sending files without text, but you might want to change this
-            onSendMessage('', { type: fileType, src: fileDataUrl, fileInfo });
+            onSendMessage(text, { type: fileType, src: fileDataUrl, fileInfo });
+            setText('');
         };
         reader.readAsDataURL(file);
     };
@@ -58,6 +66,53 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
         if (text.trim()) {
             onSendMessage(text);
             setText('');
+        }
+    };
+    
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            audioChunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (event) => {
+                audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorderRef.current.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const fileInfo = { name: `recording_${Date.now()}.webm`, size: audioBlob.size, type: audioBlob.type };
+                onSendMessage("", { type: 'audio', src: audioUrl, fileInfo });
+                
+                // Stop all tracks to release microphone
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            toast({
+                variant: 'destructive',
+                title: "خطأ في الوصول للميكروفون",
+                description: "الرجاء التأكد من منح الإذن لاستخدام الميكروفون."
+            });
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+    };
+
+    const handleMicClick = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
         }
     };
 
@@ -72,6 +127,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
         setText(e.target.value);
         setIsTyping(true);
     };
+
+    const hasContent = text.trim().length > 0;
 
     return (
         <div className="p-2 md:p-4 bg-transparent border-t border-transparent mb-2">
@@ -92,33 +149,42 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                     ref={fileInputRef}
                     onChange={handleFileSelect}
                     className="hidden"
+                    accept="image/*,video/*,audio/*,application/*,text/*"
                 />
                 <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
                     <Smile />
                 </Button>
                 <Textarea
                     ref={textareaRef}
-                    placeholder="اكتب رسالة..."
+                    placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
                     value={text}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     rows={1}
                     className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
+                    disabled={isRecording}
                 />
-                <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={() => fileInputRef.current?.click()}>
-                    <Paperclip />
-                </Button>
-
+                {!hasContent && !isRecording && (
+                    <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={() => fileInputRef.current?.click()}>
+                        <Paperclip />
+                    </Button>
+                )}
+                
                 <AnimatePresence mode="popLayout">
                     <motion.div
-                        key={text ? 'send' : 'mic'}
+                        key={hasContent ? 'send' : 'mic'}
                         initial={{ scale: 0, opacity: 0, y: 10 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0, opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
                     >
-                         <Button size="icon" className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" onClick={handleSend} disabled={!text.trim()}>
-                            {text ? <Send /> : <Mic />}
+                         <Button 
+                            size="icon" 
+                            className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12" 
+                            onClick={hasContent ? handleSend : handleMicClick}
+                            disabled={!hasContent && isRecording && !mediaRecorderRef.current}
+                         >
+                            {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
                         </Button>
                     </motion.div>
                 </AnimatePresence>
