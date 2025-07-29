@@ -1,5 +1,5 @@
 
-import type { User, Post, Notification } from './types';
+import type { User, Post, Notification, Call } from './types';
 
 export const CURRENT_USER: User = { id: 100, name: 'أنت', avatar: '👤' };
 
@@ -51,4 +51,11 @@ export const initialNotifications: Notification[] = [
     {id: 1, type: 'like', user: 'فاطمة سالم', message: 'أعجبها منشورك.', time: 'منذ 5 دقائق', isRead: false},
     {id: 2, type: 'comment', user: 'علياء', message: 'علقت على منشورك: "عمل رائع!"', time: 'منذ 15 دقيقة', isRead: false},
     {id: 3, type: 'request', user: 'خالد', message: 'أرسل لك طلب صداقة.', time: 'منذ ساعة', isRead: true},
+];
+
+export const initialCalls: Call[] = [
+    { id: 1, user: 'سارة أحمد', avatar: '👩‍🎨', type: 'missed', time: '10:30 صباحًا' },
+    { id: 2, user: 'أحمد محمد', avatar: '👨‍💻', type: 'outgoing', time: '9:15 صباحًا', duration: '5:23' },
+    { id: 3, user: 'محمد العلي', avatar: '👨‍💼', type: 'incoming', time: 'بالأمس', duration: '12:45' },
+    { id: 4, user: 'فاطمة سالم', avatar: '👩‍🔬', type: 'missed', time: 'بالأمس' },
 ];

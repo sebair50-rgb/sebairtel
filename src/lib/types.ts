@@ -36,3 +36,12 @@ export interface Notification {
   time: string;
   isRead: boolean;
 }
+
+export interface Call {
+    id: number;
+    user: string;
+    avatar: string;
+    type: 'incoming' | 'outgoing' | 'missed';
+    time: string;
+    duration?: string;
+}
