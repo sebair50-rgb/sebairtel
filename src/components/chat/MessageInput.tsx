@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Play } from 'lucide-react';
@@ -48,7 +48,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
         return () => clearTimeout(typingTimeout);
     }, [text]);
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -62,16 +62,16 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
             setText('');
         };
         reader.readAsDataURL(file);
-    };
+    }, [onSendMessage, text]);
 
-    const handleSend = () => {
+    const handleSend = useCallback(() => {
         if (text.trim()) {
             onSendMessage(text);
             setText('');
         }
-    };
+    }, [onSendMessage, text]);
     
-    const startRecording = async () => {
+    const startRecording = useCallback(async () => {
         if (recordedAudio) setRecordedAudio(null);
 
         try {
@@ -102,41 +102,41 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
                 description: "الرجاء التأكد من منح الإذن لاستخدام الميكروفون."
             });
         }
-    };
+    }, [recordedAudio, toast]);
 
-    const stopRecording = () => {
+    const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
             mediaRecorderRef.current.stop();
         }
         setIsRecording(false);
-    };
+    }, []);
 
-    const handleMicClick = () => {
+    const handleMicClick = useCallback(() => {
         if (isRecording) {
             stopRecording();
         } else {
             startRecording();
         }
-    };
+    }, [isRecording, startRecording, stopRecording]);
 
-    const handleSendAudio = () => {
+    const handleSendAudio = useCallback(() => {
         if (recordedAudio) {
             const fileInfo = { name: `recording_${Date.now()}.webm`, size: recordedAudio.blob.size, type: recordedAudio.blob.type };
             onSendMessage("", { type: 'audio', src: recordedAudio.src, fileInfo });
             setRecordedAudio(null);
         }
-    }
+    }, [recordedAudio, onSendMessage]);
 
-    const handleCancelAudio = () => {
+    const handleCancelAudio = useCallback(() => {
         setRecordedAudio(null);
-    }
+    }, []);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
-    };
+    }, [handleSend]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
@@ -229,4 +229,4 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     );
 };
 
-export default MessageInput;
+export default React.memo(MessageInput);

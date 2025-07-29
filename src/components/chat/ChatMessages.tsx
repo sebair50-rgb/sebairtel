@@ -17,6 +17,7 @@ interface ChatMessagesProps {
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,14 +33,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDe
   return (
     <ScrollArea className="flex-1" viewportRef={viewportRef}>
         <div className="p-4 md:p-6">
-        <div className={cn("flex flex-col gap-1")}>
-            {messages.map((message, index) => {
-                const prevMessage = messages[index - 1];
-                const nextMessage = messages[index + 1];
+        <div className={cn("flex flex-col-reverse gap-1")}>
+            {[...messages].reverse().map((message, index) => {
+                const prevMessage = messages[messages.length - index];
+                const nextMessage = messages[messages.length - index - 2];
                 const isOwnMessage = message.user === currentUser.name;
 
-                const isFirstInGroup = !prevMessage || prevMessage.user !== message.user;
-                const isLastInGroup = !nextMessage || nextMessage.user !== message.user;
+                const isFirstInGroup = !nextMessage || nextMessage.user !== message.user;
+                const isLastInGroup = !prevMessage || prevMessage.user !== message.user;
 
                 return (
                     <MessageItem
@@ -62,4 +63,4 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, currentUser, onDe
   );
 };
 
-export default ChatMessages;
+export default React.memo(ChatMessages);
