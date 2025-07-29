@@ -25,7 +25,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   const [executionError, setExecutionError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const codeContent = useMemo(() => code.replace(/^```(html|javascript|js)?\n|```$/g, ''), [code]);
+  const codeContent = useMemo(() => {
+    return code.replace(/^```(html|javascript|js)?\n?/, '').replace(/```$/, '');
+  }, [code]);
   
   const codeType = useMemo(() => {
     if (code.startsWith('```html') || /<[a-z][\s\S]*>/i.test(codeContent)) {
