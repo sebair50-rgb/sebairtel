@@ -2,6 +2,14 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  # The amount of CPU to allocate to a container instance.
+  # The value is in CPU-units, where 1 CPU-unit corresponds to 1 vCPU.
+  cpu: 1
+  # The amount of memory in MiB to allocate to a container instance.
+  memoryMiB: 1024
+  # The number of concurrent requests a container instance can service.
+  concurrency: 100
+  # The minimum number of container instances to keep running.
+  minInstances: 1
+  # The maximum number of container instances to scale up to.
+  maxInstances: 10
