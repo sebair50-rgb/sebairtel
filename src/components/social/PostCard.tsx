@@ -1,0 +1,81 @@
+"use client";
+
+import React from 'react';
+import type { Post, Chat } from '@/lib/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+interface PostCardProps {
+  post: Post;
+  onLike: (postId: number) => void;
+  onSave: (postId: number) => void;
+  onShare: (post: Post, chatId: number) => void;
+  chats: Chat[];
+}
+
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave, onShare, chats }) => {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-row items-center gap-4 p-4">
+        <Avatar>
+          <AvatarFallback>{post.avatar}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <p className="font-bold">{post.user}</p>
+          <p className="text-xs text-muted-foreground">{post.time}</p>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <p className="whitespace-pre-wrap">{post.content}</p>
+        {post.media && (
+          <div className="mt-4 rounded-lg overflow-hidden border">
+             <Image src={post.media.src} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" data-ai-hint="social media" />
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="p-4 pt-0 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => onLike(post.id)}>
+            <Heart size={18} className={cn(post.isLiked && 'fill-red-500 text-red-500')} />
+            <span className="text-sm">{post.likes}</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <MessageCircle size={18} />
+            <span className="text-sm">{post.comments.length}</span>
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Share2 size={18} />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                {chats.map(chat => (
+                    <DropdownMenuItem key={chat.id} onClick={() => onShare(post, chat.id)}>
+                        مشاركة مع {chat.name}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => onSave(post.id)}>
+          <Bookmark size={18} className={cn(post.isSaved && 'fill-primary text-primary')} />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default PostCard;
