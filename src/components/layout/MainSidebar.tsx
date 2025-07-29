@@ -92,7 +92,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
                     </TooltipContent>
                  </Tooltip>
                  <Avatar>
-                    <AvatarFallback>{currentUser.avatar}</AvatarFallback>
+                    <AvatarFallback>{currentUser?.avatar || currentUser?.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
             </div>
         </TooltipProvider>

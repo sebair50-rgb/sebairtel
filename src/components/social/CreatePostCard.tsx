@@ -42,7 +42,7 @@ const CreatePostCard = () => {
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start gap-4">
           <Avatar>
-            <AvatarFallback>{currentUser.avatar}</AvatarFallback>
+            <AvatarFallback>{currentUser?.avatar || currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
             placeholder="بماذا تفكر يا صديقي؟"
