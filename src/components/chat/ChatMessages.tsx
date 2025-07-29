@@ -8,18 +8,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAppContext } from '@/store/AppContext';
 
 interface ChatMessagesProps {
   chatId: string;
-  currentUser: User | null;
-  onDeleteMessage: (messageId: string) => void;
   onReply: (message: Message) => void;
   onEditMessage: (message: Message) => void;
-  onLikeMessage: (messageId: string) => void;
 }
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDeleteMessage, onReply, onEditMessage, onLikeMessage }) => {
+const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, onReply, onEditMessage }) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const { currentUser, deleteMessage, updateMessage } = useAppContext();
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,10 +28,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDele
       const q = query(messagesColRef, orderBy('timestamp', 'asc'));
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
-          const fetchedMessages = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data(),
-          } as Message));
+          const fetchedMessages = snapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                ...data,
+                // Convert Firestore Timestamp to JS Date, then to string for MessageItem
+                time: data.timestamp?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || '',
+              } as Message
+          });
           setMessages(fetchedMessages);
       });
       
@@ -40,7 +44,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDele
   }, [chatId]);
 
   useEffect(() => {
-    // We use a timeout to ensure the DOM has updated before scrolling.
     setTimeout(() => {
         if (viewportRef.current) {
             viewportRef.current.scrollTop = viewportRef.current.scrollHeight;
@@ -48,6 +51,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDele
     }, 100);
   }, [messages]);
 
+  const handleDeleteMessage = (messageId: string) => {
+    deleteMessage(chatId, messageId);
+  };
+
+  const handleLikeMessage = (messageId: string) => {
+      const message = messages.find(m => m.id === messageId);
+      if (message && currentUser) {
+          const isLiked = !(message.likedBy?.includes(currentUser.id));
+          let newLikedBy = message.likedBy || [];
+          if(isLiked) {
+              newLikedBy.push(currentUser.id);
+          } else {
+              newLikedBy = newLikedBy.filter(id => id !== currentUser.id);
+          }
+          updateMessage(chatId, messageId, { likedBy: newLikedBy });
+      }
+  }
 
   if (!currentUser) {
     return <div>Loading...</div>;
@@ -72,11 +92,12 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, currentUser, onDele
                         isOwnMessage={isOwnMessage}
                         isFirstInGroup={isFirstInGroup}
                         isLastInGroup={isLastInGroup}
-                        onDelete={() => onDeleteMessage(message.id)}
+                        onDelete={() => handleDeleteMessage(message.id)}
                         onReply={() => onReply(message)}
                         onEdit={() => onEditMessage(message)}
-                        onLike={() => onLikeMessage(message.id)}
+                        onLike={() => handleLikeMessage(message.id)}
                         allMessages={messages}
+                        currentUser={currentUser}
                     />
                 )
             })}

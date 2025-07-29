@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import type { Message } from '@/lib/types';
+import type { Message, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Check, CheckCheck, Download, Edit, MoreHorizontal, Trash2, Heart, Share2, Reply } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ interface MessageItemProps {
   onEdit: () => void;
   onLike: () => void;
   allMessages: Message[];
+  currentUser: User;
 }
 
 const MessageStatus: React.FC<{ status: Message['status'] }> = ({ status }) => {
@@ -33,7 +34,7 @@ const MessageStatus: React.FC<{ status: Message['status'] }> = ({ status }) => {
   return <Check size={16} className="text-muted-foreground" />;
 };
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirstInGroup, isLastInGroup, onDelete, onReply, onEdit, onLike, allMessages }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDelete, onReply, onEdit, onLike, allMessages, currentUser }) => {
   const { toast } = useToast();
 
   const handleDownload = () => {
@@ -56,6 +57,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
   }
 
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
+  const isLiked = message.likedBy?.includes(currentUser.id) || false;
 
   return (
     <div className={cn(
@@ -67,6 +69,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
            isOwnMessage ? "items-end" : "items-start"
       )}>
         <div
+          id={`message-${message.id}`}
           className={cn(
             "p-2 w-fit min-w-[80px] relative",
             isOwnMessage
@@ -90,20 +93,20 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
             {isOwnMessage && <MessageStatus status={message.status} />}
           </div>
 
-          {message.likes && message.likes > 0 && (
+          {(message.likedBy?.length || 0) > 0 && (
              <div className={cn(
                  "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm z-10",
                  isOwnMessage ? "left-2" : "right-2"
              )}>
-                <Heart className={cn("w-3 h-3", message.isLiked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
-                <span>{message.likes}</span>
+                <Heart className={cn("w-3 h-3", isLiked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
+                <span>{message.likedBy?.length}</span>
              </div>
           )}
         </div>
         
         <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-[8rem] md:-left-[8.5rem]" : "-right-[8rem] md:-right-[8.5rem]")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
-              <Heart size={16} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
+              <Heart size={16} className={cn(isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onReply}>
                 <Reply size={16} />

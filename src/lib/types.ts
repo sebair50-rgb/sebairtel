@@ -13,12 +13,13 @@ export interface User {
 export interface Message {
     id: string; // Changed for Firestore
     user: string;
+    userId: string;
     avatar: string;
     text?: string;
     time: string;
     timestamp: Timestamp;
     status: 'sent' | 'delivered' | 'seen';
-    type: 'text' | 'image' | 'video' | 'file' | 'audio';
+    type: 'text' | 'image' | 'video' | 'file' | 'audio' | 'code';
     src?: string;
     fileInfo?: {
       name: string;
@@ -26,8 +27,7 @@ export interface Message {
       type: string;
     };
     replyTo?: string | null;
-    likes?: number;
-    isLiked?: boolean;
+    likedBy?: string[];
     suggestions?: string[];
 }
 
@@ -37,9 +37,9 @@ export interface Chat {
   name: string;
   avatar: string;
   users: string[]; // array of user uids
-  messages: Message[];
+  // messages are now a subcollection
   unreadCount?: number;
-  lastMessageTime: string;
+  lastMessageTime?: string;
   lastMessageTimestamp?: Timestamp;
   isMuted?: boolean;
   isBlocked?: boolean;
@@ -64,8 +64,7 @@ export interface Post {
   } | null;
   time: string;
   timestamp: Timestamp;
-  likes: number;
-  isLiked?: boolean; // This will be client-side state
+  likedBy?: string[];
   isSaved?: boolean; // This will be client-side state
   comments: Comment[];
 }

@@ -5,31 +5,38 @@ import React from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Check, UserPlus, Users, X } from 'lucide-react';
+import { Check, MessageSquare, UserPlus, Users, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 const UsersView: React.FC = () => {
-    const { users, friendRequests, createChat, setSelectedChatId } = useAppContext();
+    const { users, friendRequests, createChat, setSelectedChatId, setActiveTab } = useAppContext();
+    const { toast } = useToast();
 
     const handleAddFriend = (userId: string) => {
         // Placeholder for sending friend request
         console.log("Sending friend request to:", userId);
+        toast({description: "سيتم تفعيل طلبات الصداقة قريباً."});
     };
 
     const handleAcceptRequest = (userId: string) => {
         console.log("Accepting friend request from:", userId);
+         toast({description: "سيتم تفعيل طلبات الصداقة قريباً."});
     };
     
     const handleDeclineRequest = (userId: string) => {
         console.log("Declining friend request from:", userId);
+         toast({description: "سيتم تفعيل طلبات الصداقة قريباً."});
     };
 
     const handleStartChat = async (userId: string) => {
         const chatId = await createChat(userId);
         if (chatId) {
             setSelectedChatId(chatId);
-            // Optionally, switch to the 'contact' tab
+            setActiveTab('contact');
+        } else {
+            toast({variant: "destructive", description: "فشل بدء المحادثة."});
         }
     }
 
@@ -72,8 +79,10 @@ const UsersView: React.FC = () => {
                                     <span className="font-semibold">{user.name}</span>
                                 </div>
                                 <div>
-                                    <Button onClick={() => handleStartChat(user.id)}>بدء محادثة</Button>
-                                    {/* Friend button logic can be added here */}
+                                    <Button onClick={() => handleStartChat(user.id)}>
+                                        <MessageSquare />
+                                        بدء محادثة
+                                    </Button>
                                 </div>
                             </div>
                         ))}

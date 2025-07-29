@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
-import type { Chat, Message, User } from '@/lib/types';
+import type { Chat, Message } from '@/lib/types';
 import { useAppContext } from '@/store/AppContext';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
@@ -25,7 +25,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage, deleteMessage, currentUser, setChats, updateMessage } = useAppContext();
+  const { addMessage, currentUser, updateMessage } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
@@ -36,17 +36,18 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-    const handleSendMessage = useCallback(async (text: string, options: { type: Message['type'], media?: any }) => {
+  const handleSendMessage = useCallback(async (text: string, options: { type: Message['type'], media?: any }) => {
     if (!currentUser) return;
     if (!text.trim() && !options.media) return;
 
     if (editingMessage) {
-        await updateMessage(chat.id, editingMessage.id, { ...editingMessage, text });
+        await updateMessage(chat.id, editingMessage.id, { text });
         setEditingMessage(null);
     } else {
         const newMessageData: Omit<Message, 'id' | 'timestamp' | 'time'> = {
             user: currentUser.name,
             avatar: currentUser.avatar,
+            userId: currentUser.id,
             text,
             status: 'sent',
             type: options.type,
@@ -57,14 +58,16 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     }
   }, [addMessage, currentUser, chat.id, editingMessage, updateMessage]);
 
-
-  const handleDeleteMessage = (messageId: string) => {
-    deleteMessage(chat.id, messageId);
-  };
-  
-   const handleEditMessage = (message: Message) => {
+  const handleEditMessage = (message: Message) => {
     setEditingMessage(message);
     messageInputRef.current?.setText(message.text || '');
+    messageInputRef.current?.focus();
+  }
+  
+  const handleReplyMessage = (message: Message) => {
+    // For now, we'll just log this. A full reply UI would be more complex.
+    console.log("Replying to:", message);
+    toast({ description: "سيتم تفعيل ميزة الرد قريبًا."});
   }
 
   const handleMenuAction = (action: 'clear' | 'block') => {
@@ -74,8 +77,6 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
               title: 'مسح المحادثة',
               message: 'هل أنت متأكد أنك تريد مسح جميع الرسائل في هذه المحادثة؟ لا يمكن التراجع عن هذا الإجراء.',
               onConfirm: () => {
-                  // This is now a more complex operation with subcollections.
-                  // For now, we'll just toast a message.
                   toast({title: "سيتم تفعيل هذه الميزة قريباً"});
               },
           });
@@ -86,32 +87,19 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
               message: `هل أنت متأكد أنك تريد حظر ${chat.name}؟ لن تتمكن من إرسال أو استقبال رسائل منه.`,
               onConfirm: () => {
                   setIsBlocked(true);
-                  // Update chat doc in firestore
                   toast({title: `تم حظر ${chat.name}`});
               },
           });
       }
   }
 
-    const handleLikeMessage = (messageId: string) => {
-        const message = chat.messages.find(m => m.id === messageId);
-        if (message) {
-            const isLiked = !message.isLiked;
-            const likes = isLiked ? (message.likes || 0) + 1 : (message.likes || 1) - 1;
-            updateMessage(chat.id, messageId, { ...message, isLiked, likes });
-        }
-    }
-
   return (
     <div className="flex flex-col h-full bg-background w-full bg-[url('https://placehold.co/1000x1000/e5ddd5/e5ddd5.png')] bg-center bg-fixed" style={{backgroundImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAABCAYAAAA/4QAYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAUSURBVHjaY/iPY/gfA/WHAFMPAFM2A27sP89VAAAAAElFTkSuQmCC")`}}>
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
       <ChatMessages
         chatId={chat.id}
-        currentUser={currentUser}
-        onDeleteMessage={handleDeleteMessage}
-        onReply={() => {}}
+        onReply={handleReplyMessage}
         onEditMessage={handleEditMessage}
-        onLikeMessage={handleLikeMessage}
       />
       {isBlocked ? (
         <div className="text-center p-4 bg-background/80 text-sm text-muted-foreground">

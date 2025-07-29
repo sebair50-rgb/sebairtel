@@ -18,15 +18,21 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
-  const { updatePost } = useAppContext();
-  const [isLiked, setIsLiked] = React.useState(post.isLiked);
+  const { updatePost, currentUser } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
 
+  if (!currentUser) return null;
+
+  const isLiked = post.likedBy?.includes(currentUser.id) || false;
+
   const handleLike = () => {
-      const newLikedState = !isLiked;
-      setIsLiked(newLikedState);
-      const newLikesCount = newLikedState ? post.likes + 1 : post.likes -1;
-      updatePost(post.id, { likes: newLikesCount });
+      let newLikedBy = post.likedBy || [];
+      if (isLiked) {
+          newLikedBy = newLikedBy.filter(id => id !== currentUser.id);
+      } else {
+          newLikedBy.push(currentUser.id);
+      }
+      updatePost(post.id, { likedBy: newLikedBy });
   }
 
   const handleSave = () => {
@@ -63,7 +69,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleLike}>
             <Heart size={18} className={cn(isLiked && 'fill-red-500 text-red-500')} />
-            <span className="text-sm">{post.likes}</span>
+            <span className="text-sm">{post.likedBy?.length || 0}</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-2">
             <MessageCircle size={18} />
