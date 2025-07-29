@@ -4,11 +4,14 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Code, Edit } from 'lucide-react';
+import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '@/lib/utils';
+
 
 interface MessageInputProps {
   newMessage: string;
@@ -38,10 +41,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   cancelEdit,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isAttachmentPopoverOpen, setIsAttachmentPopoverOpen] = useState(false);
 
   useEffect(() => {
       const lastMessage = chat.messages[chat.messages.length - 1];
@@ -58,7 +63,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [editingMessage]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'file') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -66,23 +71,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
     reader.onload = (event) => {
       const fileDataUrl = event.target?.result as string;
       const fileInfo = { name: file.name, size: file.size, type: file.type };
-      if (file.type.startsWith('image/')) {
+      if (type === 'image' && file.type.startsWith('image/')) {
         setAttachment({ type: 'image', src: fileDataUrl, fileInfo });
-      } else if (file.type.startsWith('video/')) {
-        setAttachment({ type: 'video', src: fileDataUrl, fileInfo });
+      } else if (type === 'image' && file.type.startsWith('video/')) {
+         setAttachment({ type: 'video', src: fileDataUrl, fileInfo });
       } else {
         setAttachment({ type: 'file', src: fileDataUrl, fileInfo });
       }
     };
     reader.readAsDataURL(file);
     if(e.target) e.target.value = ''; // Reset file input
+    setIsAttachmentPopoverOpen(false);
   };
   
-  const handleSendCode = () => {
-    if (!newMessage.trim()) return;
-    const codeMessage = `\`\`\`js\n${newMessage}\n\`\`\``;
-    handleSendMessage(codeMessage);
-  }
 
   const generateSuggestions = async () => {
     const lastMessage = chat.messages.filter(m => m.user !== 'أنت').pop();
@@ -104,57 +105,88 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const onSendMessage = () => {
     handleSendMessage(newMessage);
+    setSuggestions([]);
   }
 
+  const showSendButton = newMessage.trim() || attachment;
 
   return (
-    <div className="p-4 border-t bg-card">
-      {suggestions.length > 0 && (
-          <div className="flex gap-2 mb-2 flex-wrap">
+    <div className="p-2 md:p-4 border-t bg-card flex flex-col gap-2">
+       {suggestions.length > 0 && !showSendButton && (
+          <div className="flex gap-2 flex-wrap px-2">
               {suggestions.map((s, i) => (
-                  <Button key={i} variant="outline" size="sm" onClick={() => handleSendMessage(s)}>
+                  <Button key={i} variant="outline" size="sm" className="rounded-full" onClick={() => handleSendMessage(s)}>
                       {s}
                   </Button>
               ))}
           </div>
       )}
-      {editingMessage && (
-        <div className="flex justify-between items-center p-2 mb-2 bg-muted rounded-md text-sm">
-            <div className='flex items-center gap-2'>
-                <Edit className="w-4 h-4 text-primary" />
-                <div>
-                    <p className="font-semibold">تعديل رسالة</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-xs">{editingMessage.text || 'مرفق'}</p>
+
+      {(editingMessage || replyingTo || attachment) && (
+        <div className="p-2 mx-2 bg-muted/50 rounded-lg border">
+            {editingMessage && (
+                <div className="flex justify-between items-center text-sm">
+                    <div className='flex items-center gap-2 text-primary overflow-hidden'>
+                        <Edit className="w-4 h-4 flex-shrink-0" />
+                        <div className='flex-1 overflow-hidden'>
+                            <p className="font-semibold">تعديل رسالة</p>
+                            <p className="text-xs text-muted-foreground truncate">{editingMessage.text || 'مرفق'}</p>
+                        </div>
+                    </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}>
+                    <X size={16} />
+                  </Button>
                 </div>
-            </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={cancelEdit}>
-            <X size={16} />
-          </Button>
+            )}
+             {replyingTo && (
+                <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2 text-primary overflow-hidden">
+                        <Reply className="w-4 h-4 flex-shrink-0" />
+                        <div className="flex-1 overflow-hidden">
+                            <p className="font-semibold">رد على {replyingTo.user}</p>
+                            <p className="text-xs text-muted-foreground truncate">{replyingTo.text || 'مرفق'}</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyingTo(null)}>
+                        <X size={16} />
+                    </Button>
+                </div>
+            )}
+            {attachment && (
+                <div className="flex items-center gap-2 p-2 mt-2 bg-background rounded-md">
+                   {attachment.type === 'image' && <Image src={attachment.src!} alt={attachment.fileInfo!.name} width={40} height={40} className="rounded-md object-cover" />}
+                   {attachment.type !== 'image' && <File className="w-8 h-8 text-muted-foreground" />}
+                   <p className="text-sm truncate flex-1">{attachment.fileInfo?.name}</p>
+                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAttachment(null)}><X size={16} /></Button>
+                </div>
+            )}
         </div>
       )}
-      {replyingTo && (
-        <div className="flex justify-between items-center p-2 mb-2 bg-muted rounded-md">
-          <div className="text-sm">
-            <p className="font-semibold">رد على {replyingTo.user}</p>
-            <p className="text-xs text-muted-foreground truncate max-w-xs">{replyingTo.text || 'مرفق'}</p>
-          </div>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReplyingTo(null)}>
-            <X size={16} />
-          </Button>
-        </div>
-      )}
-       {attachment && (
-        <div className="flex items-center gap-2 p-2 mb-2 bg-muted rounded-md">
-           {attachment.type === 'image' && <Image src={attachment.src!} alt={attachment.fileInfo!.name} width={40} height={40} className="rounded-md object-cover" />}
-           <p className="text-sm truncate flex-1">{attachment.fileInfo?.name}</p>
-           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAttachment(null)}><X size={16} /></Button>
-        </div>
-      )}
+
       <div className="flex items-end gap-2">
-         <div className="flex-1 flex items-center gap-2 bg-muted rounded-full px-2 py-1">
-           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({description: "Emoji picker coming soon!"})}>
-             <Smile />
-           </Button>
+         <div className="flex-1 flex items-end gap-2 bg-muted rounded-xl p-1">
+            <div className="flex items-center self-end">
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toast({description: "Emoji picker coming soon!"})}>
+                 <Smile />
+                </Button>
+                <input type="file" ref={imageInputRef} onChange={(e) => handleFileSelect(e, 'image')} accept="image/*,video/*" className="hidden" />
+                <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
+                 <Popover open={isAttachmentPopoverOpen} onOpenChange={setIsAttachmentPopoverOpen}>
+                    <PopoverTrigger asChild>
+                         <Button variant="ghost" size="icon" className={cn("h-9 w-9", showSendButton && "hidden")}>
+                            <Paperclip />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40 p-1 mb-2">
+                        <Button variant="ghost" className="w-full justify-start" onClick={() => imageInputRef.current?.click()}>
+                           <ImageIcon className="ml-2"/> صورة أو فيديو
+                        </Button>
+                        <Button variant="ghost" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
+                           <File className="ml-2"/> ملف
+                        </Button>
+                    </PopoverContent>
+                </Popover>
+            </div>
            <Textarea
              ref={textareaRef}
              placeholder="اكتب رسالة..."
@@ -166,28 +198,28 @@ const MessageInput: React.FC<MessageInputProps> = ({
                  onSendMessage();
                }
              }}
-             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base"
+             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base shadow-none"
            />
-           <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
-           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fileInputRef.current?.click()}>
-             <Paperclip />
-           </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast({description: "Voice messages coming soon!"})}>
+           <div className="flex items-center self-end">
+             <Button variant="ghost" size="icon" className={cn("h-9 w-9", showSendButton && "hidden")} onClick={() => toast({description: "Voice messages coming soon!"})}>
                 <Mic />
             </Button>
+           </div>
          </div>
-         <div className="flex items-center gap-1">
-             <Button
-                size="icon"
-                className="h-10 w-10 shrink-0"
-                onClick={onSendMessage}
-                disabled={!newMessage.trim() && !attachment}
-             >
-                 <ArrowUp />
-             </Button>
-              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
-                {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
-             </Button>
+         <div className="flex items-center gap-1 self-end">
+             {showSendButton ? (
+                <Button
+                    size="icon"
+                    className="h-10 w-10 shrink-0 rounded-full"
+                    onClick={onSendMessage}
+                >
+                    <ArrowUp />
+                </Button>
+             ) : (
+                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
+                    {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
+                </Button>
+             )}
         </div>
       </div>
     </div>
@@ -195,3 +227,5 @@ const MessageInput: React.FC<MessageInputProps> = ({
 };
 
 export default MessageInput;
+
+    

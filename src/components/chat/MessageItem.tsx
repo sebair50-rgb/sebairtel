@@ -5,7 +5,7 @@ import React from 'react';
 import type { Message } from '@/lib/types';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, CornerDownRight, Download, Edit, MoreHorizontal, Trash2, Heart, Share2 } from 'lucide-react';
+import { Check, CheckCheck, Download, Edit, MoreHorizontal, Trash2, Heart, Share2, Reply } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import {
@@ -80,35 +80,33 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
       )}>
         <div
           className={cn(
-            "p-3 w-fit",
+            "p-3 w-fit min-w-[60px]",
             isOwnMessage
               ? "bg-primary text-primary-foreground"
               : "bg-card text-card-foreground border",
             'rounded-2xl',
             isFirstInGroup && (isOwnMessage ? 'rounded-tr-md' : 'rounded-tl-md'),
             isLastInGroup && (isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md'),
-            !isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-r-md' : 'rounded-l-md'),
-            isFirstInGroup && !isLastInGroup && (isOwnMessage ? 'rounded-tr-md rounded-br-2xl' : 'rounded-tl-md rounded-bl-2xl'),
-            !isFirstInGroup && isLastInGroup && (isOwnMessage ? 'rounded-br-md rounded-tr-2xl' : 'rounded-bl-md rounded-tl-2xl'),
           )}
         >
           {!isOwnMessage && isFirstInGroup && <p className="text-xs font-semibold mb-1 text-primary">{message.user}</p>}
           
           {repliedToMessage && (
-            <div className="p-2 mb-2 border-r-2 border-primary/50 bg-black/10 rounded-md text-sm">
+            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-r-2 border-primary/50 bg-black/10 rounded-lg text-sm transition-colors hover:bg-black/20">
                 <p className="font-semibold text-xs">{repliedToMessage.user}</p>
-                <p className="opacity-80 truncate">{repliedToMessage.text?.substring(0, 50) || 'مرفق'}</p>
-            </div>
+                <p className="opacity-80 truncate max-w-[200px]">{repliedToMessage.text?.substring(0, 50) || 'مرفق'}</p>
+            </a>
           )}
 
           <MessageContent message={message} />
+
           {message.likes && message.likes > 0 && (
              <div className={cn(
                  "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm z-10",
                  isOwnMessage ? "left-2" : "right-2"
              )}>
-                <span>{message.likes}</span>
                 <Heart className={cn("w-3 h-3", message.isLiked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
+                <span>{message.likes}</span>
              </div>
           )}
         </div>
@@ -120,21 +118,20 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
             </div>
         )}
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20", isOwnMessage ? "-left-[5.5rem] md:-left-20" : "-right-[5.5rem] md:-right-20")}>
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-[8rem] md:-left-[8.5rem]" : "-right-[8rem] md:-right-[8.5rem]")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
-              <Heart size={18} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
+              <Heart size={16} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onReply}>
+                <Reply size={16} />
+            </Button>
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                    <MoreHorizontal size={18}/>
+                    <MoreHorizontal size={16}/>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={isOwnMessage ? "start" : "end"}>
-                <DropdownMenuItem onClick={onReply}>
-                  <CornerDownRight className="ml-2 h-4 w-4" />
-                  <span>رد</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleShare}>
                   <Share2 className="ml-2 h-4 w-4" />
                   <span>مشاركة</span>
