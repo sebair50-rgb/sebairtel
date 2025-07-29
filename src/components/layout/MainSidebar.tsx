@@ -1,10 +1,9 @@
 "use client";
 
 import React from 'react';
-import { MessageCircle, Users, Sun, Moon, Settings, User, Brain, AppWindow, UserCircle } from 'lucide-react';
+import { Users, Settings, Brain, AppWindow } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface MainSidebarProps {
   activeTab: string;
@@ -12,10 +11,9 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { darkMode, toggleDarkMode, currentUser } = useAppContext();
+  const { currentUser } = useAppContext();
 
   const navItems = [
-    { name: 'community', icon: MessageCircle, label: 'المحادثات' },
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'social', icon: Users, label: 'المجتمع' },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },

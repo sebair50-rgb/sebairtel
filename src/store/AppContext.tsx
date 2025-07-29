@@ -2,19 +2,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Chat, Message, User, Post, Notification, Call } from '@/lib/types';
-import { initialChats, initialUsers, initialPosts, initialNotifications, initialFriendRequests, initialCalls, CURRENT_USER } from '@/lib/data';
-import { useToast } from "@/hooks/use-toast";
+import type { User, Post, Notification } from '@/lib/types';
+import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER } from '@/lib/data';
 import { useAuth } from './AuthContext';
 
 interface AppContextType {
   darkMode: boolean;
   toggleDarkMode: () => void;
   currentUser: User;
-  chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
-  addMessage: (chatId: number, message: Message) => void;
-  deleteMessage: (chatId: number, messageId: number) => void;
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   friendRequests: User[];
@@ -24,11 +19,8 @@ interface AppContextType {
   addPost: (post: Pick<Post, 'content' | 'media'>) => void;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
-  calls: Call[];
-  setCalls: React.Dispatch<React.SetStateAction<Call[]>>;
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
-  handleShareToChat: (post: Post, chatId: number) => number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -49,14 +41,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
 
   const [darkMode, setDarkMode] = useState(true);
-  const { toast } = useToast();
 
-  const [chats, setChats] = useState<Chat[]>(initialChats);
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
-  const [calls, setCalls] = useState<Call[]>(initialCalls);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
   const toggleDarkMode = () => {
@@ -69,30 +58,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
       return newMode;
     });
-  };
-
-  const addMessage = (chatId: number, message: Message) => {
-    setChats(prevChats =>
-      prevChats.map(chat =>
-        chat.id === chatId
-          ? { ...chat, messages: [...chat.messages, message] }
-          : chat
-      )
-    );
-  };
-  
-  const deleteMessage = (chatId: number, messageId: number) => {
-    setChats(prevChats =>
-        prevChats.map(chat => {
-            if (chat.id === chatId) {
-                return {
-                    ...chat,
-                    messages: chat.messages.filter(m => m.id !== messageId)
-                };
-            }
-            return chat;
-        })
-    );
   };
 
   const addPost = (postData: Pick<Post, 'content' | 'media'>) => {
@@ -110,51 +75,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setPosts(prevPosts => [newPost, ...prevPosts]);
   }
 
-  const handleShareToChat = (post: Post, chatId: number) => {
-    const baseMessage = {
-       id: Date.now(),
-       user: currentUser.name,
-       time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-       avatar: currentUser.avatar,
-       status: 'sent',
-   };
-   
-   let messageContent = `مشاركة منشور من ${post.user}:\n\n${post.content}`;
-   let message: Message;
-   
-   if (post.media) {
-     message = {
-       ...baseMessage,
-       type: post.media.type,
-       src: post.media.src,
-       fileInfo: { name: `post_${post.id}.jpg`, type: 'image/jpeg' },
-       text: messageContent
-     };
-   } else {
-     message = {
-       ...baseMessage,
-       type: 'text',
-       text: messageContent
-     };
-   }
-   
-   addMessage(chatId, message);
-   toast({
-      title: "تمت المشاركة بنجاح",
-      description: `تمت مشاركة المنشور في المحادثة.`,
-    });
-    return chatId;
-  };
-
-
   const value = {
     darkMode,
     toggleDarkMode,
     currentUser,
-    chats,
-    setChats,
-    addMessage,
-    deleteMessage,
     users,
     setUsers,
     friendRequests,
@@ -164,11 +88,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     addPost,
     notifications,
     setNotifications,
-    calls,
-    setCalls,
     settings,
     setSettings,
-    handleShareToChat,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

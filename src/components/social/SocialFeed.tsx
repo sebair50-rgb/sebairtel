@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,12 +6,11 @@ import { useAppContext } from '@/store/AppContext';
 import PostCard from './PostCard';
 import { ScrollArea } from '../ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
 
 const SocialFeed = () => {
-    const { posts, setPosts, handleShareToChat, chats } = useAppContext();
+    const { posts, setPosts } = useAppContext();
 
     const handleLike = (postId: number) => {
         setPosts(prevPosts =>
@@ -56,8 +56,6 @@ const SocialFeed = () => {
                                     post={post}
                                     onLike={handleLike}
                                     onSave={handleSave}
-                                    onShare={handleShareToChat}
-                                    chats={chats}
                                 />
                             ))}
                         </div>

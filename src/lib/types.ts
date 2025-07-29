@@ -1,47 +1,10 @@
+
 export interface User {
   id: number;
   name: string;
   avatar: string;
   isFriend?: boolean;
   requestSent?: boolean;
-}
-
-export interface Reply {
-  id: number;
-  user: string;
-  text: string;
-}
-
-export interface FileInfo {
-  name: string;
-  size?: number;
-  type: string;
-}
-
-export interface Message {
-  id: number;
-  user: string;
-  avatar: string;
-  type: 'text' | 'image' | 'video' | 'file' | 'code';
-  text?: string;
-  src?: string;
-  fileInfo?: FileInfo;
-  time: string;
-  status: 'sent' | 'delivered' | 'seen';
-  replyTo?: number | null;
-  suggestions?: string[];
-  deleted?: boolean;
-}
-
-export interface Chat {
-  id: number;
-  name: string;
-  avatar: string;
-  messages: Message[];
-  unreadCount?: number;
-  isMuted?: boolean;
-  isBlocked?: boolean;
-  lastMessageTime?: string;
 }
 
 export interface Comment {
@@ -72,13 +35,4 @@ export interface Notification {
   message: string;
   time: string;
   isRead: boolean;
-}
-
-export interface Call {
-    id: number;
-    user: string;
-    avatar: string;
-    type: 'incoming' | 'outgoing' | 'missed';
-    time: string;
-    duration: string;
 }

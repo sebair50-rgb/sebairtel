@@ -1,7 +1,8 @@
+
 "use client";
 
 import React from 'react';
-import type { Post, Chat } from '@/lib/types';
+import type { Post } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -14,16 +15,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from '@/hooks/use-toast';
 
 interface PostCardProps {
   post: Post;
   onLike: (postId: number) => void;
   onSave: (postId: number) => void;
-  onShare: (post: Post, chatId: number) => void;
-  chats: Chat[];
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave, onShare, chats }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave }) => {
+  const { toast } = useToast();
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(`Check out this post by ${post.user}!`);
+    toast({ description: "تم نسخ رابط المشاركة!" });
+  }
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
@@ -54,20 +61,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onSave, onShare, chat
             <span className="text-sm">{post.comments.length}</span>
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                    <Share2 size={18} />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                {chats.map(chat => (
-                    <DropdownMenuItem key={chat.id} onClick={() => onShare(post, chat.id)}>
-                        مشاركة مع {chat.name}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
+              <Share2 size={18} />
+          </Button>
 
         </div>
         <Button variant="ghost" size="sm" onClick={() => onSave(post.id)}>
