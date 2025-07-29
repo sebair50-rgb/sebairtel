@@ -4,14 +4,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon, Code } from 'lucide-react';
+import { Paperclip, Send, Smile, X, Mic, Edit, Reply, File, Image as ImageIcon, Code } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { cn } from '@/lib/utils';
-
 
 interface MessageInputProps {
   newMessage: string;
@@ -45,16 +43,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isAttachmentPopoverOpen, setIsAttachmentPopoverOpen] = useState(false);
 
   useEffect(() => {
-      const lastMessage = chat.messages[chat.messages.length - 1];
-      if (lastMessage?.suggestions) {
-          setSuggestions(lastMessage.suggestions);
-      } else {
-          setSuggestions([]);
-      }
+    const lastMessage = chat.messages[0];
+    if (lastMessage?.suggestions) {
+        setSuggestions(lastMessage.suggestions);
+    } else {
+        setSuggestions([]);
+    }
   }, [chat.messages]);
 
   useEffect(() => {
@@ -106,24 +103,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
     setIsAttachmentPopoverOpen(false);
   }
-
-  const generateSuggestions = async () => {
-    const lastMessage = chat.messages.filter(m => m.user !== 'أنت').pop();
-    if (!lastMessage || !lastMessage.text) {
-        toast({variant: "destructive", description: "لا توجد رسالة لتوليد رد عليها."});
-        return;
-    }
-    setIsLoadingSuggestions(true);
-    try {
-        const result = await smartReplySuggestions({message: lastMessage.text});
-        setSuggestions(result.suggestions);
-    } catch (error) {
-        console.error("Failed to generate smart replies:", error);
-        toast({variant: "destructive", title: "خطأ", description: "فشل توليد الردود الذكية."});
-    } finally {
-        setIsLoadingSuggestions(false);
-    }
-  };
 
   const onSendMessage = () => {
     handleSendMessage(newMessage);
@@ -247,3 +226,5 @@ const MessageInput: React.FC<MessageInputProps> = ({
 };
 
 export default MessageInput;
+
+    
