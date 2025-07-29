@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ChatInterface from '../chat/ChatInterface';
 import CallsList from './CallsList';
+import UsersView from '../users/UsersView';
 
 
 const CallsView = () => {
@@ -26,7 +27,11 @@ const CallsView = () => {
                         <MessageSquare className="w-8 h-8 text-primary" />
                         <h1 className="text-3xl font-bold">تواصل</h1>
                     </div>
-                    <TabsList className="grid w-full grid-cols-3 gap-1 h-auto">
+                    <TabsList className="grid w-full grid-cols-4 gap-1 h-auto">
+                        <TabsTrigger value="friends" className="py-2">
+                             <Users className="ml-2" />
+                            الأصدقاء
+                        </TabsTrigger>
                         <TabsTrigger value="groups" className="py-2">
                              <Users className="ml-2" />
                             مجموعاتي
@@ -49,6 +54,9 @@ const CallsView = () => {
                 </TabsContent>
                 <TabsContent value="groups" className="mt-6 flex-1">
                     <ComingSoonContent title="المجموعات" icon={Users} />
+                </TabsContent>
+                <TabsContent value="friends" className="mt-6 flex-1">
+                    <UsersView />
                 </TabsContent>
             </Tabs>
         </div>
