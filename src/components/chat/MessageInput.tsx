@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send, Smile, X, Mic, Brain, Code } from 'lucide-react';
+import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Code } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -152,7 +152,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
              </Button>
              <Button size="icon" className="h-10 w-10 shrink-0" onClick={() => handleSendMessage()}>
-                 <Send />
+                 <ArrowUp />
              </Button>
         </div>
       </div>
