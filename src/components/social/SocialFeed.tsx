@@ -39,12 +39,12 @@ const SocialFeed = () => {
                 <h1 className="text-2xl font-bold">المجتمع</h1>
                 <Tabs defaultValue="posts" className="w-full">
                     <TabsList className="w-full justify-start overflow-x-auto">
-                        <TabsTrigger value="posts">المنشورات العامة</TabsTrigger>
-                        <TabsTrigger value="live">بث مباشر</TabsTrigger>
-                        <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
-                        <TabsTrigger value="market">السوق</TabsTrigger>
-                        <TabsTrigger value="services">خدماتي</TabsTrigger>
                         <TabsTrigger value="news">الأخبار</TabsTrigger>
+                        <TabsTrigger value="services">خدماتي</TabsTrigger>
+                        <TabsTrigger value="market">السوق</TabsTrigger>
+                        <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+                        <TabsTrigger value="live">بث مباشر</TabsTrigger>
+                        <TabsTrigger value="posts">المنشورات العامة</TabsTrigger>
                     </TabsList>
                     <TabsContent value="posts" className="mt-6">
                          <div className="space-y-6">
