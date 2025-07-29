@@ -1,25 +1,29 @@
+
 import * as React from 'react';
 
 import {cn} from '@/lib/utils';
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
-  ({className, ...props}, ref) => {
+  ({className, onChange, ...props}, ref) => {
     const internalRef = React.useRef<HTMLTextAreaElement>(null);
     React.useImperativeHandle(ref, () => internalRef.current!, []);
 
+    const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
+      const textarea = internalRef.current;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+      if (onChange) {
+        onChange(event);
+      }
+    };
+    
     React.useLayoutEffect(() => {
         const textarea = internalRef.current;
         if (textarea) {
-            // Temporarily disable scroll to get the real scrollHeight
-            const originalOverflow = textarea.style.overflow;
-            textarea.style.overflow = 'hidden';
-            textarea.style.height = 'auto'; // Reset height to recalculate
-            
-            const scrollHeight = textarea.scrollHeight;
-            
-            textarea.style.height = `${scrollHeight}px`;
-             // Restore overflow property
-            textarea.style.overflow = originalOverflow;
+             textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
         }
     }, [props.value]);
 
@@ -31,6 +35,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
           className
         )}
         ref={internalRef}
+        onInput={handleInput}
+        onChange={onChange}
         {...props}
       />
     );
