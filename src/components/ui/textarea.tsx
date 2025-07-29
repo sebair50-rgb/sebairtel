@@ -8,25 +8,24 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
     const internalRef = React.useRef<HTMLTextAreaElement>(null);
     React.useImperativeHandle(ref, () => internalRef.current!, []);
 
-    const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
-      const textarea = internalRef.current;
-      if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-      if (onInput) {
-        onInput(event);
-      }
+    const autoResize = (textarea: HTMLTextAreaElement | null) => {
+        if (textarea) {
+            textarea.style.height = 'auto';
+            const scrollHeight = textarea.scrollHeight;
+            textarea.style.height = `${scrollHeight}px`;
+        }
     };
     
     React.useLayoutEffect(() => {
-        const textarea = internalRef.current;
-        if (textarea) {
-             textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
-        }
+        autoResize(internalRef.current);
     }, [props.value]);
 
+    const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        autoResize(event.target);
+        if (onChange) {
+            onChange(event);
+        }
+    };
 
     return (
       <textarea
@@ -35,8 +34,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
           className
         )}
         ref={internalRef}
-        onInput={handleInput}
-        onChange={onChange}
+        onChange={handleInputChange}
+        onInput={onInput}
         {...props}
       />
     );
