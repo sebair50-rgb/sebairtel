@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { PanelLeft, MessageCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import AIView from '../ai/AIView';
+import AppsView from '../apps/AppsView';
 
 const AppShell = () => {
   const { chats } = useAppContext();
@@ -34,6 +35,8 @@ const AppShell = () => {
         return <SettingsView />;
       case 'ai':
         return <AIView />;
+      case 'apps':
+        return <AppsView />;
       case 'community':
       default:
         return (
