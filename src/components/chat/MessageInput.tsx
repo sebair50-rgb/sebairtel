@@ -57,7 +57,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, editingMessa
     };
 
     return (
-        <div className="p-2 md:p-4 bg-transparent border-t border-transparent">
+        <div className="p-2 md:p-4 bg-transparent border-t border-transparent mb-2">
             {editingMessage && (
                 <div className="p-2 mb-2 bg-primary/10 rounded-lg text-sm flex justify-between items-center">
                     <div>
