@@ -32,21 +32,21 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
             </div>
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1 px-4 md:px-6">
                 <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-1 h-auto">
-                    <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
-                         <Users className="ml-1 sm:ml-2" />
-                        الأصدقاء
-                    </TabsTrigger>
-                    <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm">
-                         <Users className="ml-1 sm:ml-2" />
-                        مجموعاتي
+                     <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm">
+                         <MessageSquare className="ml-1 sm:ml-2" />
+                        دردشتي
                     </TabsTrigger>
                     <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm">
                          <Phone className="ml-1 sm:ml-2" />
                         مكالماتي
                     </TabsTrigger>
-                     <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm">
-                         <MessageSquare className="ml-1 sm:ml-2" />
-                        دردشتي
+                    <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm">
+                         <Users className="ml-1 sm:ml-2" />
+                        مجموعاتي
+                    </TabsTrigger>
+                    <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
+                         <Users className="ml-1 sm:ml-2" />
+                        الأصدقاء
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="calls" className="mt-6 flex-1">

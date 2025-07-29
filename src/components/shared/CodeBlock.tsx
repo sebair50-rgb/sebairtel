@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -53,21 +54,21 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language, isRunnable = true
     }
 
     return (
-        <div className="mt-2 rounded-lg bg-gray-900 text-white font-code text-right">
+        <div className="mt-2 rounded-lg bg-gray-800 text-white font-code text-left">
             <div className="flex justify-between items-center p-2 rounded-t-lg bg-gray-700/50">
                 <div className="flex gap-2">
                     {isRunnable && (
                         <>
-                            <button onClick={copyCode} className="text-xs flex items-center gap-1 text-muted-foreground hover:text-accent">
-                                {isCopied ? <><Check size={14} /> تم النسخ</> : <><Copy size={14} /> نسخ</>}
+                            <button onClick={copyCode} className="text-xs flex items-center gap-1 text-gray-400 hover:text-white">
+                                {isCopied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
                             </button>
-                            <button onClick={runCode} className="text-xs flex items-center gap-1 text-muted-foreground hover:text-accent">
-                                <Play size={14} /> تشغيل
+                            <button onClick={runCode} className="text-xs flex items-center gap-1 text-gray-400 hover:text-white">
+                                <Play size={14} /> Run
                             </button>
                         </>
                     )}
                 </div>
-                <span className="text-xs text-muted-foreground">{language || 'code'}</span>
+                <span className="text-xs text-gray-400">{language || 'code'}</span>
             </div>
             <pre className="p-3 text-sm whitespace-pre-wrap text-green-300"><code>{code}</code></pre>
             {runMode === 'js' && output !== null && <pre className="p-3 text-xs border-t border-gray-700 whitespace-pre-wrap text-white">{output || ' '}</pre>}

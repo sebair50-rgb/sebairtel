@@ -101,7 +101,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   
   const addMessage = (chatId: number, message: Message) => {
     setChats(prevChats => prevChats.map(chat =>
-      chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat
+      chat.id === chatId ? { ...chat, messages: [message, ...chat.messages] } : chat
     ));
   };
 

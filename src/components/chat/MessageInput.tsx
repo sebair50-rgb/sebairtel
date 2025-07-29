@@ -4,7 +4,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon, Code } from 'lucide-react';
+import { Paperclip, Send, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon, Code } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -92,14 +92,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
         const text = textareaRef.current.value;
         const newText = text.substring(0, start) + codeTemplate + text.substring(end);
         
-        // Directly manipulating the textarea value and dispatching an event
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
         nativeInputValueSetter?.call(textareaRef.current, newText);
         
         const event = new Event('input', { bubbles: true });
         textareaRef.current.dispatchEvent(event);
         
-        // Set cursor position
         const cursorPosition = start + '```javascript\n'.length;
         textareaRef.current.focus();
         setTimeout(() => {
@@ -135,7 +133,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const showSendButton = newMessage.trim() || attachment;
 
   return (
-    <div className="p-2 md:p-4 border-t bg-card flex flex-col gap-2">
+    <div className="p-2 md:p-3 border-t bg-transparent flex flex-col gap-2">
        {suggestions.length > 0 && !showSendButton && (
           <div className="flex gap-2 flex-wrap px-2">
               {suggestions.map((s, i) => (
@@ -188,16 +186,29 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
 
       <div className="flex items-end gap-2">
-         <div className="flex-1 flex items-end gap-2 bg-muted rounded-xl p-1">
-            <div className="flex items-center self-end">
-                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toast({description: "Emoji picker coming soon!"})}>
-                 <Smile />
-                </Button>
+         <div className="flex-1 flex items-center bg-card rounded-full p-1 pl-3">
+           <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => toast({description: "Emoji picker coming soon!"})}>
+             <Smile />
+            </Button>
+           <Textarea
+             ref={textareaRef}
+             placeholder="اكتب رسالة..."
+             value={newMessage}
+             onChange={handleTyping}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' && !e.shiftKey) {
+                 e.preventDefault();
+                 onSendMessage();
+               }
+             }}
+             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base shadow-none h-auto"
+           />
+           <div className="flex items-center self-center">
                 <input type="file" ref={imageInputRef} onChange={(e) => handleFileSelect(e, 'image')} accept="image/*,video/*" className="hidden" />
                 <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e, 'file')} className="hidden" />
                  <Popover open={isAttachmentPopoverOpen} onOpenChange={setIsAttachmentPopoverOpen}>
                     <PopoverTrigger asChild>
-                         <Button variant="ghost" size="icon" className={cn("h-9 w-9", showSendButton && "hidden")}>
+                         <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
                             <Paperclip />
                         </Button>
                     </PopoverTrigger>
@@ -213,38 +224,20 @@ const MessageInput: React.FC<MessageInputProps> = ({
                         </Button>
                     </PopoverContent>
                 </Popover>
-            </div>
-           <Textarea
-             ref={textareaRef}
-             placeholder="اكتب رسالة..."
-             value={newMessage}
-             onChange={handleTyping}
-             onKeyDown={(e) => {
-               if (e.key === 'Enter' && !e.shiftKey) {
-                 e.preventDefault();
-                 onSendMessage();
-               }
-             }}
-             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base shadow-none"
-           />
-           <div className="flex items-center self-end">
-             <Button variant="ghost" size="icon" className={cn("h-9 w-9", showSendButton && "hidden")} onClick={() => toast({description: "Voice messages coming soon!"})}>
-                <Mic />
-            </Button>
            </div>
          </div>
          <div className="flex items-center gap-1 self-end">
              {showSendButton ? (
                 <Button
                     size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full"
+                    className="h-11 w-11 shrink-0 rounded-full bg-[#00A884] hover:bg-[#00A884]/90 text-white"
                     onClick={onSendMessage}
                 >
-                    <ArrowUp />
+                    <Send />
                 </Button>
              ) : (
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
-                    {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
+                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={() => toast({description: "Voice messages coming soon!"})}>
+                    <Mic />
                 </Button>
              )}
         </div>
@@ -254,5 +247,3 @@ const MessageInput: React.FC<MessageInputProps> = ({
 };
 
 export default MessageInput;
-
-    

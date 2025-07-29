@@ -145,7 +145,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     }
 
   return (
-    <div className="flex flex-col h-full bg-background w-full">
+    <div className="flex flex-col h-full bg-background w-full bg-[url('https://placehold.co/1000x1000/e5ddd5/e5ddd5.png')] bg-center bg-fixed" style={{backgroundImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAABCAYAAAA/4QAYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAUSURBVHjaY/iPY/gfA/WHAFMPAFM2A27sP89VAAAAAElFTkSuQmCC")`}}>
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
       <ChatMessages
         messages={chat.messages}
@@ -156,7 +156,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
         onLikeMessage={handleLikeMessage}
       />
       {isBlocked ? (
-         <div className="p-4 text-center text-sm text-muted-foreground border-t">
+         <div className="p-4 text-center text-sm text-muted-foreground border-t bg-background">
            لقد حظرت هذا المستخدم. <button onClick={() => { setIsBlocked(false); setChats(prev => prev.map(c => c.id === chat.id ? {...c, isBlocked: false} : c)); }} className="text-accent hover:underline">إلغاء الحظر</button>
          </div>
       ) : (

@@ -3,7 +3,6 @@
 
 import React from 'react';
 import type { Message } from '@/lib/types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Check, CheckCheck, Download, Edit, MoreHorizontal, Trash2, Heart, Share2, Reply } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,7 +28,7 @@ interface MessageItemProps {
 }
 
 const MessageStatus: React.FC<{ status: Message['status'] }> = ({ status }) => {
-  if (status === 'seen') return <CheckCheck size={16} className="text-accent" />;
+  if (status === 'seen') return <CheckCheck size={16} className="text-blue-500" />;
   if (status === 'delivered') return <CheckCheck size={16} className="text-muted-foreground" />;
   return <Check size={16} className="text-muted-foreground" />;
 };
@@ -60,45 +59,36 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
 
   return (
     <div className={cn(
-        "flex items-start gap-2 group w-full", 
+        "flex items-end gap-1.5 group w-full", 
         isOwnMessage ? "flex-row-reverse" : "flex-row",
-        !isLastInGroup ? 'mb-0.5' : 'mb-2'
     )}>
-      <div className="w-8 flex-shrink-0 self-end">
-        {isLastInGroup ? (
-            <Avatar className="w-8 h-8">
-                <AvatarFallback>{message.avatar}</AvatarFallback>
-            </Avatar>
-        ) : (
-            <div className="w-8" />
-        )}
-      </div>
-
       <div className={cn(
           "relative flex flex-col max-w-[80%] lg:max-w-[70%]",
            isOwnMessage ? "items-end" : "items-start"
       )}>
         <div
           className={cn(
-            "p-3 w-fit min-w-[60px]",
+            "p-2 w-fit min-w-[80px] relative",
             isOwnMessage
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-card-foreground border",
-            'rounded-2xl',
-            isFirstInGroup && (isOwnMessage ? 'rounded-tr-md' : 'rounded-tl-md'),
-            isLastInGroup && (isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md'),
+              ? "bg-[#D9FDD3] dark:bg-[#054740] text-black dark:text-white"
+              : "bg-white dark:bg-secondary text-black dark:text-white",
+            'rounded-lg',
           )}
         >
-          {!isOwnMessage && isFirstInGroup && <p className="text-xs font-semibold mb-1 text-primary">{message.user}</p>}
           
           {repliedToMessage && (
-            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-r-2 border-primary/50 bg-black/10 rounded-lg text-sm transition-colors hover:bg-black/20">
-                <p className="font-semibold text-xs">{repliedToMessage.user}</p>
+            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-r-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10">
+                <p className="font-semibold text-xs text-primary">{repliedToMessage.user}</p>
                 <p className="opacity-80 truncate max-w-[200px]">{repliedToMessage.text?.substring(0, 50) || 'مرفق'}</p>
             </a>
           )}
 
-          <MessageContent message={message} />
+          <MessageContent message={message} isOwnMessage={isOwnMessage} />
+
+          <div className="float-right flex items-center gap-1.5 mt-1 ml-4" style={{direction: "ltr"}}>
+            <span className="text-xs text-muted-foreground">{message.time}</span>
+            {isOwnMessage && <MessageStatus status={message.status} />}
+          </div>
 
           {message.likes && message.likes > 0 && (
              <div className={cn(
@@ -110,13 +100,6 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, isFirs
              </div>
           )}
         </div>
-        
-        {isLastInGroup && (
-             <div className={cn("flex items-center gap-2 mt-1 text-xs text-muted-foreground", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
-              <span>{message.time}</span>
-              {isOwnMessage && <MessageStatus status={message.status} />}
-            </div>
-        )}
         
         <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-[8rem] md:-left-[8.5rem]" : "-right-[8rem] md:-right-[8.5rem]")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>

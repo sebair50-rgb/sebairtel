@@ -3,16 +3,17 @@
 
 import React from 'react';
 import type { Message } from '@/lib/types';
-import CodeBlock from '@/components/shared/CodeBlock';
 import { FileIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import CodeBlock from '../shared/CodeBlock';
 
 interface MessageContentProps {
   message: Message;
+  isOwnMessage: boolean;
 }
 
-const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
+const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }) => {
     const formatFileSize = (bytes?: number) => {
         if (!bytes) return '';
         if (bytes === 0) return '0 Bytes';
@@ -27,7 +28,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         return text.split(urlRegex).map((part, index) => {
             if (part.match(urlRegex)) {
                 return (
-                    <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-accent underline hover:opacity-80">
+                    <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:opacity-80">
                         {part}
                     </a>
                 );
@@ -36,7 +37,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
         });
     };
 
-    const containsCodeBlock = (text?: string) => {
+     const containsCodeBlock = (text?: string) => {
         if (!text) return false;
         return /```(\w+)?\n([\s\S]+?)```/.test(text);
     }
@@ -44,7 +45,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
     switch (message.type) {
         case 'image':
             return (
-                <div className="space-y-2">
+                <div className="space-y-1">
                     {message.src && (
                       <Image 
                         src={message.src} 
@@ -59,16 +60,16 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
             );
         case 'video':
             return (
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <video src={message.src} controls className="rounded-lg max-w-full h-auto bg-black">
                         متصفحك لا يدعم عرض الفيديو.
                     </video>
-                    {message.text && <p className="text-sm mt-2 whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
+                    {message.text && <p className="text-sm mt-1 whitespace-pre-wrap">{renderTextWithLinks(message.text)}</p>}
                 </div>
             );
         case 'file':
             return (
-                <div className={cn("flex items-center gap-3 p-3 rounded-lg bg-black/20")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-lg", isOwnMessage ? "bg-black/10" : "bg-black/5")}>
                     <FileIcon size={32} className="flex-shrink-0" />
                     <div className="overflow-hidden">
                         <p className="font-semibold text-sm truncate">{message.fileInfo?.name}</p>
@@ -76,15 +77,14 @@ const MessageContent: React.FC<MessageContentProps> = ({ message }) => {
                     </div>
                 </div>
             );
-        case 'code':
+         case 'code':
             const codeMatch = message.text?.match(/```(\w+)?\n([\s\S]+?)```/);
             if (codeMatch) {
                  const lang = codeMatch[1] || 'js';
                  const code = codeMatch[2];
                  return <CodeBlock code={code} language={lang} />;
             }
-            // Fallback for malformed code messages
-             return <div className="whitespace-pre-wrap break-words">{message.text ? renderTextWithLinks(message.text) : null}</div>;
+             return <div className="whitespace-pre-wrap break-words text-left font-code">{message.text ? renderTextWithLinks(message.text) : null}</div>;
         default: // text
              if (containsCodeBlock(message.text)) {
                 const parts = message.text!.split(/(```(?:\w+)?\n(?:[\s\S]+?)```)/);
