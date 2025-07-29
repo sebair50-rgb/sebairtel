@@ -6,6 +6,7 @@ import type { Chat, Message } from '@/lib/types';
 import { useAppContext } from '@/store/AppContext';
 import ChatHeader from './ChatHeader';
 import ChatMessages from './ChatMessages';
+import MessageInput from './MessageInput';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -24,25 +25,47 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { deleteMessage, currentUser, setChats, updateMessage } = useAppContext();
+  const { addMessage, deleteMessage, currentUser, setChats, updateMessage } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-  const handleEditMessage = (message: Message) => {
-    // This functionality is removed as the input field is gone.
-    // We can keep the function to avoid breaking other parts, or remove it if not used elsewhere.
-    // For now, let's keep it empty.
-  }
+  const handleSendMessage = (text: string, media?: { type: 'image' | 'video' | 'file', src: string, fileInfo: any }) => {
+        if (!text.trim() && !media) return;
+
+        if (editingMessage) {
+             updateMessage(chat.id, editingMessage.id, { ...editingMessage, text });
+             setEditingMessage(null);
+        } else {
+             const newMessage: Message = {
+                id: Date.now(),
+                user: currentUser.name,
+                avatar: currentUser.avatar,
+                text,
+                time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                status: 'sent',
+                type: media ? media.type : 'text',
+                src: media?.src,
+                fileInfo: media?.fileInfo,
+            };
+            addMessage(chat.id, newMessage);
+        }
+    };
+
 
   const handleDeleteMessage = (messageId: number) => {
     deleteMessage(chat.id, messageId);
   };
   
+   const handleEditMessage = (message: Message) => {
+    setEditingMessage(message);
+  }
+
   const handleMenuAction = (action: 'clear' | 'block') => {
       if(action === 'clear') {
           setShowConfirmation({
@@ -88,6 +111,17 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
         onEditMessage={handleEditMessage}
         onLikeMessage={handleLikeMessage}
       />
+      {isBlocked ? (
+        <div className="text-center p-4 bg-background/80 text-sm text-muted-foreground">
+            لقد قمت بحظر هذا المستخدم.
+        </div>
+      ) : (
+         <MessageInput
+            onSendMessage={handleSendMessage}
+            editingMessage={editingMessage}
+            onCancelEdit={() => setEditingMessage(null)}
+         />
+      )}
        {showConfirmation && (
           <AlertDialog open={showConfirmation.show} onOpenChange={(isOpen) => !isOpen && setShowConfirmation(null)}>
             <AlertDialogContent>

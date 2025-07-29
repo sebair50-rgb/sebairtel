@@ -14,7 +14,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
         if (textarea) {
             textarea.style.height = 'auto'; // Reset height to recalculate
             const scrollHeight = textarea.scrollHeight;
-            textarea.style.height = `${scrollHeight}px`;
+            const maxHeight = 120; // max height 
+            textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+            textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
         }
     }, []);
     
@@ -32,7 +34,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
     return (
       <textarea
         className={cn(
-          'flex min-h-[40px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-hidden',
+          'flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none',
           className
         )}
         ref={internalRef}
