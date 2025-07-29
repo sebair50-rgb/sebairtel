@@ -3,8 +3,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { User, Post, Notification, Call, Chat, Message } from '@/lib/types';
-import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER, initialCalls, initialChats } from '@/lib/data';
+import type { User, Post, Notification, Call } from '@/lib/types';
+import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER, initialCalls } from '@/lib/data';
 import { useAuth } from './AuthContext';
 
 interface AppContextType {
@@ -15,13 +15,6 @@ interface AppContextType {
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   friendRequests: User[];
   setFriendRequests: React.Dispatch<React.SetStateAction<User[]>>;
-  chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
-  selectedChatId: number | null;
-  setSelectedChatId: React.Dispatch<React.SetStateAction<number | null>>;
-  addMessage: (chatId: number, message: Message) => void;
-  deleteMessage: (chatId: number, messageId: number) => void;
-  updateMessage: (chatId: number, messageId: number, updatedMessage: Message) => void;
   posts: Post[];
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
   addPost: (post: Pick<Post, 'content' | 'media'>) => void;
@@ -54,8 +47,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
-  const [chats, setChats] = useState<Chat[]>(initialChats);
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [calls, setCalls] = useState<Call[]>(initialCalls);
@@ -72,35 +63,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       return newMode;
     });
   };
-
-  const addMessage = (chatId: number, message: Message) => {
-    setChats(prevChats =>
-      prevChats.map(chat =>
-        chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat
-      )
-    );
-  };
-
-  const deleteMessage = (chatId: number, messageId: number) => {
-    setChats(prevChats =>
-      prevChats.map(chat =>
-        chat.id === chatId
-          ? { ...chat, messages: chat.messages.filter(m => m.id !== messageId) }
-          : chat
-      )
-    );
-  };
-  
-  const updateMessage = (chatId: number, messageId: number, updatedMessage: Message) => {
-      setChats(prevChats =>
-          prevChats.map(chat =>
-              chat.id === chatId
-                  ? { ...chat, messages: chat.messages.map(m => m.id === messageId ? updatedMessage : m) }
-                  : chat
-          )
-      );
-  };
-
 
   const addPost = (postData: Pick<Post, 'content' | 'media'>) => {
     const newPost: Post = {
@@ -125,13 +87,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setUsers,
     friendRequests,
     setFriendRequests,
-    chats,
-    setChats,
-    selectedChatId,
-    setSelectedChatId,
-    addMessage,
-    deleteMessage,
-    updateMessage,
     posts,
     setPosts,
     addPost,

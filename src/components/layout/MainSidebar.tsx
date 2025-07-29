@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut } from 'lucide-react';
+import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -23,7 +23,7 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
+  const { currentUser } = useAppContext();
   const router = useRouter();
   const isMobile = useIsMobile();
 
@@ -33,21 +33,20 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   };
 
   const handleTabClick = (tab: string) => {
-    if (tab === 'contact') {
-      setSelectedChatId(null);
-    }
     setActiveTab(tab);
   };
 
   const navItems = [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
-    { name: 'contact', icon: MessageSquare, label: 'تواصل' },
+    { name: 'contact', icon: Phone, label: 'تواصل' },
     { name: 'social', icon: Users, label: 'المجتمع' },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
   
-  const showMobileNav = isMobile && selectedChatId === null;
+  // For now, mobile nav is always shown if on mobile.
+  // This can be adapted if certain views should hide it.
+  const showMobileNav = isMobile;
 
   return (
     <>
