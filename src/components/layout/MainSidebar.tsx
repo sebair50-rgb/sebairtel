@@ -16,9 +16,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
 
   const navItems = [
     { name: 'community', icon: MessageCircle, label: 'المحادثات' },
-    { name: 'social', icon: Users, label: 'الاجتماعي' },
-    { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
+    { name: 'social', icon: Users, label: 'المجتمع' },
+    { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
 
