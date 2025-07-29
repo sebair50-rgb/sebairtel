@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -9,13 +10,22 @@ import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
 import UsersView from '@/components/users/UsersView';
 import { cn } from '@/lib/utils';
-import { PanelLeft, MessageCircle } from 'lucide-react';
+import { PanelLeft, MessageCircle, Phone, Users as UsersIcon, List } from 'lucide-react';
 import { Button } from '../ui/button';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
 import { useAuth } from '@/store/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
+    <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
+        <Icon size={64} className="text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <p className="text-muted-foreground mt-2">هذه الميزة ستكون متاحة قريباً!</p>
+    </div>
+);
 
 const AppShell = () => {
   const { chats, currentUser } = useAppContext();
@@ -31,12 +41,21 @@ const AppShell = () => {
     router.push('/login');
   };
 
-  const renderContent = () => {
-    if (activeTab === 'community' && selectedChatId) {
-      const chat = chats.find(c => c.id === selectedChatId);
-      if (chat) return <ChatView key={chat.id} chat={chat} onBack={() => setSelectedChatId(null)} />;
-    }
+  const renderCommunityContent = () => {
+      if(selectedChatId) {
+          const chat = chats.find(c => c.id === selectedChatId);
+          if (chat) return <ChatView key={chat.id} chat={chat} onBack={() => setSelectedChatId(null)} />;
+      }
+      return (
+        <div className="hidden md:flex flex-col items-center justify-center h-full bg-card text-center p-8">
+            <MessageCircle size={64} className="text-muted-foreground mb-4" />
+            <h2 className="text-2xl font-bold">مرحباً بك في SebairTel, {currentUser.name}!</h2>
+            <p className="text-muted-foreground mt-2">اختر محادثة من القائمة للبدء.</p>
+        </div>
+      );
+  }
 
+  const renderContent = () => {
     switch (activeTab) {
       case 'social':
         return <SocialFeed />;
@@ -49,19 +68,32 @@ const AppShell = () => {
       case 'apps':
         return <AppsView />;
       case 'community':
-      default:
-        // When community is selected but no chat is open, show the welcome message on larger screens.
-        // On smaller screens this area will be hidden by the chat list.
-         if (activeTab === 'community') {
-             return (
-                <div className="hidden md:flex flex-col items-center justify-center h-full bg-card text-center p-8">
-                    <MessageCircle size={64} className="text-muted-foreground mb-4" />
-                    <h2 className="text-2xl font-bold">مرحباً بك في SebairTel, {currentUser.name}!</h2>
-                    <p className="text-muted-foreground mt-2">اختر محادثة من القائمة للبدء.</p>
+         return (
+             <Tabs defaultValue="chats" className="w-full h-full flex flex-col">
+                <div className="p-4 border-b">
+                    <h1 className="text-2xl font-bold mb-4">المحادثات</h1>
+                    <TabsList className="grid w-full grid-cols-4 gap-1">
+                        <TabsTrigger value="chats">الدردشات</TabsTrigger>
+                        <TabsTrigger value="calls">المكالمات</TabsTrigger>
+                        <TabsTrigger value="groups">مجموعات</TabsTrigger>
+                        <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+                    </TabsList>
                 </div>
-            );
-         }
-        // Default to social feed if for some reason activeTab is not set.
+                <TabsContent value="chats" className="flex-1 overflow-hidden">
+                    {renderCommunityContent()}
+                </TabsContent>
+                <TabsContent value="calls" className="flex-1">
+                    <ComingSoonContent title="المكالمات" icon={Phone} />
+                </TabsContent>
+                <TabsContent value="groups" className="flex-1">
+                    <ComingSoonContent title="مجموعات الدردشة" icon={UsersIcon} />
+                </TabsContent>
+                <TabsContent value="friends" className="flex-1">
+                    <ComingSoonContent title="قائمة الأصدقاء" icon={List} />
+                </TabsContent>
+            </Tabs>
+         )
+      default:
         return <SocialFeed />;
     }
   };
