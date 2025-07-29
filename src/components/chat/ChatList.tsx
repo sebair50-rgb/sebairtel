@@ -46,10 +46,10 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
         </div>
          <Tabs defaultValue="chats" className="w-full">
             <TabsList className="grid w-full grid-cols-4 gap-1">
-                <TabsTrigger value="chats">الدردشات</TabsTrigger>
-                <TabsTrigger value="calls">المكالمات</TabsTrigger>
-                <TabsTrigger value="groups">مجموعات</TabsTrigger>
                 <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+                <TabsTrigger value="groups">مجموعات</TabsTrigger>
+                <TabsTrigger value="calls">المكالمات</TabsTrigger>
+                <TabsTrigger value="chats">الدردشات</TabsTrigger>
             </TabsList>
         </Tabs>
       </div>
