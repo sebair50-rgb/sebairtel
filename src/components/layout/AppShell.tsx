@@ -52,61 +52,39 @@ const AppShell = () => {
     const showChatList = activeTab === 'community';
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
-      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+    <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
       <div className={cn(
-        "transition-all duration-300 ease-in-out",
-        isSidebarOpen && showChatList ? "w-80 border-l" : "w-0"
+        "transition-all duration-300 ease-in-out border-l",
+        isSidebarOpen && showChatList ? "w-full md:w-80" : "w-0",
+        !showChatList && "hidden"
       )}>
-        {showChatList && (
-            <div className="h-full w-80">
-            <ChatList
-                selectedChatId={selectedChatId}
-                setSelectedChatId={setSelectedChatId}
-                isSidebarOpen={isSidebarOpen}
-                toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            />
-            </div>
-        )}
+        <ChatList
+            selectedChatId={selectedChatId}
+            setSelectedChatId={(id) => {
+              setSelectedChatId(id);
+              if (window.innerWidth < 768) {
+                setIsSidebarOpen(false);
+              }
+            }}
+            isSidebarOpen={isSidebarOpen}
+            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
       </div>
       
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
           <div className="md:hidden p-2 border-b flex items-center">
               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                   <PanelLeft />
               </Button>
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
-          {/* Mobile sidebar overlay */}
-          {isSidebarOpen && showChatList && (
-              <div
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="fixed inset-0 z-30 bg-black/50 md:hidden"
-              />
-          )}
-          {/* Mobile sidebar content */}
-          {showChatList && (
-            <div className={cn(
-                "fixed top-0 right-0 h-full w-80 bg-card border-l z-40 transition-transform duration-300 ease-in-out md:hidden",
-                isSidebarOpen ? "translate-x-0" : "translate-x-full"
-            )}>
-                <ChatList
-                    selectedChatId={selectedChatId}
-                    setSelectedChatId={(id) => {
-                    setSelectedChatId(id);
-                    setIsSidebarOpen(false);
-                    }}
-                    isSidebarOpen={isSidebarOpen}
-                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                />
-            </div>
-          )}
           
-          <div className="flex-1 overflow-y-auto">
+          <div className={cn("flex-1 overflow-y-auto", { "hidden md:block": showChatList && selectedChatId === null })}>
             {renderContent()}
           </div>
       </main>
+
+       <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };

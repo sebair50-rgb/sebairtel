@@ -1,10 +1,8 @@
 "use client";
 
 import React from 'react';
-import { MessageCircle, Users, Sun, Moon, Settings, User, Brain, AppWindow } from 'lucide-react';
+import { MessageCircle, Users, Sun, Moon, Settings, User, Brain, AppWindow, UserCircle } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
-import NewSebairTelLogo from '@/components/shared/Logo';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
@@ -25,65 +23,23 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   ];
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <aside className="w-16 bg-card border-l flex flex-col items-center justify-between p-2">
-        <div>
-          <div className="mb-6">
-            <NewSebairTelLogo />
-          </div>
-          <nav className="flex flex-col items-center gap-4">
-            {navItems.map((item) => (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setActiveTab(item.name)}
-                    className={cn(
-                      'p-2 rounded-lg transition-colors duration-200',
-                      activeTab === item.name
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )}
-                  >
-                    <item.icon size={24} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" align="center">
-                  <p>{item.label}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex flex-col items-center gap-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-200"
-              >
-                {darkMode ? <Sun size={24} /> : <Moon size={24} />}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left" align="center">
-              <p>{darkMode ? 'وضع النهار' : 'الوضع الداكن'}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger>
-              <Avatar>
-                <AvatarImage src={`https://i.pravatar.cc/150?u=${currentUser.name}`} />
-                <AvatarFallback>{currentUser.avatar}</AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-            <TooltipContent side="left" align="center">
-              <p>{currentUser.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </aside>
-    </TooltipProvider>
+    <nav className="fixed bottom-0 right-0 w-full bg-card border-t flex justify-around items-center p-2 md:hidden z-50">
+      {navItems.map((item) => (
+        <button
+          key={item.name}
+          onClick={() => setActiveTab(item.name)}
+          className={cn(
+            'flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors duration-200',
+            activeTab === item.name
+              ? 'bg-primary/10 text-primary'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
+        >
+          <item.icon size={24} />
+          <span className="text-xs mt-1">{item.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 };
 
