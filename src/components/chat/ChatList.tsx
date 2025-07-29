@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -35,7 +36,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
             {isSidebarOpen ? <PanelRight /> : <PanelLeft />}
           </Button>
         </div>
-        <div className="relative mb-4">
+        <div className="relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="بحث..."
@@ -44,13 +45,15 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-         <Tabs defaultValue="chats" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 gap-1">
-                <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
-                <TabsTrigger value="groups">مجموعات</TabsTrigger>
-                <TabsTrigger value="calls">المكالمات</TabsTrigger>
-                <TabsTrigger value="chats">الدردشات</TabsTrigger>
-            </TabsList>
+      </div>
+      <div className="p-4 border-b">
+        <Tabs defaultValue="chats" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 gap-1">
+            <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+            <TabsTrigger value="groups">مجموعات</TabsTrigger>
+            <TabsTrigger value="calls">المكالمات</TabsTrigger>
+            <TabsTrigger value="chats">الدردشات</TabsTrigger>
+          </TabsList>
         </Tabs>
       </div>
       <ScrollArea className="flex-1">
