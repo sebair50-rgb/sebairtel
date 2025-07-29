@@ -60,7 +60,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2">
-            {activeTab === 'chats' && filteredChats.map(chat => (
+            {filteredChats.map(chat => (
                 <button
                 key={chat.id}
                 onClick={() => setSelectedChatId(chat.id)}

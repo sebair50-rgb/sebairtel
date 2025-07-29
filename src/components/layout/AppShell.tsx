@@ -95,16 +95,16 @@ const AppShell = () => {
   
   const showChatList = activeTab === 'community';
   const isChatViewActive = communityTab === 'chats' && selectedChatId !== null;
+  const showChatListSidebar = showChatList && communityTab === 'chats';
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
       <div className={cn(
         "transition-all duration-300 ease-in-out border-l md:flex flex-col",
         "w-full md:w-80",
-        !showChatList && "hidden",
+        !showChatListSidebar && "hidden",
         isChatViewActive ? "hidden md:flex" : "flex",
-        (isChatViewActive && showChatList) && "hidden md:flex",
-        communityTab !== 'chats' && "hidden md:flex",
+        (isChatViewActive && showChatListSidebar) && "hidden md:flex",
         isSidebarOpen ? "md:w-80" : "md:w-0"
       )}>
         <ChatList
@@ -124,19 +124,25 @@ const AppShell = () => {
       
       <main className={cn(
         "flex-1 flex flex-col overflow-hidden",
-        { "pb-16 md:pb-0": !isChatViewActive },
-        { "hidden": isChatViewActive && !isSidebarOpen && communityTab === 'chats'}
+        { "pb-16 md:pb-0": !isChatViewActive }
       )}>
-          <div className="md:hidden p-2 border-b flex items-center">
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                  <PanelLeft />
-              </Button>
-              <h1 className="text-lg font-bold mr-4">SebairTel</h1>
-          </div>
+          {activeTab === 'community' && (
+              <div className="md:hidden p-2 border-b">
+                 <ChatList
+                    selectedChatId={selectedChatId}
+                    setSelectedChatId={setSelectedChatId}
+                    isSidebarOpen={isSidebarOpen}
+                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    activeTab={communityTab}
+                    setActiveTab={setCommunityTab}
+                />
+              </div>
+          )}
           
           <div className={cn(
               "flex-1 flex overflow-y-auto",
-              { "hidden": isChatViewActive && isSidebarOpen  }
+              // Hide main content on mobile if we are in chat list view
+              { "hidden": showChatListSidebar && !isChatViewActive  }
           )}>
             {renderContent()}
           </div>
