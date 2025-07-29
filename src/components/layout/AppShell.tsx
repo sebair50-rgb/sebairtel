@@ -18,6 +18,7 @@ import { useAuth } from '@/store/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import CallsView from '../calls/CallsView';
 
 const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
     <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
@@ -35,6 +36,7 @@ const AppShell = () => {
   const [activeTab, setActiveTab] = useState('social');
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [communityTab, setCommunityTab] = useState('chats');
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -70,12 +72,12 @@ const AppShell = () => {
       case 'community':
          return (
             <div className="flex-1 flex flex-col overflow-hidden h-full">
-                <Tabs defaultValue="chats" className="w-full h-full flex flex-col">
+                <Tabs value={communityTab} onValueChange={setCommunityTab} className="w-full h-full flex flex-col">
                     <TabsContent value="chats" className="flex-1 overflow-hidden h-full">
                         {renderCommunityContent()}
                     </TabsContent>
-                    <TabsContent value="calls" className="flex-1">
-                        <ComingSoonContent title="المكالمات" icon={Phone} />
+                    <TabsContent value="calls" className="flex-1 overflow-hidden h-full">
+                        <CallsView />
                     </TabsContent>
                     <TabsContent value="groups" className="flex-1">
                         <ComingSoonContent title="مجموعات الدردشة" icon={UsersIcon} />
@@ -91,7 +93,7 @@ const AppShell = () => {
     }
   };
   
-    const showChatList = activeTab === 'community';
+    const showChatList = activeTab === 'community' && communityTab === 'chats';
     const isChatViewActive = showChatList && selectedChatId !== null;
 
 
@@ -111,6 +113,8 @@ const AppShell = () => {
             }}
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            activeTab={communityTab}
+            setActiveTab={setCommunityTab}
         />
       </div>
       
@@ -122,7 +126,7 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           
-          <div className={cn("flex-1 flex overflow-y-auto", { "hidden": showChatList && !isChatViewActive })}>
+          <div className={cn("flex-1 flex overflow-y-auto", { "hidden": isChatViewActive && isSidebarOpen })}>
             {renderContent()}
           </div>
       </main>

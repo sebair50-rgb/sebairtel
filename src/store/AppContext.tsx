@@ -2,8 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Chat, Message, User, Post, Notification } from '@/lib/types';
-import { initialChats, initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER } from '@/lib/data';
+import type { Chat, Message, User, Post, Notification, Call } from '@/lib/types';
+import { initialChats, initialUsers, initialPosts, initialNotifications, initialFriendRequests, initialCalls, CURRENT_USER } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from './AuthContext';
 
@@ -24,6 +24,8 @@ interface AppContextType {
   addPost: (post: Pick<Post, 'content' | 'media'>) => void;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
+  calls: Call[];
+  setCalls: React.Dispatch<React.SetStateAction<Call[]>>;
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
   handleShareToChat: (post: Post, chatId: number) => number;
@@ -54,6 +56,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [calls, setCalls] = useState<Call[]>(initialCalls);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
   const toggleDarkMode = () => {
@@ -161,6 +164,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     addPost,
     notifications,
     setNotifications,
+    calls,
+    setCalls,
     settings,
     setSettings,
     handleShareToChat,

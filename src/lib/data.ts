@@ -1,4 +1,4 @@
-import type { Chat, User, Post, Notification } from './types';
+import type { Chat, User, Post, Notification, Call } from './types';
 
 export const CURRENT_USER: User = { id: 100, name: 'أنت', avatar: '👤' };
 
@@ -95,4 +95,11 @@ export const initialNotifications: Notification[] = [
     {id: 1, type: 'like', user: 'فاطمة سالم', message: 'أعجبها منشورك.', time: 'منذ 5 دقائق', isRead: false},
     {id: 2, type: 'comment', user: 'علياء', message: 'علقت على منشورك: "عمل رائع!"', time: 'منذ 15 دقيقة', isRead: false},
     {id: 3, type: 'request', user: 'خالد', message: 'أرسل لك طلب صداقة.', time: 'منذ ساعة', isRead: true},
+];
+
+export const initialCalls: Call[] = [
+    { id: 1, user: 'أحمد محمد', avatar: '👨‍💻', type: 'outgoing', time: 'اليوم، 11:30 صباحًا', duration: '5:21' },
+    { id: 2, user: 'سارة أحمد', avatar: '👩‍🎨', type: 'missed', time: 'اليوم، 9:15 صباحًا', duration: '' },
+    { id: 3, user: 'فريق العمل', avatar: '💼', type: 'incoming', time: 'أمس، 4:00 مساءً', duration: '30:45' },
+    { id: 4, user: 'خالد', avatar: '🧑‍🚀', type: 'outgoing', time: 'أمس، 10:00 صباحًا', duration: '12:03' },
 ];

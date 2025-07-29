@@ -17,12 +17,13 @@ interface ChatListProps {
   setSelectedChatId: (id: number) => void;
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, isSidebarOpen, toggleSidebar }) => {
+const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, isSidebarOpen, toggleSidebar, activeTab, setActiveTab }) => {
   const { chats } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [activeTab, setActiveTab] = React.useState('chats');
 
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
