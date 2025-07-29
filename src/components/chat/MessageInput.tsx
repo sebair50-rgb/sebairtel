@@ -4,7 +4,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon } from 'lucide-react';
+import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Edit, Reply, File, Image as ImageIcon, Code } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -84,6 +84,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
     setIsAttachmentPopoverOpen(false);
   };
   
+  const handleCodeSend = () => {
+    const codeTemplate = '```javascript\n\n```';
+    if(textareaRef.current) {
+        const start = textareaRef.current.selectionStart;
+        const end = textareaRef.current.selectionEnd;
+        const text = textareaRef.current.value;
+        const newText = text.substring(0, start) + codeTemplate + text.substring(end);
+        
+        // Directly manipulating the textarea value and dispatching an event
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+        nativeInputValueSetter?.call(textareaRef.current, newText);
+        
+        const event = new Event('input', { bubbles: true });
+        textareaRef.current.dispatchEvent(event);
+        
+        // Set cursor position
+        const cursorPosition = start + '```javascript\n'.length;
+        textareaRef.current.focus();
+        setTimeout(() => {
+             textareaRef.current?.setSelectionRange(cursorPosition, cursorPosition);
+        }, 0)
+    }
+    setIsAttachmentPopoverOpen(false);
+  }
 
   const generateSuggestions = async () => {
     const lastMessage = chat.messages.filter(m => m.user !== 'أنت').pop();
@@ -183,6 +207,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
                         </Button>
                         <Button variant="ghost" className="w-full justify-start" onClick={() => fileInputRef.current?.click()}>
                            <File className="ml-2"/> ملف
+                        </Button>
+                         <Button variant="ghost" className="w-full justify-start" onClick={handleCodeSend}>
+                           <Code className="ml-2"/> كود
                         </Button>
                     </PopoverContent>
                 </Popover>
