@@ -1,9 +1,11 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Chat, Message, User, Post, Notification } from '@/lib/types';
 import { initialChats, initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER } from '@/lib/data';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from './AuthContext';
 
 interface AppContextType {
   darkMode: boolean;
@@ -29,6 +31,20 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
+  const { user: authUser } = useAuth();
+  const [currentUser, setCurrentUser] = useState<User>(CURRENT_USER);
+
+  useEffect(() => {
+    if (authUser) {
+      setCurrentUser({
+        id: 100, // This might need to come from your DB for the authUser
+        name: authUser.displayName || 'أنت',
+        avatar: '👤', // Default avatar, or get from user profile
+      });
+    }
+  }, [authUser]);
+
+
   const [darkMode, setDarkMode] = useState(true);
   const { toast } = useToast();
 
@@ -78,9 +94,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const handleShareToChat = (post: Post, chatId: number) => {
     const baseMessage = {
        id: Date.now(),
-       user: CURRENT_USER.name,
+       user: currentUser.name,
        time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-       avatar: CURRENT_USER.avatar,
+       avatar: currentUser.avatar,
        status: 'sent',
    };
    
@@ -115,7 +131,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     darkMode,
     toggleDarkMode,
-    currentUser: CURRENT_USER,
+    currentUser,
     chats,
     setChats,
     addMessage,

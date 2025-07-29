@@ -13,12 +13,23 @@ import { PanelLeft, MessageCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
+import { useAuth } from '@/store/AuthContext';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 const AppShell = () => {
-  const { chats } = useAppContext();
+  const { chats, currentUser } = useAppContext();
+  const { user: authUser } = useAuth();
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState('community');
   const [selectedChatId, setSelectedChatId] = useState<number | null>(chats[1]?.id || null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+  };
 
   const renderContent = () => {
     if (activeTab === 'community' && selectedChatId) {
@@ -32,7 +43,7 @@ const AppShell = () => {
       case 'users':
         return <UsersView />;
       case 'settings':
-        return <SettingsView />;
+        return <SettingsView onLogout={handleLogout} />;
       case 'ai':
         return <AIView />;
       case 'apps':
@@ -42,7 +53,7 @@ const AppShell = () => {
         return (
             <div className="hidden md:flex flex-col items-center justify-center h-full bg-card text-center p-8">
                 <MessageCircle size={64} className="text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold">مرحباً بك في SebairTel</h2>
+                <h2 className="text-2xl font-bold">مرحباً بك في SebairTel, {currentUser.name}!</h2>
                 <p className="text-muted-foreground mt-2">اختر محادثة من القائمة للبدء.</p>
             </div>
         );

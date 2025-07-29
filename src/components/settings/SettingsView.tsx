@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,9 +6,14 @@ import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Lock, Palette, Languages, HelpCircle } from 'lucide-react';
+import { Bell, Lock, Palette, Languages, HelpCircle, LogOut } from 'lucide-react';
+import { Button } from '../ui/button';
 
-const SettingsView = () => {
+interface SettingsViewProps {
+    onLogout: () => void;
+}
+
+const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
     const { settings, setSettings, darkMode, toggleDarkMode } = useAppContext();
 
     return (
@@ -80,6 +86,17 @@ const SettingsView = () => {
                     </CardHeader>
                     <CardContent>
                         <p className="text-muted-foreground">للمساعدة، تواصل مع فريق الدعم.</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><LogOut /> تسجيل الخروج</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Button variant="destructive" className="w-full" onClick={onLogout}>
+                            تسجيل الخروج
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
