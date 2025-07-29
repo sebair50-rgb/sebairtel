@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import useIsMobile from '@/hooks/use-is-mobile';
+import Logo from '../shared/Logo';
 
 interface MainSidebarProps {
   activeTab: string;
@@ -53,6 +54,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
     <>
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex flex-col items-center gap-4 p-2 bg-card border-l w-16">
+        <div className="my-2">
+            <Logo />
+        </div>
         <TooltipProvider>
             <div className='flex flex-col items-center gap-4 flex-1'>
                 {navItems.map((item) => (
