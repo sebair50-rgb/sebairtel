@@ -23,13 +23,20 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { currentUser, selectedChatId } = useAppContext();
+  const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
   const router = useRouter();
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await auth.signOut();
     router.push('/login');
+  };
+
+  const handleTabClick = (tab: string) => {
+    if (tab === 'contact') {
+      setSelectedChatId(null);
+    }
+    setActiveTab(tab);
   };
 
   const navItems = [
@@ -54,7 +61,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
                              <Button
                                 variant={activeTab === item.name ? 'secondary': 'ghost'}
                                 size="icon"
-                                onClick={() => setActiveTab(item.name)}
+                                onClick={() => handleTabClick(item.name)}
                                 className={cn(
                                     'rounded-lg transition-colors duration-200 w-12 h-12',
                                     activeTab === item.name && 'text-primary'
@@ -93,7 +100,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
           {navItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              onClick={() => handleTabClick(item.name)}
               className={cn(
                 'flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors duration-200 text-[10px]',
                 activeTab === item.name
