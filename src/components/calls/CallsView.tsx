@@ -8,8 +8,11 @@ import ChatInterface from '../chat/ChatInterface';
 import CallsList from './CallsList';
 import UsersView from '../users/UsersView';
 
+interface CallsViewProps {
+    defaultTab?: string;
+}
 
-const CallsView = () => {
+const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats' }) => {
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />
@@ -26,7 +29,7 @@ const CallsView = () => {
                     <h1 className="text-3xl font-bold">تواصل</h1>
                 </div>
             </div>
-             <Tabs defaultValue="chats" className="w-full flex flex-col flex-1 px-4 md:px-6">
+             <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1 px-4 md:px-6">
                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto">
                     <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
                          <Users className="ml-1 sm:ml-2" />
