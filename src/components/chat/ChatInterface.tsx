@@ -16,12 +16,8 @@ const ChatInterface = () => {
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
   useEffect(() => {
-    if (!isMobile && !selectedChatId && chats.length > 0) {
-      setSelectedChatId(chats[0].id);
-    }
-    if (isMobile && selectedChatId) {
-        // When switching to mobile view with a chat open, we might want to default to showing the chat view
-    }
+    // This effect is now simplified. We no longer automatically select a chat.
+    // The user must explicitly select a chat from the list.
   }, [isMobile, selectedChatId, chats, setSelectedChatId]);
 
   const handleSelectChat = (id: number) => {
