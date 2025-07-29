@@ -9,6 +9,7 @@ import { Search, PanelRight, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '../ui/button';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ChatListProps {
   selectedChatId: number | null;
@@ -34,7 +35,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
             {isSidebarOpen ? <PanelRight /> : <PanelLeft />}
           </Button>
         </div>
-        <div className="relative">
+        <div className="relative mb-4">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="بحث..."
@@ -43,6 +44,14 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+         <Tabs defaultValue="chats" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 gap-1">
+                <TabsTrigger value="chats">الدردشات</TabsTrigger>
+                <TabsTrigger value="calls">المكالمات</TabsTrigger>
+                <TabsTrigger value="groups">مجموعات</TabsTrigger>
+                <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
+            </TabsList>
+        </Tabs>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2">

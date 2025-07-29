@@ -69,29 +69,22 @@ const AppShell = () => {
         return <AppsView />;
       case 'community':
          return (
-             <Tabs defaultValue="chats" className="w-full h-full flex flex-col">
-                <div className="p-4 border-b">
-                    <h1 className="text-2xl font-bold mb-4">المحادثات</h1>
-                    <TabsList className="grid w-full grid-cols-4 gap-1">
-                        <TabsTrigger value="chats">الدردشات</TabsTrigger>
-                        <TabsTrigger value="calls">المكالمات</TabsTrigger>
-                        <TabsTrigger value="groups">مجموعات</TabsTrigger>
-                        <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
-                    </TabsList>
-                </div>
-                <TabsContent value="chats" className="flex-1 overflow-hidden">
-                    {renderCommunityContent()}
-                </TabsContent>
-                <TabsContent value="calls" className="flex-1">
-                    <ComingSoonContent title="المكالمات" icon={Phone} />
-                </TabsContent>
-                <TabsContent value="groups" className="flex-1">
-                    <ComingSoonContent title="مجموعات الدردشة" icon={UsersIcon} />
-                </TabsContent>
-                <TabsContent value="friends" className="flex-1">
-                    <ComingSoonContent title="قائمة الأصدقاء" icon={List} />
-                </TabsContent>
-            </Tabs>
+            <div className="flex-1 flex flex-col overflow-hidden h-full">
+                <Tabs defaultValue="chats" className="w-full h-full flex flex-col">
+                    <TabsContent value="chats" className="flex-1 overflow-hidden h-full">
+                        {renderCommunityContent()}
+                    </TabsContent>
+                    <TabsContent value="calls" className="flex-1">
+                        <ComingSoonContent title="المكالمات" icon={Phone} />
+                    </TabsContent>
+                    <TabsContent value="groups" className="flex-1">
+                        <ComingSoonContent title="مجموعات الدردشة" icon={UsersIcon} />
+                    </TabsContent>
+                    <TabsContent value="friends" className="flex-1">
+                        <ComingSoonContent title="قائمة الأصدقاء" icon={List} />
+                    </TabsContent>
+                </Tabs>
+            </div>
          )
       default:
         return <SocialFeed />;
@@ -128,7 +121,7 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           
-          <div className={cn("flex-1 overflow-y-auto", { "hidden md:block": showChatList && selectedChatId !== null && isSidebarOpen })}>
+          <div className={cn("flex-1 flex overflow-y-auto", { "hidden md:flex": showChatList && selectedChatId !== null && isSidebarOpen })}>
             {renderContent()}
           </div>
       </main>
