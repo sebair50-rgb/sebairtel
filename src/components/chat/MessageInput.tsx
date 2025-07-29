@@ -102,6 +102,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const onSendMessage = () => {
+    handleSendMessage(newMessage);
+  }
+
 
   return (
     <div className="p-4 border-t bg-card">
@@ -156,11 +160,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
             placeholder="اكتب رسالة..."
             value={newMessage}
             onChange={handleTyping}
-            rows={1}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSendMessage();
+                onSendMessage();
               }
             }}
             className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 p-2 text-base"
@@ -177,7 +180,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
              <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={generateSuggestions} disabled={isLoadingSuggestions}>
                 {isLoadingSuggestions ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div> : <Brain />}
              </Button>
-             <Button size="icon" className="h-10 w-10 shrink-0" onClick={() => handleSendMessage()}>
+             <Button size="icon" className="h-10 w-10 shrink-0" onClick={onSendMessage}>
                  <ArrowUp />
              </Button>
         </div>
