@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,9 +27,16 @@ export default function SignupPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      await sendEmailVerification(userCredential.user);
       
-      toast({ title: "تم إنشاء الحساب بنجاح", description: "مرحباً بك في SebairTel!" });
-      router.push('/');
+      await auth.signOut(); // Sign out the user until they verify their email
+
+      toast({ 
+        title: "تم إنشاء الحساب بنجاح", 
+        description: "لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. الرجاء تفعيل حسابك لتتمكن من تسجيل الدخول.",
+        duration: 10000 // Show toast longer
+      });
+      router.push('/login');
     } catch (error: any) {
         if(error.code === 'auth/email-already-in-use') {
              toast({ variant: "destructive", title: "خطأ في إنشاء الحساب", description: "هذا البريد الإلكتروني مستخدم بالفعل." });

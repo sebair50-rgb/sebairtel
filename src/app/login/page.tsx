@@ -24,7 +24,13 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCredential.user.emailVerified) {
+          await auth.signOut();
+          toast({ variant: "destructive", title: "الحساب غير مؤكد", description: "الرجاء التحقق من بريدك الإلكتروني لتفعيل حسابك." });
+          setIsLoading(false);
+          return;
+      }
       toast({ title: "تم تسجيل الدخول بنجاح", description: "أهلاً بك مجدداً!" });
       router.push('/');
     } catch (error: any) {
