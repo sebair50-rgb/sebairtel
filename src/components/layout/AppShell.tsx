@@ -43,7 +43,7 @@ const AppShell = () => {
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
       <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-y-auto">
             {renderContent()}
           </div>

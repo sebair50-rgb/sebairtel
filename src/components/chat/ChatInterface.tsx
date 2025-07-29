@@ -20,6 +20,15 @@ const ChatInterface = () => {
     if (!isMobile && !selectedChatId && chats.length > 0) {
       setSelectedChatId(chats[0].id);
     }
+     if (isMobile) {
+        setSelectedChatId(null);
+    }
+  }, [isMobile]);
+
+  React.useEffect(() => {
+    if (!isMobile && !selectedChatId && chats.length > 0) {
+      setSelectedChatId(chats[0].id);
+    }
   }, [chats, selectedChatId, isMobile]);
   
   return (
@@ -27,7 +36,7 @@ const ChatInterface = () => {
       <div
         className={cn(
           "w-full bg-card border-l transition-transform duration-300 ease-in-out md:w-80 lg:w-96 md:flex md:flex-col",
-          isMobile && selectedChatId !== null ? "absolute -translate-x-full" : "relative translate-x-0"
+          isMobile && selectedChatId !== null ? "hidden" : "flex"
         )}
       >
         <ChatList
@@ -35,7 +44,7 @@ const ChatInterface = () => {
           setSelectedChatId={setSelectedChatId}
         />
       </div>
-      <div className={cn("flex-1 flex flex-col", isMobile && !selectedChatId ? "hidden" : "flex")}>
+      <div className={cn("flex-1 flex-col", isMobile && !selectedChatId ? "hidden" : "flex")}>
         {selectedChat ? (
           <ChatView
             key={selectedChat.id}

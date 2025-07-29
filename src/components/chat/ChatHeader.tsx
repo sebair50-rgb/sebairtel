@@ -48,8 +48,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
         <Avatar>
           <AvatarFallback>{chat.avatar}</AvatarFallback>
         </Avatar>
-        <div>
-          <h2 className="font-bold text-lg">{chat.name}</h2>
+        <div className="flex-1 overflow-hidden">
+          <h2 className="font-bold text-lg truncate">{chat.name}</h2>
           <p className="text-xs text-muted-foreground">متصل الآن</p>
         </div>
       </div>

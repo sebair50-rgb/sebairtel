@@ -57,11 +57,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
 
   return (
-    <div className={cn("flex items-end gap-3", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
-      <Avatar className="w-8 h-8 self-end">
+    <div className={cn("flex items-end gap-2", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
+      <Avatar className="w-8 h-8 self-end flex-shrink-0">
         <AvatarFallback>{message.avatar}</AvatarFallback>
       </Avatar>
-      <div className={cn("group relative max-w-md lg:max-w-lg", isOwnMessage ? "items-end" : "items-start")}>
+      <div className={cn("group relative max-w-[80%] lg:max-w-[70%]", isOwnMessage ? "items-end" : "items-start")}>
         <div
           className={cn(
             "p-3 rounded-2xl w-fit",
@@ -95,7 +95,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           {isOwnMessage && <MessageStatus status={message.status} />}
         </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center", isOwnMessage ? "-left-20" : "-right-20")}>
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center", isOwnMessage ? "-left-[5.5rem] md:-left-20" : "-right-[5.5rem] md:-right-20")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
               <Heart size={18} className={cn(message.isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>

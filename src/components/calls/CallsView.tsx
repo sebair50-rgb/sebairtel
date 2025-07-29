@@ -27,21 +27,21 @@ const CallsView = () => {
                 </div>
             </div>
              <Tabs defaultValue="chats" className="w-full flex flex-col flex-1 px-4 md:px-6">
-                <TabsList className="grid w-full grid-cols-4 gap-1 h-auto">
-                    <TabsTrigger value="friends" className="py-2">
-                         <Users className="ml-2" />
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto">
+                    <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
+                         <Users className="ml-1 sm:ml-2" />
                         الأصدقاء
                     </TabsTrigger>
-                    <TabsTrigger value="groups" className="py-2">
-                         <Users className="ml-2" />
+                    <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm">
+                         <Users className="ml-1 sm:ml-2" />
                         مجموعاتي
                     </TabsTrigger>
-                    <TabsTrigger value="calls" className="py-2">
-                         <Phone className="ml-2" />
+                    <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm">
+                         <Phone className="ml-1 sm:ml-2" />
                         مكالماتي
                     </TabsTrigger>
-                     <TabsTrigger value="chats" className="py-2">
-                        <MessageSquare className="ml-2" />
+                     <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm">
+                        <MessageSquare className="ml-1 sm:ml-2" />
                         دردشتي
                      </TabsTrigger>
                 </TabsList>

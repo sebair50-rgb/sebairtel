@@ -136,7 +136,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background w-full">
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
       <ChatMessages
         messages={chat.messages}
