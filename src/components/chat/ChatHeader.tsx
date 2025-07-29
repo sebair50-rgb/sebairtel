@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import type { Chat } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Video, MoreVertical, Search, BellOff, XCircle, UserX, Trash2 } from 'lucide-react';
+import { ArrowRight, Phone, Video, MoreVertical, Search, BellOff, Trash2, UserX } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,

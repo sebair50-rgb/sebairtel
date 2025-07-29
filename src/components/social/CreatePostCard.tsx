@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -5,7 +6,7 @@ import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Send } from 'lucide-react';
+import { Image as ImageIcon, Send, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import Image from 'next/image';
 

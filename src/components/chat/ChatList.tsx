@@ -3,14 +3,13 @@
 
 import React from 'react';
 import { useAppContext } from '@/store/AppContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, PanelRight, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '../ui/button';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ChatListProps {
   selectedChatId: number | null;

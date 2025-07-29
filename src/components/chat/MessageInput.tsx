@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
@@ -7,7 +8,6 @@ import { Paperclip, ArrowUp, Smile, X, Mic, Brain, Code } from 'lucide-react';
 import type { Chat, Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
-import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 interface MessageInputProps {

@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import type { Message } from '@/lib/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Check, CheckCheck, CornerDownRight, Download, Edit, Share2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Check, CheckCheck, CornerDownRight, Download, Edit, MoreHorizontal, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MessageContent from './MessageContent';
 import {
@@ -74,7 +75,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           {isOwnMessage && <MessageStatus status={message.status} />}
         </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity", isOwnMessage ? "-right-10" : "-left-10")}>
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity", isOwnMessage ? "-left-10" : "-right-10")}>
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">

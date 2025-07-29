@@ -1,9 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import type { Message } from '@/lib/types';
 import CodeBlock from '@/components/shared/CodeBlock';
-import { FileIcon } from 'lucide-react';
+import { FileIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
