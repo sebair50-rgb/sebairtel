@@ -11,6 +11,7 @@ import { useAuth } from '@/store/AuthContext';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import CallsView from '../calls/CallsView';
+import ChatInterface from '../chat/ChatInterface';
 
 const AppShell = () => {
   const { user: authUser } = useAuth();
@@ -34,9 +35,9 @@ const AppShell = () => {
       case 'apps':
         return <AppsView />;
       case 'contact':
-        return <CallsView defaultTab="calls" />;
+        return <CallsView defaultTab="chats" />;
       default:
-        return <CallsView defaultTab="calls" />;
+        return <CallsView defaultTab="chats" />;
     }
   };
 

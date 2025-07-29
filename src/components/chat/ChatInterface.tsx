@@ -16,8 +16,11 @@ const ChatInterface = () => {
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
   useEffect(() => {
-    // This effect is now simplified. We no longer automatically select a chat.
-    // The user must explicitly select a chat from the list.
+    // On desktop, if no chat is selected, select the first one.
+    // On mobile, do not auto-select a chat to show the list first.
+    if (!isMobile && !selectedChatId && chats.length > 0) {
+      // setSelectedChatId(chats[0].id);
+    }
   }, [isMobile, selectedChatId, chats, setSelectedChatId]);
 
   const handleSelectChat = (id: number) => {

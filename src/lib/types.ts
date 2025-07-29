@@ -1,5 +1,4 @@
 
-
 export interface User {
   id: number;
   name: string;
@@ -7,6 +6,39 @@ export interface User {
   isFriend?: boolean;
   requestSent?: boolean;
 }
+
+export interface Message {
+    id: number;
+    user: string;
+    avatar: string;
+    text?: string;
+    time: string;
+    status: 'sent' | 'delivered' | 'seen';
+    type: 'text' | 'image' | 'video' | 'file' | 'code';
+    src?: string;
+    fileInfo?: {
+      name: string;
+      size: number;
+      type: string;
+    };
+    replyTo?: number | null;
+    likes?: number;
+    isLiked?: boolean;
+    suggestions?: string[];
+}
+
+
+export interface Chat {
+  id: number;
+  name: string;
+  avatar: string;
+  messages: Message[];
+  unreadCount?: number;
+  lastMessageTime: string;
+  isMuted?: boolean;
+  isBlocked?: boolean;
+}
+
 
 export interface Comment {
   user: string;

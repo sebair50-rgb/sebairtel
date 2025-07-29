@@ -2,10 +2,12 @@
 "use client";
 
 import React from 'react';
-import { Phone, Users } from 'lucide-react';
+import { Phone, Users, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CallsList from './CallsList';
 import UsersView from '../users/UsersView';
+import ChatInterface from '../chat/ChatInterface';
+
 
 interface CallsViewProps {
     defaultTab?: string;
@@ -29,7 +31,7 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                 </div>
             </div>
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1 px-4 md:px-6">
-                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 gap-1 h-auto">
+                <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-1 h-auto">
                     <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
                          <Users className="ml-1 sm:ml-2" />
                         الأصدقاء
@@ -42,9 +44,16 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                          <Phone className="ml-1 sm:ml-2" />
                         مكالماتي
                     </TabsTrigger>
+                     <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm">
+                         <MessageSquare className="ml-1 sm:ml-2" />
+                        دردشتي
+                    </TabsTrigger>
                 </TabsList>
                 <TabsContent value="calls" className="mt-6 flex-1">
                     <CallsList />
+                </TabsContent>
+                 <TabsContent value="chats" className="mt-6 flex-1">
+                    <ChatInterface />
                 </TabsContent>
                 <TabsContent value="groups" className="mt-6 flex-1">
                     <ComingSoonContent title="المجموعات" icon={Users} />

@@ -23,7 +23,7 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { currentUser } = useAppContext();
+  const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
   const router = useRouter();
   const isMobile = useIsMobile();
 
@@ -33,6 +33,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   };
 
   const handleTabClick = (tab: string) => {
+    if (tab === 'contact') {
+      setSelectedChatId(null);
+    }
     setActiveTab(tab);
   };
 
@@ -44,9 +47,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
   
-  // For now, mobile nav is always shown if on mobile.
-  // This can be adapted if certain views should hide it.
-  const showMobileNav = isMobile;
+  const showMobileNav = isMobile && selectedChatId === null;
 
   return (
     <>
@@ -101,7 +102,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
               key={item.name}
               onClick={() => handleTabClick(item.name)}
               className={cn(
-                'flex flex-col items-center justify-center w-16 h-14 rounded-lg transition-colors duration-200 text-[10px]',
+                'flex flex-col items-center justify-center w-full h-14 rounded-lg transition-colors duration-200 text-[10px]',
                 activeTab === item.name
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'

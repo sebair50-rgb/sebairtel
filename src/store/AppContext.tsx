@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { User, Post, Notification, Call } from '@/lib/types';
-import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER, initialCalls } from '@/lib/data';
+import type { User, Post, Notification, Call, Chat, Message } from '@/lib/types';
+import { initialUsers, initialPosts, initialNotifications, initialFriendRequests, CURRENT_USER, initialCalls, initialChats } from '@/lib/data';
 import { useAuth } from './AuthContext';
 
 interface AppContextType {
@@ -24,6 +23,13 @@ interface AppContextType {
   setCalls: React.Dispatch<React.SetStateAction<Call[]>>;
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
+  chats: Chat[];
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
+  selectedChatId: number | null;
+  setSelectedChatId: (id: number | null) => void;
+  addMessage: (chatId: number, message: Message) => void;
+  deleteMessage: (chatId: number, messageId: number) => void;
+  updateMessage: (chatId: number, messageId: number, updatedMessage: Partial<Message>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -31,6 +37,17 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { user: authUser } = useAuth();
   const [currentUser, setCurrentUser] = useState<User>(CURRENT_USER);
+
+  const [darkMode, setDarkMode] = useState(true);
+
+  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [calls, setCalls] = useState<Call[]>(initialCalls);
+  const [chats, setChats] = useState<Chat[]>(initialChats);
+  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
   useEffect(() => {
     if (authUser) {
@@ -42,15 +59,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [authUser]);
 
+  useEffect(() => {
+    // If a chat is selected, hide mobile nav
+    const mobileNav = document.querySelector('.fixed.bottom-0');
+    if (mobileNav) {
+        if (selectedChatId !== null) {
+            mobileNav.classList.add('hidden');
+        } else {
+            mobileNav.classList.remove('hidden');
+        }
+    }
+  }, [selectedChatId]);
 
-  const [darkMode, setDarkMode] = useState(true);
-
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [friendRequests, setFriendRequests] = useState<User[]>(initialFriendRequests);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
-  const [calls, setCalls] = useState<Call[]>(initialCalls);
-  const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
   const toggleDarkMode = () => {
     setDarkMode(prev => {
@@ -77,7 +97,33 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         ...postData,
     };
     setPosts(prevPosts => [newPost, ...prevPosts]);
+  };
+  
+  const addMessage = (chatId: number, message: Message) => {
+    setChats(prevChats => prevChats.map(chat =>
+      chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat
+    ));
+  };
+
+  const deleteMessage = (chatId: number, messageId: number) => {
+    setChats(prevChats => prevChats.map(chat =>
+      chat.id === chatId ? { ...chat, messages: chat.messages.filter(m => m.id !== messageId) } : chat
+    ));
+  };
+  
+  const updateMessage = (chatId: number, messageId: number, updatedMessage: Partial<Message>) => {
+    setChats(prevChats => prevChats.map(chat =>
+        chat.id === chatId
+            ? {
+                ...chat,
+                messages: chat.messages.map(message =>
+                    message.id === messageId ? { ...message, ...updatedMessage } : message
+                )
+            }
+            : chat
+    ));
   }
+
 
   const value = {
     darkMode,
@@ -96,6 +142,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setCalls,
     settings,
     setSettings,
+    chats,
+    setChats,
+    selectedChatId,
+    setSelectedChatId,
+    addMessage,
+    deleteMessage,
+    updateMessage,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
