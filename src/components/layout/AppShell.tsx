@@ -2,12 +2,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useAppContext } from '@/store/AppContext';
 import MainSidebar from '@/components/layout/MainSidebar';
 import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
-import UsersView from '@/components/users/UsersView';
-import { cn } from '@/lib/utils';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
 import { useAuth } from '@/store/AuthContext';
@@ -16,11 +13,10 @@ import { useRouter } from 'next/navigation';
 import CallsView from '../calls/CallsView';
 
 const AppShell = () => {
-  const { currentUser } = useAppContext();
   const { user: authUser } = useAuth();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState('social');
+  const [activeTab, setActiveTab] = useState('contact');
   
   const handleLogout = async () => {
     await auth.signOut();
@@ -31,8 +27,6 @@ const AppShell = () => {
     switch (activeTab) {
       case 'social':
         return <SocialFeed />;
-      case 'users':
-        return <UsersView />;
       case 'settings':
         return <SettingsView onLogout={handleLogout} />;
       case 'ai':
@@ -42,24 +36,18 @@ const AppShell = () => {
       case 'contact':
         return <CallsView />;
       default:
-        return <SocialFeed />;
+        return <CallsView />;
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
-      <main className={cn(
-        "flex-1 flex flex-col overflow-hidden",
-        "pb-16 md:pb-0"
-      )}>
-          <div className={cn(
-              "flex-1 flex overflow-y-auto"
-          )}>
+    <div className="flex h-screen w-full bg-background overflow-hidden">
+      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
+          <div className="flex-1 flex overflow-y-auto">
             {renderContent()}
           </div>
       </main>
-      
-       <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
+import useIsMobile from '@/hooks/use-is-mobile';
 
 
 interface ChatHeaderProps {
@@ -27,6 +28,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
   const { toast } = useToast();
   const { setChats } = useAppContext();
   const [isMuted, setIsMuted] = React.useState(chat.isMuted || false);
+  const isMobile = useIsMobile();
 
   const handleMute = () => {
     const newMutedState = !isMuted;
@@ -38,9 +40,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
   return (
     <div className="flex items-center justify-between p-3 border-b bg-card">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
-          <ArrowRight size={20} />
-        </Button>
+        {isMobile && (
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowRight size={20} />
+            </Button>
+        )}
         <Avatar>
           <AvatarFallback>{chat.avatar}</AvatarFallback>
         </Avatar>
@@ -49,7 +53,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
           <p className="text-xs text-muted-foreground">متصل الآن</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 md:gap-2">
         <Button variant="ghost" size="icon" onClick={() => toast({ description: "سيتم تفعيل المكالمات الصوتية قريباً" })}>
           <Phone size={20} />
         </Button>
