@@ -92,28 +92,29 @@ const AppShell = () => {
   };
   
     const showChatList = activeTab === 'community';
+    const isChatViewActive = showChatList && selectedChatId !== null;
+
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-background overflow-hidden">
       <div className={cn(
-        "transition-all duration-300 ease-in-out border-l",
-        isSidebarOpen && showChatList ? "w-full md:w-80" : "w-0",
-        !showChatList && "hidden"
+        "transition-all duration-300 ease-in-out border-l md:flex flex-col",
+        "w-full md:w-80",
+        !showChatList && "hidden",
+        isChatViewActive ? "hidden md:flex" : "flex",
+        isSidebarOpen ? "md:w-80" : "md:w-0"
       )}>
         <ChatList
             selectedChatId={selectedChatId}
             setSelectedChatId={(id) => {
               setSelectedChatId(id);
-              if (window.innerWidth < 768) {
-                setIsSidebarOpen(false);
-              }
             }}
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
       </div>
       
-      <main className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
+      <main className={cn("flex-1 flex flex-col overflow-hidden", { "pb-16 md:pb-0": !isChatViewActive })}>
           <div className="md:hidden p-2 border-b flex items-center">
               <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                   <PanelLeft />
@@ -121,12 +122,12 @@ const AppShell = () => {
               <h1 className="text-lg font-bold mr-4">SebairTel</h1>
           </div>
           
-          <div className={cn("flex-1 flex overflow-y-auto", { "hidden md:flex": showChatList && selectedChatId !== null && isSidebarOpen })}>
+          <div className={cn("flex-1 flex overflow-y-auto", { "hidden": showChatList && !isChatViewActive })}>
             {renderContent()}
           </div>
       </main>
-
-       <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+       {!isChatViewActive && <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />}
     </div>
   );
 };

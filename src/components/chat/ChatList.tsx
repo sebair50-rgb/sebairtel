@@ -22,6 +22,7 @@ interface ChatListProps {
 const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, isSidebarOpen, toggleSidebar }) => {
   const { chats } = useAppContext();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('chats');
 
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -47,8 +48,8 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, setSelectedChatId, 
         </div>
       </div>
       <div className="p-4 border-b">
-        <Tabs defaultValue="chats" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 gap-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 gap-1 h-auto">
             <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
             <TabsTrigger value="groups">مجموعات</TabsTrigger>
             <TabsTrigger value="calls">المكالمات</TabsTrigger>
