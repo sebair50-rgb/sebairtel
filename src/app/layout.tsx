@@ -1,5 +1,5 @@
 
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/store/AuthContext';
@@ -8,7 +8,13 @@ import { AppContextProvider } from '@/store/AppContext';
 export const metadata: Metadata = {
   title: 'SebairTel AI Communicator',
   description: 'An advanced AI-powered communication platform.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
