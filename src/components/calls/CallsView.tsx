@@ -36,21 +36,23 @@ const CallsView: React.FC = () => {
     });
 
     return (
-        <ScrollArea className="h-full">
-            <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-8 h-full flex flex-col">
-                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold flex items-center gap-2"><Phone /> سجل المكالمات</h1>
-                 </div>
+        <div className="max-w-4xl mx-auto p-4 md:p-6 h-full flex flex-col">
+            <div className="flex-shrink-0">
+                <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-bold flex items-center gap-2"><Phone /> سجل المكالمات</h1>
+                </div>
 
-                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="all">الكل</TabsTrigger>
-                        <TabsTrigger value="missed">الفائتة</TabsTrigger>
-                        <TabsTrigger value="incoming">الواردة</TabsTrigger>
-                        <TabsTrigger value="outgoing">الصادرة</TabsTrigger>
-                    </TabsList>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="all">الكل</TabsTrigger>
+                    <TabsTrigger value="missed">الفائتة</TabsTrigger>
+                    <TabsTrigger value="incoming">الواردة</TabsTrigger>
+                    <TabsTrigger value="outgoing">الصادرة</TabsTrigger>
+                </TabsList>
                 </Tabs>
-                
+            </div>
+            
+            <ScrollArea className="flex-1 mt-4">
                 <Card className="flex-1">
                     <CardContent className="p-4 space-y-4">
                         {filteredCalls.length > 0 ? filteredCalls.map(call => (
@@ -81,8 +83,8 @@ const CallsView: React.FC = () => {
                         )}
                     </CardContent>
                 </Card>
-            </div>
-        </ScrollArea>
+            </ScrollArea>
+        </div>
     );
 };
 
