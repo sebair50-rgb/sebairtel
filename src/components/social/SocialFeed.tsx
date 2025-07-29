@@ -7,6 +7,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
+import CreatePostCard from './CreatePostCard';
 
 const SocialFeed = () => {
     const { posts, setPosts, handleShareToChat, chats } = useAppContext();
@@ -46,7 +47,8 @@ const SocialFeed = () => {
                         <TabsTrigger value="live">بث مباشر</TabsTrigger>
                         <TabsTrigger value="posts">المنشورات العامة</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="posts" className="mt-6">
+                    <TabsContent value="posts" className="mt-6 space-y-6">
+                         <CreatePostCard />
                          <div className="space-y-6">
                             {posts.map(post => (
                                 <PostCard

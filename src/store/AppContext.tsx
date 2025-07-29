@@ -21,6 +21,7 @@ interface AppContextType {
   setFriendRequests: React.Dispatch<React.SetStateAction<User[]>>;
   posts: Post[];
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+  addPost: (post: Pick<Post, 'content' | 'media'>) => void;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
   settings: { notifications: boolean; privacy: boolean };
@@ -91,6 +92,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const addPost = (postData: Pick<Post, 'content' | 'media'>) => {
+    const newPost: Post = {
+        id: Date.now(),
+        user: currentUser.name,
+        avatar: currentUser.avatar,
+        time: 'الآن',
+        likes: 0,
+        isLiked: false,
+        isSaved: false,
+        comments: [],
+        ...postData,
+    };
+    setPosts(prevPosts => [newPost, ...prevPosts]);
+  }
+
   const handleShareToChat = (post: Post, chatId: number) => {
     const baseMessage = {
        id: Date.now(),
@@ -142,6 +158,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setFriendRequests,
     posts,
     setPosts,
+    addPost,
     notifications,
     setNotifications,
     settings,
