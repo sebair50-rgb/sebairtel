@@ -12,9 +12,10 @@ import type { Notification } from '@/lib/types';
 
 interface NotificationItemProps {
     notification: Notification;
+    onClick: () => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onClick }) => {
     
     const timeAgo = formatDistanceToNow(notification.timestamp.toDate(), { addSuffix: true, locale: ar });
 
@@ -44,10 +45,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
     }
 
     return (
-        <Card className={cn(
-            "p-4 flex items-start gap-4 transition-colors hover:bg-muted/50",
-            !notification.isRead && "bg-primary/5 border-primary/20"
-        )}>
+        <Card 
+            className={cn(
+                "p-4 flex items-start gap-4 transition-colors hover:bg-muted/50",
+                !notification.isRead && "bg-primary/5 border-primary/20",
+                notification.link && "cursor-pointer"
+            )}
+            onClick={onClick}
+        >
             <div className="relative">
                 <Avatar className="h-12 w-12">
                     <AvatarFallback>{notification.fromUser.avatar}</AvatarFallback>

@@ -3,13 +3,27 @@
 
 import React from 'react';
 import { useAppContext } from '@/store/AppContext';
-import { Bell, UserPlus, Heart, PhoneMissed } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import NotificationItem from './NotificationItem';
+import type { Notification } from '@/lib/types';
 
 const NotificationsView = () => {
-    const { notifications } = useAppContext();
+    const { notifications, setActiveTab, setSelectedChatId } = useAppContext();
+
+    const handleNotificationClick = (notification: Notification) => {
+        if (notification.link) {
+            // Example link: /chats/chatId123
+            const parts = notification.link.split('/');
+            if (parts[1] === 'chats' && parts[2]) {
+                const chatId = parts[2];
+                setSelectedChatId(chatId);
+                setActiveTab('contact');
+            }
+            // Can be extended for other link types like /posts/postId123
+        }
+    }
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -24,7 +38,11 @@ const NotificationsView = () => {
                  <div className="p-4 md:p-6 space-y-4">
                     {notifications.length > 0 ? (
                         notifications.map(notification => (
-                            <NotificationItem key={notification.id} notification={notification} />
+                            <NotificationItem 
+                                key={notification.id} 
+                                notification={notification} 
+                                onClick={() => handleNotificationClick(notification)}
+                            />
                         ))
                     ) : (
                         <Card className="text-center text-muted-foreground p-8 mt-8">
