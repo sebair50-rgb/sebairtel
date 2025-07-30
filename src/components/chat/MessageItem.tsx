@@ -71,10 +71,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
         <div
           id={`message-${message.id}`}
           className={cn(
-            "p-2 w-fit min-w-[80px] relative",
+            "p-2 w-fit min-w-[80px] relative overflow-hidden",
             isOwnMessage
-              ? "bg-[#D9FDD3] dark:bg-[#054740] text-black dark:text-white"
-              : "bg-white dark:bg-secondary text-black dark:text-white",
+              ? "bg-[#D9FDD3] text-black"
+              : "bg-white text-black",
             'rounded-lg',
           )}
         >
