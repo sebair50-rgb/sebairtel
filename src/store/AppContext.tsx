@@ -53,7 +53,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    // Set default to light mode on initial load
+    // On initial load, check for saved mode. Default to light (false) if nothing is saved.
     const savedMode = localStorage.getItem('darkMode');
     const isDark = savedMode === 'true';
     setDarkMode(isDark);
@@ -119,6 +119,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  ...data,
                  name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
                  avatar: otherUserInfo ? otherUserInfo.avatar : "?",
+                 lastMessageText: data.lastMessageText || '...',
                  lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || ''
              } as Chat;
         });
