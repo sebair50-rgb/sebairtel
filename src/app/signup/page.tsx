@@ -43,9 +43,9 @@ export default function SignupPage() {
         duration: 10000
       });
       
-      // Redirect to the verification page
-      router.push('/signup/verify-email');
-
+      // AuthProvider will redirect to the verification page automatically
+      // No need to router.push here
+      
     } catch (error: any) {
         if(error.code === 'auth/email-already-in-use') {
              toast({ variant: "destructive", title: "خطأ في إنشاء الحساب", description: "هذا البريد الإلكتروني مستخدم بالفعل." });

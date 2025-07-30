@@ -26,6 +26,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // AuthProvider will handle redirection based on verification status
+      // No need to router.push here, AuthContext handles it.
       toast({ title: "تم تسجيل الدخول بنجاح", description: "أهلاً بك مجدداً!" });
     } catch (error: any) {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
