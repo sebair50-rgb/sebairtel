@@ -7,21 +7,14 @@ import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
-import { useAuth } from '@/store/AuthContext';
-import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import CallsView from '../calls/CallsView';
-import ChatInterface from '../chat/ChatInterface';
 
 const AppShell = () => {
-  const { user: authUser } = useAuth();
-  const router = useRouter();
-
   const [activeTab, setActiveTab] = useState('contact');
   
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
+  const handleLogout = () => {
+    // Logout functionality is removed
+    console.log("Logout action is disabled.");
   };
 
   const renderContent = () => {

@@ -7,7 +7,6 @@ import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import {
   Tooltip,
@@ -28,9 +27,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
   const router = useRouter();
   const isMobile = useIsMobile();
 
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
+  const handleLogout = () => {
+    console.log("Logout action is disabled.");
+    // In a real app with auth, you would sign out here.
   };
 
   const handleTabClick = (tab: string) => {
@@ -83,12 +82,12 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
             <div className='flex flex-col items-center gap-2'>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant='ghost' size="icon" onClick={handleLogout} className="rounded-lg w-12 h-12">
-                            <LogOut size={24} className='text-destructive'/>
+                        <Button variant='ghost' size="icon" onClick={handleLogout} className="rounded-lg w-12 h-12" disabled>
+                            <LogOut size={24} className='text-muted-foreground'/>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left">
-                        <p>تسجيل الخروج</p>
+                        <p>تم تعطيل تسجيل الخروج</p>
                     </TooltipContent>
                  </Tooltip>
                  <Avatar>
