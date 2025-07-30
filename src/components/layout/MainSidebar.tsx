@@ -38,14 +38,14 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
     setActiveTab(tab);
   };
 
-  const navItems = [
+  const navItems = React.useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'contact', icon: Phone, label: 'تواصل' },
     { name: 'social', icon: Users, label: 'المجتمع' },
     { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
-  ];
+  ], [unreadNotificationCount]);
   
   const showMobileNav = isMobile && selectedChatId === null;
 
