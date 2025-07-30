@@ -4,9 +4,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Newspaper, Zap, CheckCircle, AlertTriangle, Info, ListChecks, MessageSquareQuote, ShieldCheck, TrendingUp, UserCheck, Link as LinkIcon, BrainCircuit } from 'lucide-react';
+import { Loader2, Newspaper, Zap, BrainCircuit, MessageSquareQuote, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { analyzeText, KnowledgeAnalysisOutput } from '@/ai/flows/knowledge-flow';
+import { analyzeText, KnowledgeAnalysisOutput } from '@/ai/flows/news-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Separator } from '../ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -16,7 +16,7 @@ interface AnalyzedContent extends KnowledgeAnalysisOutput {
     sourceText: string;
 }
 
-const KnowledgeView = () => {
+const NewsView = () => {
     const [textToAnalyze, setTextToAnalyze] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [analyzedContent, setAnalyzedContent] = useState<AnalyzedContent[]>([]);
@@ -57,10 +57,10 @@ const KnowledgeView = () => {
             <div className="text-center">
                  <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl flex items-center justify-center gap-3">
                     <BrainCircuit className="w-10 h-10" />
-                    مساعد المعرفة الذكي
+                    محلل المقالات الذكي
                 </h1>
                 <p className="mt-4 text-xl text-muted-foreground">
-                    ألصق أي نص - مقال، فكرة، سؤال - ودع الذكاء الاصطناعي يقدم لك تحليلًا معمقًا وملخصًا ذكيًا.
+                    ألصق أي مقال ودع الذكاء الاصطناعي يقدم لك تحليلًا معمقًا وملخصًا ذكيًا.
                 </p>
             </div>
 
@@ -68,7 +68,7 @@ const KnowledgeView = () => {
                  <CardContent className="p-4">
                     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-2">
                          <Textarea
-                            placeholder="الصق النص هنا لتحليله..."
+                            placeholder="الصق نص المقال هنا لتحليله..."
                             className="w-full bg-muted min-h-[150px] text-base"
                             value={textToAnalyze}
                             onChange={(e) => setTextToAnalyze(e.target.value)}
@@ -132,4 +132,4 @@ const KnowledgeView = () => {
     );
 };
 
-export default KnowledgeView;
+export default NewsView;
