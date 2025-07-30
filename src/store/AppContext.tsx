@@ -11,6 +11,9 @@ import {
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 
+type Visibility = 'everyone' | 'friends' | 'nobody';
+type FriendRequestSetting = 'everyone' | 'friends_of_friends';
+
 interface AppSettings {
     theme: 'light' | 'dark' | 'system';
     notifications: {
@@ -19,7 +22,11 @@ interface AppSettings {
         mentions: boolean;
         calls: boolean;
     };
-    privacy: boolean;
+    privacy: {
+        lastSeen: Visibility;
+        profilePhoto: 'everyone' | 'friends';
+        friendRequests: FriendRequestSetting;
+    };
 }
 
 interface AppContextType {
@@ -66,7 +73,11 @@ const defaultSettings: AppSettings = {
         mentions: true,
         calls: true,
     },
-    privacy: false,
+    privacy: {
+        lastSeen: 'everyone',
+        profilePhoto: 'everyone',
+        friendRequests: 'everyone',
+    },
 };
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
@@ -84,7 +95,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof window !== 'undefined') {
         const savedSettings = localStorage.getItem('app-settings');
-        return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+        if (savedSettings) {
+            const parsedSettings = JSON.parse(savedSettings);
+            // Merge with defaults to ensure all keys are present
+            return { ...defaultSettings, ...parsedSettings };
+        }
     }
     return defaultSettings;
   });
@@ -644,5 +659,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    
