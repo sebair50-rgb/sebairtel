@@ -221,17 +221,48 @@ const LiveStreamPage = () => {
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row items-center justify-center text-white">
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
-                 <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-6 right-6 z-30 bg-black/50 backdrop-blur-sm rounded-full"
-                    onClick={handleExitActions}
-                >
-                    <ArrowRight />
-                </Button>
+                 <AnimatePresence>
+                    {!isFullScreen && (
+                        <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="absolute top-6 right-6 z-10 bg-black/50 backdrop-blur-sm rounded-full"
+                                onClick={handleExitActions}
+                            >
+                                <ArrowRight />
+                            </Button>
+                        </motion.div>
+                    )}
+                 </AnimatePresence>
+
 
                 <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
                     {renderStreamContent()}
+
+                    <AnimatePresence>
+                        {isFullScreen && (
+                            <motion.div 
+                                className="absolute top-0 left-0 right-0 z-30 p-4 bg-gradient-to-b from-black/70 to-transparent"
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-4">
+                                        <Button variant="ghost" size="icon" className="bg-black/50 rounded-full" onClick={handleExitActions}><ArrowRight /></Button>
+                                        <h3 className="font-bold text-lg">{streamer?.name}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="ghost" size="icon" className="bg-black/50 rounded-full" onClick={() => setShowChatInFullScreen(!showChatInFullScreen)}>
+                                            {showChatInFullScreen ? <MessageSquareOff /> : <MessageSquare />}
+                                        </Button>
+                                         <Button variant="ghost" size="icon" className="bg-black/50 rounded-full" onClick={handleToggleFullScreen}><Minimize /></Button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     
                      <div className="absolute top-4 left-4 z-20">
                         <Card className="bg-black/50 border-none text-white">
@@ -251,30 +282,24 @@ const LiveStreamPage = () => {
                         </Card>
                     </div>
 
-                    <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
-                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="bg-black/50 backdrop-blur-sm rounded-full"
-                            onClick={handleToggleFullScreen}
-                        >
-                           {isFullScreen ? <Minimize /> : <Maximize /> }
-                        </Button>
-                        <AnimatePresence>
-                        {isFullScreen && (
-                             <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }}>
+                    <AnimatePresence>
+                        {!isFullScreen && (
+                            <motion.div 
+                                className="absolute bottom-4 right-4 z-20"
+                                initial={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
                                 <Button 
                                     variant="ghost" 
                                     size="icon" 
                                     className="bg-black/50 backdrop-blur-sm rounded-full"
-                                    onClick={() => setShowChatInFullScreen(!showChatInFullScreen)}
+                                    onClick={handleToggleFullScreen}
                                 >
-                                {showChatInFullScreen ? <MessageSquareOff /> : <MessageSquare />}
+                                    <Maximize />
                                 </Button>
-                             </motion.div>
+                            </motion.div>
                         )}
-                        </AnimatePresence>
-                    </div>
+                    </AnimatePresence>
 
                     <AnimatePresence>
                     {isFullScreen && showChatInFullScreen && (
