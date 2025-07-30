@@ -31,15 +31,11 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                 </div>
             </header>
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1">
-                <div className="px-4 md:px-6 pt-4">
-                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
-                        <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                <div className="px-4 md:px-6 pt-4 bg-white">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 gap-2 h-auto bg-slate-200 p-2">
+                         <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="ml-1 sm:ml-2" />
                             أصدقائي
-                        </TabsTrigger>
-                        <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <Users className="ml-1 sm:ml-2" />
-                            مجموعاتي
                         </TabsTrigger>
                          <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Phone className="ml-1 sm:ml-2" />
@@ -51,16 +47,13 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                         </TabsTrigger>
                     </TabsList>
                 </div>
-                 <TabsContent value="chats" className="flex-1">
+                 <TabsContent value="chats" className="flex-1 bg-white">
                     <ChatInterface />
                 </TabsContent>
                 <TabsContent value="calls" className="mt-2 flex-1 px-4 md:px-6">
                     <CallsList />
                 </TabsContent>
-                <TabsContent value="groups" className="mt-2 flex-1">
-                    <ComingSoonContent title="المجموعات" icon={Users} />
-                </TabsContent>
-                 <TabsContent value="friends" className="mt-2 flex-1">
+                 <TabsContent value="friends" className="flex-1 bg-white">
                     <UsersView />
                 </TabsContent>
             </Tabs>
@@ -69,5 +62,3 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
 };
 
 export default CallsView;
-
-
