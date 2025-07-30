@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
@@ -28,7 +28,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   const { currentUser, selectedChatId, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead } = useAppContext();
   const isMobile = useIsMobile();
 
-  const handleTabClick = (tab: string) => {
+  const handleTabClick = useCallback((tab: string) => {
     if (tab === 'contact') {
       setSelectedChatId(null);
     }
@@ -36,7 +36,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
       markNotificationsAsRead();
     }
     setActiveTab(tab);
-  };
+  }, [setActiveTab, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead]);
 
   const navItems = React.useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
