@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -25,6 +25,7 @@ const ProfileSettings = () => {
     const [name, setName] = useState(currentUser?.name || '');
     const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
     const [bio, setBio] = useState(currentUser?.bio || '');
+    const [phone, setPhone] = useState(currentUser?.phone || '');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -34,6 +35,7 @@ const ProfileSettings = () => {
             setName(currentUser.name || '');
             setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
             setBio(currentUser.bio || '');
+            setPhone(currentUser.phone || '');
             setAvatarPreview(null);
             setAvatarFile(null);
         }
@@ -77,6 +79,10 @@ const ProfileSettings = () => {
         
         if (bio.trim() !== (currentUser.bio || '')) {
             updatePayload.bio = bio.trim();
+        }
+        
+        if (phone.trim() !== (currentUser.phone || '')) {
+            updatePayload.phone = phone.trim();
         }
 
         if (avatarPreview && avatarFile) {
@@ -148,6 +154,7 @@ const ProfileSettings = () => {
       (name.trim() !== (currentUser.name || '') && name.trim() !== "") ||
       (formattedDob !== (currentUser.dob || undefined)) ||
       (bio.trim() !== (currentUser.bio || '')) ||
+      (phone.trim() !== (currentUser.phone || '')) ||
       !!avatarFile;
 
 
@@ -197,6 +204,10 @@ const ProfileSettings = () => {
                      <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني</Label>
                         <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">رقم الهاتف</Label>
+                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+966 12 345 6789" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="dob">تاريخ الميلاد</Label>

@@ -512,13 +512,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await updateProfile(auth.currentUser, { displayName: data.name });
             updateData.name = data.name;
         }
-
+        
         if (data.dob !== undefined && data.dob !== currentUser?.dob) {
             updateData.dob = data.dob;
         }
         
         if (data.bio !== undefined && data.bio !== (currentUser?.bio || '')) {
             updateData.bio = data.bio;
+        }
+        
+        if (data.phone !== undefined && data.phone !== (currentUser?.phone || '')) {
+            updateData.phone = data.phone;
         }
 
         if (data.avatar && data.avatar !== currentUser?.avatar) {
