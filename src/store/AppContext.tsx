@@ -12,9 +12,6 @@ import {
 
 interface AppContextType {
   currentUser: User | null;
-  users: User[];
-  friends: User[];
-  friendRequests: User[];
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -30,7 +27,6 @@ interface AppContextType {
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
   deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
-  createChat: (otherUserId: string) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -39,35 +35,25 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  const [users, setUsers] = useState<User[]>([]);
-  const [friends, setFriends] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState('contact');
   
-  const [friendRequests, setFriendRequests] = useState<User[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
   useEffect(() => {
-    // On initial load, check if a theme is saved in localStorage.
-    // If not, default to 'light'.
-    const savedTheme = localStorage.getItem('theme');
-    if (!savedTheme) {
-        document.documentElement.className = 'light';
-        localStorage.setItem('theme', 'light');
-    } else {
-        document.documentElement.className = savedTheme;
-    }
+    // On initial load, force light theme.
+    document.documentElement.className = 'light';
+    localStorage.setItem('theme', 'light');
   }, []);
 
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
       setCurrentUser(null);
-      setUsers([]);
       setPosts([]);
       setChats([]);
       return;
@@ -123,30 +109,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [authUser, authLoading]);
 
-  // Derived state for friends from chats and all users
-  useEffect(() => {
-      if (!authUser) return;
-
-      const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
-      const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-        const allUsersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(allUsersData);
-      });
-
-      return () => unsubscribeUsers();
-  }, [authUser]);
-
-
-  useEffect(() => {
-      if (!authUser) return;
-      
-      const friendIds = new Set(chats.flatMap(chat => chat.users).filter(id => id !== authUser.id));
-      
-      const currentFriends = users.filter(user => friendIds.has(user.id));
-      setFriends(currentFriends);
-
-  }, [chats, users, authUser]);
-
 
   const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
     if (!currentUser) return;
@@ -184,50 +146,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
   };
   
-  const createChat = async (otherUserId: string): Promise<string | null> => {
-      if (!currentUser) return null;
-      
-      const chatsRef = collection(db, "chats");
-      const sortedUsers = [currentUser.id, otherUserId].sort();
-      const chatId = sortedUsers.join('_');
-      const chatDocRef = doc(chatsRef, chatId);
-      const chatDoc = await getDoc(chatDocRef);
-
-
-      if (chatDoc.exists()) {
-          return chatDoc.id;
-      }
-      
-      const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
-      if (!otherUserDoc.exists()) {
-          console.error("Attempted to create chat with non-existent user:", otherUserId);
-          return null;
-      }
-      const otherUser = otherUserDoc.data() as User;
-      
-      const newChatData = {
-          users: sortedUsers,
-          userInfo: {
-              [currentUser.id]: {
-                  id: currentUser.id,
-                  name: currentUser.name,
-                  avatar: currentUser.avatar,
-              },
-              [otherUserId]: {
-                  id: otherUser.id,
-                  name: otherUser.name,
-                  avatar: otherUser.avatar,
-              }
-          },
-          lastMessageTimestamp: serverTimestamp(),
-          lastMessageText: `لقد بدأت محادثة مع ${otherUser.name}`,
-          unreadCount: 0,
-      };
-      
-      await setDoc(chatDocRef, newChatData);
-      
-      return chatId;
-  };
 
   const deleteMessage = async (chatId: string, messageId: string) => {
       const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
@@ -241,9 +159,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const value = {
     currentUser,
-    users,
-    friends,
-    friendRequests,
     posts,
     addPost,
     updatePost,
@@ -258,8 +173,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setActiveTab,
     addMessage,
     deleteMessage,
-    updateMessage: updateMessage,
-    createChat,
+    updateMessage,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

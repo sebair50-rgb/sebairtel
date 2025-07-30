@@ -5,7 +5,6 @@ import React from 'react';
 import { Phone, Users, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CallsList from './CallsList';
-import UsersView from '../users/UsersView';
 import ChatInterface from '../chat/ChatInterface';
 
 
@@ -32,7 +31,7 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
             </header>
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4">
-                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 gap-2 h-auto bg-slate-200 p-2">
                         <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <MessageSquare className="ml-1 sm:ml-2" />
                             دردشتي
@@ -45,10 +44,6 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                             <Users className="ml-1 sm:ml-2" />
                             مجموعاتي
                         </TabsTrigger>
-                        <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <Users className="ml-1 sm:ml-2" />
-                            الأصدقاء
-                        </TabsTrigger>
                     </TabsList>
                 </div>
                 <TabsContent value="calls" className="mt-2 flex-1 px-4 md:px-6">
@@ -59,9 +54,6 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
                 </TabsContent>
                 <TabsContent value="groups" className="mt-2 flex-1">
                     <ComingSoonContent title="المجموعات" icon={Users} />
-                </TabsContent>
-                <TabsContent value="friends" className="flex-1">
-                    <UsersView />
                 </TabsContent>
             </Tabs>
         </div>
