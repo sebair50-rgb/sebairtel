@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -10,11 +11,38 @@ import { Music, Bell, Phone } from 'lucide-react';
 type SoundKey = 'messageTone' | 'notificationTone' | 'callRingtone';
 
 const soundOptions = [
-    { value: 'default', label: 'افتراضي' },
-    { value: 'chime', label: 'رنين' },
-    { value: 'signal', label: 'إشارة' },
-    { value: 'vibrate', label: 'اهتزاز فقط' },
+    { value: 'default', label: 'افتراضي', freq: 440 },
+    { value: 'chime', label: 'رنين', freq: 523.25 },
+    { value: 'signal', label: 'إشارة', freq: 659.25 },
+    { value: 'alert', label: 'تنبيه', freq: 783.99 },
+    { value: 'vibrate', label: 'اهتزاز فقط', freq: 0 },
 ];
+
+const playSound = (soundValue: string) => {
+    const sound = soundOptions.find(s => s.value === soundValue);
+    if (!sound || sound.freq === 0) return; // Don't play for vibrate
+
+    try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+        oscillator.frequency.setValueAtTime(sound.freq, audioContext.currentTime); 
+        
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch(e) {
+        console.error("Could not play sound:", e)
+    }
+};
+
 
 const SoundSettings = () => {
     const { settings, setSettings } = useAppContext();
@@ -27,6 +55,7 @@ const SoundSettings = () => {
                 [key]: value,
             }
         }));
+        playSound(value);
     };
 
     return (
