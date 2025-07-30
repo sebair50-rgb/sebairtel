@@ -10,12 +10,9 @@ import UsersView from '../users/UsersView';
 import { useAppContext } from '@/store/AppContext';
 
 
-interface CallsViewProps {
-    defaultTab?: string;
-    setActiveTab: (tab: string) => void;
-}
+const CallsView = () => {
+    const { setActiveTab } = useAppContext();
 
-const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats', setActiveTab }) => {
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />
@@ -32,7 +29,7 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats', setActiveTa
                     <h1 className="text-2xl font-bold">تواصل</h1>
                 </div>
             </header>
-             <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1">
+             <Tabs defaultValue="chats" className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-white">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
@@ -60,7 +57,7 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats', setActiveTa
                     <CallsList />
                 </TabsContent>
                  <TabsContent value="friends" className="flex-1 bg-white">
-                    <UsersView setActiveTab={setActiveTab} />
+                    <UsersView />
                 </TabsContent>
                  <TabsContent value="groups" className="flex-1 bg-white">
                     <ComingSoonContent title="المجموعات" icon={Users} />

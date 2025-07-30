@@ -74,14 +74,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     });
     
-    // Fetch all users except the current one
-    const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
+    const usersQuery = query(collection(db, 'users'));
     const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setUsers(usersData);
+        const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        const otherUsers = allUsers.filter(u => u.id !== authUser.uid);
+        setUsers(otherUsers);
     });
 
-    // Fetch posts
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
       const postsData = snapshot.docs.map(doc => {
@@ -95,7 +94,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setPosts(postsData);
     });
 
-    // Fetch chats for the current user
     const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
@@ -112,7 +110,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              } as Chat;
         });
         
-        // Sort chats by last message timestamp client-side
         const sortedChats = chatsData.sort((a, b) => {
             const timeA = a.lastMessageTimestamp?.toMillis() || 0;
             const timeB = b.lastMessageTimestamp?.toMillis() || 0;
@@ -132,7 +129,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [authUser, authLoading]);
 
-  // Separate friends and suggested users
   useEffect(() => {
       if (!currentUser || users.length === 0) return;
 
@@ -169,21 +165,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const createChat = async (friend: User): Promise<string | null> => {
       if (!currentUser) return null;
 
-      // Check if a chat already exists between the two users
-      const existingChatQuery = query(
-          collection(db, 'chats'),
-          where('users', 'array-contains', currentUser.id)
-      );
-      const querySnapshot = await getDocs(existingChatQuery);
-      const existingChat = querySnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as Chat))
-          .find(chat => chat.users.includes(friend.id));
+      const existingChat = chats.find(chat => chat.users.includes(friend.id));
       
       if (existingChat) {
           return existingChat.id;
       }
       
-      // If no chat exists, create a new one
       const newChatRef = doc(collection(db, 'chats'));
       const newChatData = {
           id: newChatRef.id,
@@ -198,6 +185,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       };
 
       await setDoc(newChatRef, newChatData);
+      
+      // Add the new chat to the local state immediately
+      const createdChat: Chat = {
+          id: newChatRef.id,
+          users: newChatData.users,
+          userInfo: newChatData.userInfo,
+          name: friend.name,
+          avatar: friend.avatar,
+          lastMessageText: newChatData.lastMessageText,
+          // These will be updated by the listener, but good to have placeholders
+          lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
+          unreadCount: 0,
+      }
+      setChats(prevChats => [createdChat, ...prevChats]);
+      
       return newChatRef.id;
   };
 

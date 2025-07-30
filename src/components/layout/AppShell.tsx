@@ -10,10 +10,11 @@ import AppsView from '../apps/AppsView';
 import CallsView from '../calls/CallsView';
 import { useAuth } from '@/store/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useAppContext } from '@/store/AppContext';
 
 
 const AppShell = () => {
-  const [activeTab, setActiveTab] = useState('contact');
+  const { activeTab, setActiveTab } = useAppContext();
   const { logout } = useAuth();
   const router = useRouter();
 
@@ -34,9 +35,9 @@ const AppShell = () => {
       case 'apps':
         return <AppsView />;
       case 'contact':
-        return <CallsView defaultTab="chats" setActiveTab={setActiveTab} />;
+        return <CallsView />;
       default:
-        return <CallsView defaultTab="chats" setActiveTab={setActiveTab} />;
+        return <CallsView />;
     }
   };
 

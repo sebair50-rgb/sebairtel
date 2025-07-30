@@ -12,13 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { User as UserType } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 
-interface UsersViewProps {
-    setActiveTab: (tab: string) => void;
-}
-
-
-const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
-    const { friends, suggestedUsers, createChat, setSelectedChatId } = useAppContext();
+const UsersView = () => {
+    const { friends, suggestedUsers, createChat, setSelectedChatId, setActiveTab } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
@@ -31,15 +26,15 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                 title: "تمت الإضافة بنجاح!",
                 description: `لقد بدأت محادثة مع ${user.name}.`,
             });
-            // The user will be moved to the friends list automatically by the context
         }
     };
     
     const handleMessageFriend = async (user: UserType) => {
-        const chatId = await createChat(user); // Will get existing or create new
+        const chatId = await createChat(user);
         if (chatId) {
-            setActiveTab('contact');
             setSelectedChatId(chatId);
+            // setActiveTab is now directly from context and will trigger AppShell's state
+            setActiveTab('contact'); 
         }
     };
 
