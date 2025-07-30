@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -8,6 +7,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
+import LiveFeed from './LiveFeed';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
@@ -29,7 +29,7 @@ const SocialFeed = () => {
                 </div>
             </header>
             <ScrollArea className="h-full">
-                <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+                <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
                     <Tabs defaultValue="posts" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-slate-200">
                             <TabsTrigger value="news">الأخبار</TabsTrigger>
@@ -39,7 +39,7 @@ const SocialFeed = () => {
                             <TabsTrigger value="live">بث مباشر</TabsTrigger>
                             <TabsTrigger value="posts">العامة</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="posts" className="mt-6 space-y-6">
+                        <TabsContent value="posts" className="mt-6 space-y-6 max-w-2xl mx-auto">
                             <CreatePostCard />
                             <div className="space-y-6">
                                 {posts.map(post => (
@@ -50,8 +50,8 @@ const SocialFeed = () => {
                                 ))}
                             </div>
                         </TabsContent>
-                        <TabsContent value="live">
-                            <ComingSoonContent title="البث المباشر" icon={Video} />
+                         <TabsContent value="live" className="mt-6">
+                            <LiveFeed />
                         </TabsContent>
                         <TabsContent value="friends">
                             <ComingSoonContent title="الأصدقاء" icon={Users} />

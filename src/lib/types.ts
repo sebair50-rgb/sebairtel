@@ -1,4 +1,3 @@
-
 import type { Timestamp } from 'firebase/firestore';
 
 export interface User {
@@ -104,5 +103,5 @@ export interface Notification {
     };
     timestamp: Timestamp;
     isRead: boolean;
-    link?: string;
+    link?: string; // e.g., /posts/postId123 or /chats/chatId456
 }

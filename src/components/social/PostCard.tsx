@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -38,7 +37,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           if (post.userId !== currentUser.id) {
             createNotification(post.userId, {
                 type: 'like',
-                message: `أعجب ${currentUser.name} بمنشورك.`,
+                message: `أعجب <strong>${currentUser.name}</strong> بمنشورك.`,
                 fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
                 link: `/post/${post.id}`
             })

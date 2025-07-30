@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -10,6 +9,8 @@ import {
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
+import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 
 type Visibility = 'everyone' | 'friends' | 'nobody';
 type FriendRequestSetting = 'everyone' | 'friends_of_friends';
@@ -66,6 +67,11 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
+  readChatAloud: () => Promise<void>;
+  isReadingAloud: boolean;
+  smartReplies: string[];
+  fetchSmartReplies: () => Promise<void>;
+  clearSmartReplies: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -130,6 +136,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // States for AI features
+  const [isReadingAloud, setIsReadingAloud] = useState(false);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -160,13 +172,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (selectedChatId) {
         markChatAsRead(selectedChatId);
+        clearSmartReplies(); // Clear replies when chat changes
     }
   }, [selectedChatId, markChatAsRead]);
 
-
-  useEffect(() => {
-    document.documentElement.className = 'light';
-  }, []);
 
   // Presence management effect
   useEffect(() => {
@@ -433,30 +442,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const unfriendUser = async (friendId: string) => {
         if (!currentUser) return;
+        
+        // Find the chat document where the 'users' array contains both UIDs
         const q = query(
             collection(db, 'chats'),
-            where('users', '==', [currentUser.id, friendId].sort())
+            where('users', 'array-contains', currentUser.id)
         );
-
         const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const chatDoc = querySnapshot.docs[0];
+        const chatDoc = querySnapshot.docs.find(doc => doc.data().users.includes(friendId));
+
+        if (chatDoc) {
             await deleteDoc(doc(db, 'chats', chatDoc.id));
             setChats(prev => prev.filter(c => c.id !== chatDoc.id));
         } else {
-            // Alternative check if users array was stored in different order
-             const qAlt = query(
-                collection(db, 'chats'),
-                where('users', '==', [friendId, currentUser.id].sort())
-            );
-            const querySnapshotAlt = await getDocs(qAlt);
-            if (!querySnapshotAlt.empty) {
-                const chatDoc = querySnapshotAlt.docs[0];
-                await deleteDoc(doc(db, 'chats', chatDoc.id));
-                 setChats(prev => prev.filter(c => c.id !== chatDoc.id));
-            } else {
-                 console.warn("No chat found to delete between these users.");
-            }
+             console.warn("No chat found to delete between these users.");
         }
     };
 
@@ -572,6 +571,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (audioRef.current) {
         audioRef.current.pause();
     }
+    // Note: The /ringing.mp3 file needs to be in the `public` directory.
     audioRef.current = new Audio('/ringing.mp3');
     audioRef.current.loop = true;
     audioRef.current.play().catch(e => console.error("Error playing sound:", e));
@@ -619,15 +619,87 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const answerCall = () => {
       if (callState.status === 'incoming') {
+          stopRingingSound();
           setCallState({ ...callState, status: 'connected' });
-          // Stop incoming call ringtone if any
       }
   };
 
   const endCall = () => {
       stopRingingSound();
+      if(callState.status === 'incoming' && callState.user) {
+          addMissedCall(callState.user);
+      }
       setCallState({ status: 'idle' });
   };
+  
+    // AI Feature: Read Chat Aloud
+    const readChatAloud = useCallback(async () => {
+        if (isReadingAloud) {
+            // Stop playing
+            if (ttsAudioRef.current) {
+                ttsAudioRef.current.pause();
+                ttsAudioRef.current = null;
+            }
+            setIsReadingAloud(false);
+            return;
+        }
+
+        if (!selectedChatId) return;
+        
+        setIsReadingAloud(true);
+        try {
+            const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+            const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(10));
+            const snapshot = await getDocs(q);
+            const messages = snapshot.docs.map(doc => doc.data() as Message);
+            
+            if (messages.length === 0) {
+                 throw new Error("No messages to read.");
+            }
+
+            const chatText = messages.reverse().map(m => `${m.user}: ${getMessageDescription(m)}`).join('\n');
+            const { audioUrl } = await textToSpeech({ text: chatText });
+
+            ttsAudioRef.current = new Audio(audioUrl);
+            ttsAudioRef.current.play();
+            ttsAudioRef.current.onended = () => {
+                setIsReadingAloud(false);
+            };
+
+        } catch (error) {
+            console.error("TTS failed:", error);
+            setIsReadingAloud(false);
+            throw error;
+        }
+    }, [isReadingAloud, selectedChatId]);
+
+     // AI Feature: Fetch Smart Replies
+    const fetchSmartReplies = useCallback(async () => {
+        if (!selectedChatId) return;
+
+        try {
+            const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+            const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(5));
+            const snapshot = await getDocs(q);
+            const messages = snapshot.docs.map(doc => doc.data() as Message);
+             if (messages.length === 0) {
+                setSmartReplies([]);
+                return;
+            }
+
+            const history = messages.reverse().map(m => `${m.user}: ${getMessageDescription(m)}`).join('\n');
+            const response = await smartReplySuggestions({ history });
+            setSmartReplies(response.suggestions);
+
+        } catch (error) {
+            console.error("Failed to fetch smart replies:", error);
+            throw error;
+        }
+    }, [selectedChatId]);
+
+    const clearSmartReplies = useCallback(() => {
+        setSmartReplies([]);
+    }, []);
 
     const updateUserProfile = async (data: Partial<Omit<User, 'id'>>) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
@@ -696,6 +768,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
+    readChatAloud,
+    isReadingAloud,
+    smartReplies,
+    fetchSmartReplies,
+    clearSmartReplies,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -708,4 +785,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
