@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +23,8 @@ const LiveStreamPage = () => {
     const { toast } = useToast();
     const { currentUser, users } = useAppContext();
     const videoRef = useRef<HTMLVideoElement>(null);
+    const videoContainerRef = useRef<HTMLDivElement>(null);
+
     const [hasCameraPermission, setHasCameraPermission] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
@@ -100,6 +102,14 @@ const LiveStreamPage = () => {
         router.back();
     };
 
+    const handleFullScreen = () => {
+        if (videoContainerRef.current) {
+            if (videoContainerRef.current.requestFullscreen) {
+                videoContainerRef.current.requestFullscreen();
+            }
+        }
+    };
+
     if (isLoading) {
         return <LiveStreamSkeleton />;
     }
@@ -155,7 +165,7 @@ const LiveStreamPage = () => {
                 >
                     <ArrowRight />
                 </Button>
-                <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
+                <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
                     {renderStreamContent()}
                     
                      <div className="absolute top-4 left-4 z-10">
@@ -175,6 +185,14 @@ const LiveStreamPage = () => {
                             </CardHeader>
                         </Card>
                     </div>
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute bottom-4 right-4 z-10 bg-black/50 backdrop-blur-sm rounded-full"
+                        onClick={handleFullScreen}
+                    >
+                        <Maximize />
+                    </Button>
                 </div>
 
                 <div className="flex items-center justify-center gap-4 mt-6">
@@ -247,3 +265,4 @@ const LiveStreamSkeleton = () => (
 
 export default LiveStreamPage;
  
+    
