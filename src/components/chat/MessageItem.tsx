@@ -18,8 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 interface MessageItemProps {
   message: Message;
   isOwnMessage: boolean;
-  isFirstInGroup: boolean;
-  isLastInGroup: boolean;
   onDelete: () => void;
   onReply: () => void;
   onEdit: () => void;
@@ -61,24 +59,25 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
 
   return (
     <div className={cn(
-        "flex items-end gap-1.5 group w-full", 
-        isOwnMessage ? "flex-row-reverse" : "flex-row",
+        "flex w-full group", 
+        isOwnMessage ? "justify-end" : "justify-start",
     )}>
-      <div className={cn(
-          "relative flex flex-col w-full",
-           isOwnMessage ? "items-end" : "items-start"
-      )}>
-        <div
-          id={`message-${message.id}`}
-          className={cn(
-            "p-2 min-w-[80px] relative overflow-hidden max-w-[80%] lg:max-w-[70%]",
-            isOwnMessage
-              ? "bg-[#D9FDD3] text-black"
-              : "bg-white text-black",
-            'rounded-lg',
-          )}
+      <div
+        className={cn(
+          "relative flex items-end gap-1.5",
+          isOwnMessage ? "flex-row-reverse" : "flex-row"
+        )}
+      >
+        <div 
+           id={`message-${message.id}`}
+           className={cn(
+            "p-2 relative break-words max-w-[80vw] sm:max-w-md md:max-w-lg lg:max-w-xl",
+             isOwnMessage
+               ? "bg-[#D9FDD3] text-black"
+               : "bg-white text-black",
+             'rounded-lg',
+           )}
         >
-          
           {repliedToMessage && (
             <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-r-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10">
                 <p className="font-semibold text-xs text-primary">{repliedToMessage.user}</p>
@@ -104,7 +103,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           )}
         </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-1 md:left-2" : "-right-1 md:right-2")}>
+        <div className={cn("opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center self-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
               <Heart size={16} className={cn(isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>
