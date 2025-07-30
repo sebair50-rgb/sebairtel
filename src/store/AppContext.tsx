@@ -96,7 +96,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Fetch chats for the current user
-    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid), orderBy('lastMessageTimestamp', 'desc'));
+    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
@@ -111,7 +111,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || ''
              } as Chat;
         });
-        setChats(chatsData);
+        
+        // Sort chats by last message timestamp client-side
+        const sortedChats = chatsData.sort((a, b) => {
+            const timeA = a.lastMessageTimestamp?.toMillis() || 0;
+            const timeB = b.lastMessageTimestamp?.toMillis() || 0;
+            return timeB - timeA;
+        });
+
+        setChats(sortedChats);
+    }, (error) => {
+        console.error("Firestore chats listener error:", error);
     });
     
     return () => {
