@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -11,6 +10,7 @@ import CreatePostCard from './CreatePostCard';
 import LiveFeed from './LiveFeed';
 import UsersView from '../users/UsersView';
 import MarketView from './MarketView';
+import StoreView from './StoreView';
 
 const SocialFeed = () => {
     const { posts, setActiveTab } = useAppContext();
@@ -36,7 +36,7 @@ const SocialFeed = () => {
                     <Tabs defaultValue="posts" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-slate-200">
                             <TabsTrigger value="news">الأخبار</TabsTrigger>
-                            <TabsTrigger value="services">خدماتي</TabsTrigger>
+                            <TabsTrigger value="market">السوق</TabsTrigger>
                             <TabsTrigger value="business">الأعمال التجارية</TabsTrigger>
                             <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
                             <TabsTrigger value="live">بث مباشر</TabsTrigger>
@@ -64,8 +64,8 @@ const SocialFeed = () => {
                         <TabsContent value="business" className="mt-6">
                             <MarketView />
                         </TabsContent>
-                        <TabsContent value="services">
-                            <ComingSoonContent title="خدماتي" icon={Briefcase} />
+                        <TabsContent value="market" className="mt-6">
+                            <StoreView />
                         </TabsContent>
                         <TabsContent value="news">
                             <ComingSoonContent title="الأخبار" icon={Newspaper} />
