@@ -5,12 +5,13 @@ import React from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing } from 'lucide-react';
+import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Video } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from '@/lib/utils';
-import type { Call } from '@/lib/types';
+import type { Call, User } from '@/lib/types';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 const CallIcon = ({ type }: { type: Call['type'] }) => {
     switch (type) {
@@ -27,10 +28,20 @@ const CallIcon = ({ type }: { type: Call['type'] }) => {
 
 
 const CallsList = () => {
-    const { calls } = useAppContext();
+    const { calls, initiateCall, users } = useAppContext();
     const [filter, setFilter] = React.useState<'all' | 'missed'>('all');
+    const { toast } = useToast();
 
     const filteredCalls = filter === 'missed' ? calls.filter(call => call.type === 'missed') : calls;
+
+    const handleCall = (call: Call) => {
+        const user = users.find(u => u.name === call.user);
+        if (user) {
+            initiateCall(user, 'audio');
+        } else {
+            toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
+        }
+    }
     
     return (
         <div className="h-full w-full flex flex-col">
@@ -60,7 +71,7 @@ const CallsList = () => {
                                     </div>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10">
+                            <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10" onClick={() => handleCall(call)}>
                                 <Phone />
                             </Button>
                         </Card>

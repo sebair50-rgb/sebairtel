@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { User, Post, Notification, Call, Chat, Message } from '@/lib/types';
+import type { User, Post, Notification, Call, Chat, Message, CallState } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -20,6 +20,7 @@ interface AppContextType {
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
   chats: Chat[];
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   selectedChatId: string | null;
   setSelectedChatId: (id: string | null) => void;
   activeTab: string;
@@ -27,9 +28,14 @@ interface AppContextType {
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
   deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
+  users: User[];
   friends: User[];
   suggestedUsers: User[];
   createChat: (friend: User) => Promise<Chat | null>;
+  callState: CallState;
+  initiateCall: (user: User, type: 'audio' | 'video') => void;
+  answerCall: () => void;
+  endCall: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,6 +56,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+
+  const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+
 
   useEffect(() => {
     document.documentElement.className = 'light';
@@ -132,7 +141,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
       if (!currentUser || users.length === 0) return;
 
-      // A user is a "friend" if a chat exists with them.
       const chatPartnerIds = new Set(
           chats.flatMap(chat => chat.users).filter(userId => userId !== currentUser.id)
       );
@@ -174,22 +182,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const createChat = async (friend: User): Promise<Chat | null> => {
     if (!currentUser) return null;
 
-    // First, check if a chat already exists locally
     const existingChat = chats.find(chat => chat.users.includes(friend.id));
     if (existingChat) {
         return existingChat;
     }
 
-    // If not, create a new one
     const newChatRef = doc(collection(db, 'chats'));
-    const newChatData = {
+    const newChatData: Omit<Chat, 'lastMessageTime'> = {
         id: newChatRef.id,
+        name: friend.name,
+        avatar: friend.avatar,
         users: [currentUser.id, friend.id],
         userInfo: {
             [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
             [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
         },
-        lastMessageTimestamp: serverTimestamp(),
+        lastMessageTimestamp: serverTimestamp() as any,
         lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
         unreadCount: 0,
         isMuted: false,
@@ -200,12 +208,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const createdChatForState: Chat = {
         ...newChatData,
-        name: friend.name,
-        avatar: friend.avatar,
         lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
     };
     
-    // Add the new chat to the local state immediately so the UI can update
     setChats(prevChats => [createdChatForState, ...prevChats]);
     
     return createdChatForState;
@@ -240,6 +245,33 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        await updateDoc(msgRef, updatedMessage);
   }
 
+  // --- Call Management ---
+  const initiateCall = (user: User, type: 'audio' | 'video') => {
+      if (callState.status !== 'idle') return;
+      setCallState({ status: 'outgoing', user, type });
+
+      // Simulate incoming call for demo purposes
+      setTimeout(() => {
+          setCallState(prev => {
+              if (prev.status === 'outgoing') {
+                  return { ...prev, status: 'incoming' };
+              }
+              return prev;
+          })
+      }, 3000);
+  };
+
+  const answerCall = () => {
+      if (callState.status === 'incoming') {
+          setCallState({ ...callState, status: 'connected' });
+      }
+  };
+
+  const endCall = () => {
+      setCallState({ status: 'idle' });
+  };
+
+
   const value = {
     currentUser,
     posts,
@@ -250,6 +282,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     settings,
     setSettings,
     chats,
+    setChats,
     selectedChatId,
     setSelectedChatId,
     activeTab,
@@ -257,9 +290,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     addMessage,
     deleteMessage,
     updateMessage,
+    users,
     friends,
     suggestedUsers,
     createChat,
+    callState,
+    initiateCall,
+    answerCall,
+    endCall
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

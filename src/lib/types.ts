@@ -39,7 +39,7 @@ export interface Chat {
   name: string;
   avatar: string;
   users: string[]; // array of user uids
-  // messages are now a subcollection
+  userInfo: { [key: string]: { id: string; name: string; avatar: string; }};
   unreadCount?: number;
   lastMessageTime?: string;
   lastMessageText?: string;
@@ -90,4 +90,12 @@ export interface Call {
     time: string;
     timestamp: Timestamp;
     duration?: string;
+}
+
+export type CallStatus = 'idle' | 'outgoing' | 'incoming' | 'connected';
+
+export interface CallState {
+    status: CallStatus;
+    user?: User;
+    type?: 'audio' | 'video';
 }

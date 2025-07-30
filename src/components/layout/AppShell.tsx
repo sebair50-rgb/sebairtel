@@ -11,6 +11,7 @@ import CallsView from '../calls/CallsView';
 import { useAuth } from '@/store/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/store/AppContext';
+import CallManager from '../calls/CallManager';
 
 
 const AppShell = () => {
@@ -43,12 +44,13 @@ const AppShell = () => {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={onLogout} />
       <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-y-auto">
             {renderContent()}
           </div>
       </main>
+      <CallManager />
     </div>
   );
 };

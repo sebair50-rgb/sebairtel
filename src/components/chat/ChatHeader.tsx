@@ -26,7 +26,7 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) => {
   const { toast } = useToast();
-  const { setChats } = useAppContext();
+  const { setChats, initiateCall, friends } = useAppContext();
   const [isMuted, setIsMuted] = React.useState(chat.isMuted || false);
   const isMobile = useIsMobile();
 
@@ -35,6 +35,18 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
     setIsMuted(newMutedState);
     setChats(prev => prev.map(c => c.id === chat.id ? {...c, isMuted: newMutedState} : c));
     toast({ title: newMutedState ? `تم كتم إشعارات ${chat.name}` : `تم إلغاء كتم ${chat.name}` });
+  }
+
+  const handleCall = (type: 'audio' | 'video') => {
+      const friendId = chat.users.find(uid => uid !== "100"); // Assuming "100" is current user's ID
+      if(friendId) {
+        const friend = friends.find(f => f.id === friendId);
+        if (friend) {
+            initiateCall(friend, type);
+        } else {
+             toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
+        }
+      }
   }
 
   return (
@@ -54,10 +66,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
         </div>
       </div>
       <div className="flex items-center gap-1 md:gap-2">
-        <Button variant="ghost" size="icon" onClick={() => toast({ description: "سيتم تفعيل المكالمات الصوتية قريباً" })}>
+        <Button variant="ghost" size="icon" onClick={() => handleCall('audio')}>
           <Phone size={20} />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => toast({ description: "سيتم تفعيل مكالمات الفيديو قريباً" })}>
+        <Button variant="ghost" size="icon" onClick={() => handleCall('video')}>
           <Video size={20} />
         </Button>
         <DropdownMenu>
