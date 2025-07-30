@@ -53,9 +53,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(isDarkMode);
-    if (isDarkMode) {
+    // Set default to light mode on initial load
+    const savedMode = localStorage.getItem('darkMode');
+    const isDark = savedMode === 'true';
+    setDarkMode(isDark);
+    if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -117,6 +119,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  ...data,
                  name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
                  avatar: otherUserInfo ? otherUserInfo.avatar : "?",
+                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || ''
              } as Chat;
         });
         setChats(chatsData);
@@ -153,10 +156,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const chatRef = doc(db, 'chats', chatId);
     const messagesColRef = collection(chatRef, 'messages');
     
-    await addDoc(messagesColRef, {
+    const dataToSend: any = {
         ...messageData,
         timestamp: serverTimestamp(),
-    });
+    };
+
+    // Explicitly handle potentially undefined fields
+    if (messageData.src === undefined) delete dataToSend.src;
+    if (messageData.fileInfo === undefined) delete dataToSend.fileInfo;
+
+
+    await addDoc(messagesColRef, dataToSend);
 
     // Update last message info on the chat document
     await updateDoc(chatRef, {
@@ -214,7 +224,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       await deleteDoc(msgRef);
   };
   
-  const updateUserMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
+  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
        await updateDoc(msgRef, updatedMessage);
   }
@@ -253,7 +263,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setActiveTab,
     addMessage,
     deleteMessage,
-    updateMessage: updateUserMessage,
+    updateMessage: updateMessage,
     createChat,
   };
 
