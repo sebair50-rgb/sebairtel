@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone } from 'lucide-react';
+import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip"
 import useIsMobile from '@/hooks/use-is-mobile';
 import Logo from '../shared/Logo';
+import { Badge } from '../ui/badge';
 
 
 interface MainSidebarProps {
@@ -24,12 +25,15 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
+  const { currentUser, selectedChatId, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead } = useAppContext();
   const isMobile = useIsMobile();
 
   const handleTabClick = (tab: string) => {
     if (tab === 'contact') {
       setSelectedChatId(null);
+    }
+    if (tab === 'notifications' && unreadNotificationCount > 0) {
+      markNotificationsAsRead();
     }
     setActiveTab(tab);
   };
@@ -38,6 +42,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'contact', icon: Phone, label: 'تواصل' },
     { name: 'social', icon: Users, label: 'المجتمع' },
+    { name: 'notifications', icon: Bell, label: 'الإشعارات', badge: unreadNotificationCount },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
@@ -62,11 +67,14 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                                 size="icon"
                                 onClick={() => handleTabClick(item.name)}
                                 className={cn(
-                                    'rounded-lg transition-colors duration-200 w-12 h-12',
+                                    'rounded-lg transition-colors duration-200 w-12 h-12 relative',
                                     activeTab === item.name && 'text-primary'
                                 )}
                                 >
                                 <item.icon size={24} />
+                                 {item.badge && item.badge > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{item.badge}</Badge>
+                                )}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
@@ -101,7 +109,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
               key={item.name}
               onClick={() => handleTabClick(item.name)}
               className={cn(
-                'flex flex-col items-center justify-center w-full h-14 rounded-lg transition-colors duration-200 text-[10px]',
+                'flex flex-col items-center justify-center w-full h-14 rounded-lg transition-colors duration-200 text-[10px] relative',
                 activeTab === item.name
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -109,6 +117,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
             >
               <item.icon size={20} />
               <span className="mt-1">{item.label}</span>
+              {item.badge && item.badge > 0 && (
+                <Badge className="absolute top-1 right-3 h-4 w-4 justify-center p-0 text-[8px]">{item.badge}</Badge>
+              )}
             </button>
           ))}
         </nav>

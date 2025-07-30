@@ -12,6 +12,7 @@ import { useAuth } from '@/store/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useAppContext } from '@/store/AppContext';
 import CallManager from '../calls/CallManager';
+import NotificationsView from '../notifications/NotificationsView';
 
 
 const AppShell = () => {
@@ -37,6 +38,8 @@ const AppShell = () => {
         return <AppsView />;
       case 'contact':
         return <CallsView setActiveTab={setActiveTab} />;
+      case 'notifications':
+        return <NotificationsView />;
       default:
         return <CallsView setActiveTab={setActiveTab} />;
     }

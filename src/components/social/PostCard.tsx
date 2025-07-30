@@ -18,7 +18,7 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
-  const { updatePost, currentUser } = useAppContext();
+  const { updatePost, currentUser, createNotification } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
 
   if (!currentUser) return null;
@@ -33,6 +33,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           newLikedBy = newLikedBy.filter(id => id !== currentUser.id);
       } else {
           newLikedBy.push(currentUser.id);
+          // Create notification only when liking, not unliking
+          if (post.userId !== currentUser.id) {
+            createNotification(post.userId, {
+                type: 'like',
+                message: `أعجب ${currentUser.name} بمنشورك.`,
+                fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
+                link: `/post/${post.id}`
+            })
+          }
       }
       updatePost(post.id, { likedBy: newLikedBy });
   }

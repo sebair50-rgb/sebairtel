@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { User, Post, Call, Chat, Message, CallState } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -36,6 +36,10 @@ interface AppContextType {
   answerCall: () => void;
   endCall: () => void;
   addMissedCall: (user: User) => void;
+  notifications: Notification[];
+  unreadNotificationCount: number;
+  markNotificationsAsRead: () => void;
+  createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -47,6 +51,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [activeTab, setActiveTab] = useState('contact');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -73,6 +79,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setFriends([]);
       setSuggestedUsers([]);
       setCalls([]);
+      setNotifications([]);
       return;
     };
 
@@ -142,6 +149,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
         setCalls(callsData);
     });
+    
+    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'));
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+        const notificationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+        setNotifications(notificationsData);
+        const unreadCount = notificationsData.filter(n => !n.isRead).length;
+        setUnreadNotificationCount(unreadCount);
+    });
+
 
     return () => {
       unsubscribeUser();
@@ -149,6 +165,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       unsubscribePosts();
       unsubscribeChats();
       unsubscribeCalls();
+      unsubscribeNotifications();
     };
   }, [authUser, authLoading]);
 
@@ -228,7 +245,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     await setDoc(newChatRef, newChatData);
 
-    // This is crucial for the UI to update immediately
+    await createNotification(friend.id, {
+        type: 'new_friend',
+        message: `بدأ ${currentUser.name} محادثة معك.`,
+        fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+    });
+
     const createdChatForState: Chat = {
         ...newChatData,
         lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
@@ -281,8 +303,31 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
        await updateDoc(msgRef, updatedMessage);
   }
+  
+  const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+      const userNotificationsRef = collection(db, `users/${userId}/notifications`);
+      await addDoc(userNotificationsRef, {
+          ...notification,
+          timestamp: serverTimestamp(),
+          isRead: false,
+      });
+  };
+  
+  const markNotificationsAsRead = async () => {
+    if (!currentUser || unreadNotificationCount === 0) return;
+    const notificationsRef = collection(db, `users/${currentUser.id}/notifications`);
+    const q = query(notificationsRef, where("isRead", "==", false));
+    const snapshot = await getDocs(q);
+    
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => {
+      batch.update(doc.ref, { isRead: true });
+    });
+    
+    await batch.commit();
+    setUnreadNotificationCount(0);
+  };
 
-  // --- Call Management ---
   const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
     if(!currentUser) return;
     
@@ -295,8 +340,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
     await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
 
-    // Add to the other user's call log
-    // For a missed call, only the current user gets the log.
     if (type !== 'missed') {
         const otherUserCallType = type === 'outgoing' ? 'incoming' : 'outgoing';
         const otherUserCallData: Omit<Call, 'id'| 'time'> = {
@@ -310,8 +353,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const addMissedCall = (user: User) => {
-    addCallLog(user, 'missed');
+  const addMissedCall = async (user: User) => {
+      if(!currentUser) return;
+      await addCallLog(user, 'missed');
+      await createNotification(currentUser.id, {
+          type: 'missed_call',
+          message: `لديك مكالمة فائتة من ${user.name}.`,
+          fromUser: user,
+      });
   }
 
   const initiateCall = (user: User, type: 'audio' | 'video') => {
@@ -319,7 +368,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'outgoing', user, type });
       addCallLog(user, 'outgoing');
 
-      // Simulate connection/end for demo
       setTimeout(() => {
           setCallState(prev => {
               if (prev.status === 'outgoing') {
@@ -375,6 +423,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     answerCall,
     endCall,
     addMissedCall,
+    notifications,
+    unreadNotificationCount,
+    markNotificationsAsRead,
+    createNotification,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

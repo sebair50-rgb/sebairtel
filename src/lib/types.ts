@@ -89,3 +89,17 @@ export interface CallState {
     user?: User;
     type?: 'audio' | 'video';
 }
+
+export interface Notification {
+    id: string;
+    type: 'like' | 'comment' | 'new_friend' | 'missed_call';
+    message: string;
+    fromUser: {
+        id: string;
+        name: string;
+        avatar: string;
+    };
+    timestamp: Timestamp;
+    isRead: boolean;
+    link?: string;
+}
