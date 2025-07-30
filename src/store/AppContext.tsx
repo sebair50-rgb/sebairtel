@@ -53,6 +53,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(isDarkMode);
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+
+  useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
       setCurrentUser(null);
@@ -213,8 +224,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const newMode = !prev;
       if (newMode) {
         document.documentElement.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
       } else {
         document.documentElement.classList.remove('dark');
+         localStorage.setItem('darkMode', 'false');
       }
       return newMode;
     });
