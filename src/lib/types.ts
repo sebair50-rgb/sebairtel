@@ -12,6 +12,8 @@ export interface User {
   bio?: string;
   phone?: string;
   friends?: string[];
+  isOnline?: boolean;
+  lastSeen?: Timestamp;
 }
 
 export interface Message {

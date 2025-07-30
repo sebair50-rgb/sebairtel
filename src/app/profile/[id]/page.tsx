@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 const UserProfilePage = () => {
     const params = useParams();
@@ -88,6 +90,15 @@ const UserProfilePage = () => {
     }
     
     const isFriend = friends.some(f => f.id === profileUser.id);
+    
+    const getStatus = () => {
+        if (isOwnProfile) return "هذا هو ملفك الشخصي";
+        if (profileUser.isOnline) return "متصل الآن";
+        if (profileUser.lastSeen) {
+            return `آخر ظهور ${formatDistanceToNow(profileUser.lastSeen.toDate(), { addSuffix: true, locale: ar })}`;
+        }
+        return `البريد الإلكتروني: ${profileUser.email}`;
+    }
 
     return (
         <ScrollArea className="h-full w-full bg-slate-50">
@@ -102,7 +113,7 @@ const UserProfilePage = () => {
                             </Avatar>
                             <div className="flex-1 pb-4">
                                 <h1 className="text-2xl md:text-3xl font-bold">{profileUser.name}</h1>
-                                <p className="text-muted-foreground">{profileUser.email}</p>
+                                <p className="text-muted-foreground">{getStatus()}</p>
                             </div>
                         </div>
 

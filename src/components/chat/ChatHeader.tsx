@@ -17,7 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
 import useIsMobile from '@/hooks/use-is-mobile';
 import { useRouter } from 'next/navigation';
-
+import { formatDistanceToNow } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 interface ChatHeaderProps {
   chat: Chat;
@@ -27,7 +28,7 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) => {
   const { toast } = useToast();
-  const { setChats, initiateCall, friends, currentUser } = useAppContext();
+  const { setChats, initiateCall, friends, currentUser, users } = useAppContext();
   const [isMuted, setIsMuted] = React.useState(chat.isMuted || false);
   const isMobile = useIsMobile();
   const router = useRouter();
@@ -40,6 +41,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
   }
 
   const friendId = chat.users.find(uid => uid !== currentUser?.id);
+  const friend = users.find(u => u.id === friendId) || friends.find(f => f.id === friendId);
   
   const handleNavigateToProfile = () => {
     if (friendId) {
@@ -48,14 +50,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
   };
 
   const handleCall = (type: 'audio' | 'video') => {
-      if(friendId) {
-        const friend = friends.find(f => f.id === friendId);
-        if (friend) {
-            initiateCall(friend, type);
-        } else {
-             toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
-        }
+      if(friend) {
+        initiateCall(friend, type);
+      } else {
+          toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
       }
+  }
+  
+  const getStatus = () => {
+    if (!friend) return null;
+    if (friend.isOnline) return "متصل الآن";
+    if (friend.lastSeen) {
+        return `آخر ظهور ${formatDistanceToNow(friend.lastSeen.toDate(), { addSuffix: true, locale: ar })}`;
+    }
+    return null;
   }
 
   return (
@@ -73,7 +81,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <h2 className="font-bold text-lg truncate">{chat.name}</h2>
-            <p className="text-xs text-muted-foreground">متصل الآن</p>
+            <p className="text-xs text-muted-foreground">{getStatus()}</p>
           </div>
         </div>
       </div>

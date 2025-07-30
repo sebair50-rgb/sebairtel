@@ -131,6 +131,38 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.className = 'light';
   }, []);
 
+  // Presence management effect
+  useEffect(() => {
+    if (!authUser) return;
+
+    const userStatusRef = doc(db, 'users', authUser.uid);
+    
+    // Set online status
+    updateDoc(userStatusRef, {
+        isOnline: true,
+        lastSeen: serverTimestamp(),
+    });
+
+    const handleBeforeUnload = () => {
+        updateDoc(userStatusRef, {
+            isOnline: false,
+            lastSeen: serverTimestamp(),
+        });
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        // Set offline on unmount/logout
+        updateDoc(userStatusRef, {
+            isOnline: false,
+            lastSeen: serverTimestamp(),
+        });
+    }
+
+  }, [authUser]);
+
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {

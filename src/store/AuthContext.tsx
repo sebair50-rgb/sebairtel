@@ -13,7 +13,7 @@ import {
   type User as FirebaseUser,
   verifyBeforeUpdateEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
@@ -52,14 +52,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await sendEmailVerification(user);
 
         const userDocRef = doc(db, 'users', user.uid);
-        const newUser: User = {
-            id: user.uid,
+        const newUser: Omit<User, 'id'> = {
             name,
             email: user.email!,
             avatar: `https://placehold.co/128x128/E6E6FA/333333.png?text=${name.charAt(0)}`,
             dob: '',
             bio: '',
             phone: '',
+            isOnline: true,
+            lastSeen: serverTimestamp() as any,
         };
         await setDoc(userDocRef, newUser);
         
