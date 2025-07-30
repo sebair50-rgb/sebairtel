@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -21,8 +21,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 
-const CoHostVideo = ({ user }: { user: User }) => (
-    <div className="bg-slate-800 rounded-lg overflow-hidden aspect-video flex flex-col items-center justify-center text-white relative">
+const CoHostVideo = ({ user, onRemove, isMyStream }: { user: User, onRemove: (user: User) => void, isMyStream: boolean }) => (
+    <div className="bg-slate-800 rounded-lg overflow-hidden aspect-video flex flex-col items-center justify-center text-white relative group">
         <Avatar className="w-16 h-16 text-2xl">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -31,14 +31,21 @@ const CoHostVideo = ({ user }: { user: User }) => (
         <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 text-xs rounded-md">
             مشارك
         </div>
+        {isMyStream && (
+             <button onClick={() => onRemove(user)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <X size={16} />
+            </button>
+        )}
     </div>
 );
 
-const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineRequest }: { 
+const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineRequest, coHosts, onRemoveCoHost }: { 
     onInvite: (user: User) => void;
     joinRequests: User[];
     onAcceptRequest: (user: User) => void;
     onDeclineRequest: (user: User) => void;
+    coHosts: User[];
+    onRemoveCoHost: (user: User) => void;
 }) => {
     const { friends } = useAppContext();
     return (
@@ -75,6 +82,30 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                              </div>
                         </div>
                     )}
+                    
+                     {coHosts.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="font-bold mb-2 text-green-400">المشاركون الحاليون ({coHosts.length})</h3>
+                            <div className="space-y-4">
+                                {coHosts.map(user => (
+                                    <div key={user.id} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={user.avatar} alt={user.name} />
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <p className="font-semibold">{user.name}</p>
+                                        </div>
+                                        <Button size="sm" variant="destructive" onClick={() => onRemoveCoHost(user)}>
+                                            <UserX className="w-4 h-4 ml-1" />
+                                            إزالة
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
 
                     <h3 className="font-bold mb-2">دعوة أصدقاء</h3>
                     <div className="space-y-4">
@@ -258,6 +289,11 @@ const LiveStreamPage = () => {
         toast({ title: "تم رفض الطلب", description: `تم رفض طلب ${user.name}.`, variant: "destructive" });
     }
     
+    const handleRemoveCoHost = (user: User) => {
+        setCoHosts(prev => prev.filter(h => h.id !== user.id));
+        toast({ title: "تمت الإزالة", description: `تمت إزالة ${user.name} من البث.`, variant: "destructive" });
+    }
+
     const handleRequestToJoin = () => {
         setHasRequestedToJoin(true);
         toast({
@@ -349,7 +385,7 @@ const LiveStreamPage = () => {
                     
                      {coHosts.length > 0 && (
                         <div className="absolute top-24 left-4 w-48 space-y-2 z-20">
-                           {coHosts.map(host => <CoHostVideo key={host.id} user={host} />)}
+                           {coHosts.map(host => <CoHostVideo key={host.id} user={host} onRemove={handleRemoveCoHost} isMyStream={isMyStream} />)}
                         </div>
                     )}
 
@@ -446,6 +482,8 @@ const LiveStreamPage = () => {
                                     joinRequests={joinRequests}
                                     onAcceptRequest={handleAcceptRequest}
                                     onDeclineRequest={handleDeclineRequest}
+                                    coHosts={coHosts}
+                                    onRemoveCoHost={handleRemoveCoHost}
                                 />
                             </>
                         ) : (
