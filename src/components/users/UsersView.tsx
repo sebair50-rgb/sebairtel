@@ -4,18 +4,19 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Input } from '@/components/ui/input';
-import { Search, UserPlus, MessageSquare, UserCheck, User, Users } from 'lucide-react';
+import { Search, UserPlus, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { User as UserType } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const UsersView = () => {
     const { friends, suggestedUsers, createChat, setSelectedChatId, setActiveTab } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
     const [activeList, setActiveList] = useState<'suggestions' | 'friends'>('suggestions');
 
@@ -45,6 +46,10 @@ const UsersView = () => {
     const filteredFriends = friends.filter(u => 
         u.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    
+    const listToShow = activeList === 'friends' ? filteredFriends : filteredSuggestedUsers;
+    const title = activeList === 'friends' ? `أصدقاؤك (${filteredFriends.length})` : `أشخاص قد تعرفهم (${filteredSuggestedUsers.length})`;
+
 
     const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' }) => (
          <div className="flex items-center justify-between gap-2 py-3">
@@ -73,18 +78,35 @@ const UsersView = () => {
         </div>
     );
 
-    const listToShow = activeList === 'friends' ? filteredFriends : filteredSuggestedUsers;
-    const title = activeList === 'friends' ? 'أصدقاؤك' : 'أشخاص قد تعرفهم';
-
     return (
         <div className="h-full w-full flex flex-col">
             <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">الأصدقاء</h1>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSearch(!showSearch)}>
                         <Search />
                     </Button>
                 </div>
+                <AnimatePresence>
+                {showSearch && (
+                    <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-4"
+                    >
+                        <div className="relative">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <Input
+                                placeholder="البحث عن أصدقاء..."
+                                className="w-full rounded-full bg-slate-200 h-12 pr-12 text-base"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </motion.div>
+                )}
+                </AnimatePresence>
                 <div className="flex gap-2 mt-4">
                      <Button 
                         variant={activeList === 'suggestions' ? 'secondary' : 'ghost'} 
@@ -119,15 +141,17 @@ const UsersView = () => {
                     ) : (
                         <div className="text-center text-muted-foreground pt-16">
                             <p className="font-semibold">
-                                {activeList === 'friends' 
-                                    ? 'لا يوجد لديك أصدقاء بعد.'
-                                    : 'لا توجد اقتراحات جديدة في الوقت الحالي.'
+                                {searchTerm 
+                                    ? `لا توجد نتائج بحث عن "${searchTerm}"`
+                                    : (activeList === 'friends' 
+                                        ? 'لا يوجد لديك أصدقاء بعد.'
+                                        : 'لا توجد اقتراحات جديدة في الوقت الحالي.')
                                 }
                             </p>
                             <p className="text-sm">
-                                {activeList === 'friends'
+                                {activeList === 'friends' && !searchTerm
                                     ? 'قم بإضافة أصدقاء لبدء التواصل!'
-                                    : 'تحقق مرة أخرى لاحقًا.'
+                                    : !searchTerm && 'تحقق مرة أخرى لاحقًا.'
                                 }
                             </p>
                         </div>
@@ -139,3 +163,5 @@ const UsersView = () => {
 };
 
 export default UsersView;
+
+    
