@@ -44,7 +44,7 @@ const AppShell = () => {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={onLogout} />
+      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-y-auto">
             {renderContent()}
