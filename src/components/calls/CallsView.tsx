@@ -35,7 +35,11 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats' }) => {
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-white">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
-                         <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                         <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                            <MessageSquare className="ml-1 sm:ml-2" />
+                            دردشتي
+                        </TabsTrigger>
+                        <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="ml-1 sm:ml-2" />
                             أصدقائي
                         </TabsTrigger>
@@ -46,10 +50,6 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats' }) => {
                         <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="ml-1 sm:ml-2" />
                             مجموعاتي
-                        </TabsTrigger>
-                        <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <MessageSquare className="ml-1 sm:ml-2" />
-                            دردشتي
                         </TabsTrigger>
                     </TabsList>
                 </div>
