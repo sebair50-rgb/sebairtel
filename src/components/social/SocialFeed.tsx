@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -5,7 +6,7 @@ import { useAppContext } from '@/store/AppContext';
 import PostCard from './PostCard';
 import { ScrollArea } from '../ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
+import { Video, ShoppingCart, Users, Briefcase, Newspaper, Building2 } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
 import LiveFeed from './LiveFeed';
 import UsersView from '../users/UsersView';
@@ -36,7 +37,7 @@ const SocialFeed = () => {
                         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-slate-200">
                             <TabsTrigger value="news">الأخبار</TabsTrigger>
                             <TabsTrigger value="services">خدماتي</TabsTrigger>
-                            <TabsTrigger value="market">السوق</TabsTrigger>
+                            <TabsTrigger value="business">الأعمال التجارية</TabsTrigger>
                             <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
                             <TabsTrigger value="live">بث مباشر</TabsTrigger>
                             <TabsTrigger value="posts">العامة</TabsTrigger>
@@ -60,7 +61,7 @@ const SocialFeed = () => {
                                 <UsersView setActiveTab={setActiveTab} />
                             </div>
                         </TabsContent>
-                        <TabsContent value="market" className="mt-6">
+                        <TabsContent value="business" className="mt-6">
                             <MarketView />
                         </TabsContent>
                         <TabsContent value="services">

@@ -1,9 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Briefcase, Building2, ArrowLeft } from 'lucide-react';
+import { Briefcase, Building2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const MarketView = () => {
@@ -11,14 +12,8 @@ const MarketView = () => {
 
     const sections = [
         {
-            icon: ShoppingCart,
-            title: "البيع والشراء",
-            description: "تصفح أو اعرض منتجات جديدة ومستعملة للبيع في مجتمعك المحلي.",
-            actionText: "استعراض المنتجات"
-        },
-        {
             icon: Briefcase,
-            title: "الوظائف والإعلان",
+            title: "الوظائف والخدمات",
             description: "ابحث عن فرص عمل أو أعلن عن وظائف شاغرة وخدمات لجمهور واسع.",
             actionText: "عرض الوظائف"
         },
@@ -40,12 +35,12 @@ const MarketView = () => {
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
             <div className="text-center">
-                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">سوق SebairTel</h1>
+                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">مركز الأعمال التجارية</h1>
                 <p className="mt-4 text-xl text-muted-foreground">
-                    المكان الأمثل للتجارة، البحث عن عمل، واستكشاف الشركات في مجتمعك.
+                    المكان الأمثل للبحث عن عمل، الإعلان عن خدمات، واستكشاف الشركات في مجتمعك.
                 </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {sections.map((section, index) => (
                     <Card key={index} className="flex flex-col text-center items-center p-6 hover:shadow-xl transition-shadow duration-300">
                         <CardHeader className="p-0">
