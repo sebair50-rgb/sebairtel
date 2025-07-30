@@ -5,8 +5,8 @@ import React, { useState } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronDown, ChevronLeft, MoreHorizontal, Search, UserPlus, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check, ChevronDown, ChevronLeft, MessageCircle, MoreHorizontal, Search, UserPlus, X } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
@@ -15,7 +15,7 @@ import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const UsersView: React.FC = () => {
-    const { users, friendRequests, createChat, setSelectedChatId, setActiveTab } = useAppContext();
+    const { users, friends, friendRequests, createChat, setSelectedChatId, setActiveTab } = useAppContext();
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -34,20 +34,32 @@ const UsersView: React.FC = () => {
         toast({ description: "تم رفض طلب الصداقة." });
     };
 
-    const filteredUsers = users.filter(user =>
+    const handleMessageFriend = async (friendId: string) => {
+        const chatId = await createChat(friendId);
+        if(chatId) {
+            setSelectedChatId(chatId);
+            setActiveTab('contact');
+        } else {
+            toast({ variant: 'destructive', description: 'حدث خطأ أثناء محاولة فتح المحادثة.' });
+        }
+    };
+
+    const suggestedUsers = users.filter(user =>
+        !friends.some(f => f.id === user.id) &&
+        !friendRequests.some(fr => fr.id === user.id) &&
         user.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const UserListItem = ({ user }: { user: User }) => (
+    const UserSuggestionItem = ({ user }: { user: User }) => (
         <div className="flex items-center justify-between p-3 bg-white/50 rounded-xl">
             <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12">
                     <AvatarImage src={`https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} />
                     <AvatarFallback>{user.avatar}</AvatarFallback>
                 </Avatar>
-                <div>
-                    <p className="font-bold text-sm">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email?.split('@')[0]}</p>
+                <div className="min-w-0">
+                    <p className="font-bold text-sm truncate">{user.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email?.split('@')[0]}</p>
                 </div>
             </div>
             <div className="flex items-center gap-2">
@@ -61,6 +73,25 @@ const UsersView: React.FC = () => {
             </div>
         </div>
     );
+
+    const FriendItem = ({ user }: { user: User }) => (
+         <div className="flex items-center justify-between p-3 bg-white/50 rounded-xl">
+            <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12">
+                    <AvatarImage src={`https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} />
+                    <AvatarFallback>{user.avatar}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                    <p className="font-bold text-sm truncate">{user.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email?.split('@')[0]}</p>
+                </div>
+            </div>
+            <Button size="sm" variant="secondary" className="rounded-full h-9" onClick={() => handleMessageFriend(user.id)}>
+                <MessageCircle size={16} className="ml-1" />
+                مراسلة
+            </Button>
+        </div>
+    )
     
     return (
         <div className="w-full h-full flex flex-col bg-slate-100">
@@ -96,6 +127,18 @@ const UsersView: React.FC = () => {
                             </div>
                         </CardContent>
                     </Card>
+                    
+                    {friends.length > 0 && (
+                        <div>
+                             <h2 className="font-bold text-base px-2 mb-2 flex justify-between items-center">
+                                أصدقائي
+                                <Badge variant="secondary">{friends.length}</Badge>
+                            </h2>
+                            <div className="space-y-2">
+                                {friends.map(user => <FriendItem key={user.id} user={user} />)}
+                            </div>
+                        </div>
+                    )}
 
                     {friendRequests.length > 0 && (
                         <div>
@@ -111,8 +154,8 @@ const UsersView: React.FC = () => {
                                                 <AvatarImage src={`https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} />
                                                 <AvatarFallback>{user.avatar}</AvatarFallback>
                                             </Avatar>
-                                            <div>
-                                                <p className="font-bold text-sm">{user.name}</p>
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-sm truncate">{user.name}</p>
                                                 <p className="text-xs text-muted-foreground">طلب صداقة</p>
                                             </div>
                                         </div>
@@ -132,15 +175,11 @@ const UsersView: React.FC = () => {
                     
                     <div>
                         <h2 className="font-bold text-base px-2 mb-2 flex justify-between items-center">
-                            بحث عن أصدقاء
-                            <Badge className="bg-red-500">7 جديد</Badge>
+                            أشخاص قد تعرفهم
                         </h2>
-                        <p className="text-xs text-muted-foreground px-2 mb-3">
-                            مستخدمو التطبيق الذين قد تعرفهم يظهرون هنا.
-                        </p>
                          <div className="space-y-2">
-                            {filteredUsers.length > 0 ? (
-                                filteredUsers.map(user => <UserListItem key={user.id} user={user} />)
+                            {suggestedUsers.length > 0 ? (
+                                suggestedUsers.map(user => <UserSuggestionItem key={user.id} user={user} />)
                             ) : (
                                 <p className="text-center text-muted-foreground p-4">لا يوجد مستخدمون مطابقون لبحثك.</p>
                             )}

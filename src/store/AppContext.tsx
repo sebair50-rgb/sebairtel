@@ -13,6 +13,7 @@ import {
 interface AppContextType {
   currentUser: User | null;
   users: User[];
+  friends: User[];
   friendRequests: User[];
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
@@ -39,6 +40,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   const [users, setUsers] = useState<User[]>([]);
+  const [friends, setFriends] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
@@ -49,9 +51,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
-  useEffect(() => {
-    // Ensure light mode is always active by default
-    document.documentElement.classList.remove('dark');
+   useEffect(() => {
+    // On initial load, check if a theme is saved in localStorage.
+    // If not, default to 'light'.
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.className = savedTheme; // Apply saved theme
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
   }, []);
 
 
@@ -80,6 +89,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersData);
+      
+      // MOCK: Separate friends from other users for now
+      // In a real app, this would come from a 'friends' subcollection or an array in the user doc
+      const currentFriends = usersData.filter(u => u.isFriend);
+      setFriends(currentFriends);
     });
 
     // Fetch posts
@@ -223,6 +237,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     currentUser,
     users,
+    friends,
     friendRequests,
     posts,
     addPost,
