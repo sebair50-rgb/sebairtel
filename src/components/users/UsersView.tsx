@@ -11,6 +11,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { User as UserType } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 interface UsersViewProps {
   setActiveTab: (tab: string) => void;
@@ -22,6 +23,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
     const [activeList, setActiveList] = useState<'suggestions' | 'friends'>('suggestions');
+    const router = useRouter();
 
     const handleAddFriend = async (user: UserType) => {
         const chat = await createChat(user);
@@ -58,15 +60,19 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center justify-between gap-4 py-3 cursor-pointer"
-            onClick={action === 'message' ? () => handleMessageFriend(user) : undefined}
+            className="flex items-center justify-between gap-4 py-3"
         >
-            <Avatar className="h-12 w-12 border">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 text-right overflow-hidden">
-                <p className="font-bold text-lg truncate">{user.name}</p>
+            <div 
+                className="flex items-center gap-4 cursor-pointer flex-1"
+                onClick={() => router.push(`/profile/${user.id}`)}
+            >
+                <Avatar className="h-12 w-12 border">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-right overflow-hidden">
+                    <p className="font-bold text-lg truncate">{user.name}</p>
+                </div>
             </div>
             {action === 'add' ? (
                 <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}>

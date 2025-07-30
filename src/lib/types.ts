@@ -11,6 +11,7 @@ export interface User {
   dob?: string;
   bio?: string;
   phone?: string;
+  friends?: string[];
 }
 
 export interface Message {
