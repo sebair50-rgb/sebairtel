@@ -263,16 +263,20 @@ const LiveStreamPage = () => {
                         >
                            {isFullScreen ? <Minimize /> : <Maximize /> }
                         </Button>
+                        <AnimatePresence>
                         {isFullScreen && (
-                             <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="bg-black/50 backdrop-blur-sm rounded-full"
-                                onClick={() => setShowChatInFullScreen(!showChatInFullScreen)}
-                            >
-                               {showChatInFullScreen ? <MessageSquareOff /> : <MessageSquare />}
-                            </Button>
+                             <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }}>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="bg-black/50 backdrop-blur-sm rounded-full"
+                                    onClick={() => setShowChatInFullScreen(!showChatInFullScreen)}
+                                >
+                                {showChatInFullScreen ? <MessageSquareOff /> : <MessageSquare />}
+                                </Button>
+                             </motion.div>
                         )}
+                        </AnimatePresence>
                     </div>
 
                     <AnimatePresence>
