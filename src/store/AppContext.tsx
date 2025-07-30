@@ -77,8 +77,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (!authUser) return;
     const chatRef = doc(db, 'chats', chatId);
     const fieldName = `unreadCount.${authUser.uid}`;
-    await updateDoc(chatRef, { [fieldName]: 0 });
+    
+    // Check if document exists before updating
+    const chatDoc = await getDoc(chatRef);
+    if (chatDoc.exists()) {
+      await updateDoc(chatRef, { [fieldName]: 0 });
+    }
   }, [authUser]);
+
 
   useEffect(() => {
     if (selectedChatId) {
@@ -134,10 +140,24 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
-        const chatsData = snapshot.docs.map(doc => {
+        const chatsDataPromises = snapshot.docs.map(async (doc) => {
              const data = doc.data();
-             const otherUserInfo = Object.values(data.userInfo).find((user: any) => user.id !== authUser.uid);
-             const unreadCount = data.unreadCount ? data.unreadCount[authUser.uid] : 0;
+             const otherUserId = data.users.find((id: string) => id !== authUser.uid);
+             let otherUserInfo: any;
+
+             if (data.userInfo && data.userInfo[otherUserId]) {
+                 otherUserInfo = data.userInfo[otherUserId];
+             } else {
+                 // Fallback to fetch user if not in userInfo
+                 if (otherUserId) {
+                     const userDoc = await getDoc(doc(db, 'users', otherUserId));
+                     if (userDoc.exists()) {
+                        otherUserInfo = { id: userDoc.id, ...userDoc.data() };
+                     }
+                 }
+             }
+             
+             const unreadCount = (data.unreadCount && data.unreadCount[authUser.uid]) ? data.unreadCount[authUser.uid] : 0;
 
              return {
                  id: doc.id,
@@ -150,13 +170,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              } as Chat;
         });
         
-        const sortedChats = chatsData.sort((a, b) => {
-            const timeA = a.lastMessageTimestamp?.toMillis() || 0;
-            const timeB = b.lastMessageTimestamp?.toMillis() || 0;
-            return timeB - timeA;
+        Promise.all(chatsDataPromises).then(chatsData => {
+            const sortedChats = chatsData.sort((a, b) => {
+                const timeA = a.lastMessageTimestamp?.toMillis() || 0;
+                const timeB = b.lastMessageTimestamp?.toMillis() || 0;
+                return timeB - timeA;
+            });
+            setChats(sortedChats);
         });
 
-        setChats(sortedChats);
     }, (error) => {
         console.error("Firestore chats listener error:", error);
     });
@@ -309,6 +331,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         lastMessageText = '🎬 فيديو';
     } else if (messageData.type === 'file') {
         lastMessageText = '📎 ملف';
+    } else if (messageData.type === 'code') {
+        lastMessageText = '💻 كود';
     }
 
     // Handle unread counts and notifications
@@ -327,7 +351,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
             await createNotification(otherUserId, {
                 type: 'new_message',
-                message: `لديك رسالة جديدة من <strong>${currentUser.name}</strong>: ${lastMessageText.substring(0, 50)}`,
+                message: `لديك رسالة جديدة من <strong>${currentUser.name}</strong>`,
                 fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
                 link: `/chats/${chatId}`
             });
@@ -400,7 +424,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       await createNotification(currentUser.id, {
           type: 'missed_call',
           message: `لديك مكالمة فائتة من ${user.name}.`,
-          fromUser: user,
+          fromUser: {id: user.id, name: user.name, avatar: user.avatar},
           link: `/calls`
       });
   }
@@ -443,13 +467,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             case 'text':
                 return msg.text || '';
             case 'image':
-                return 'أرسل صورة';
+                return `أرسل صورة ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
             case 'video':
-                return 'أرسل فيديو';
+                return `أرسل فيديو ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
             case 'audio':
                 return 'أرسل رسالة صوتية';
             case 'file':
-                return `أرسل ملفًا باسم ${msg.fileInfo?.name || 'ملف'}`;
+                 return `أرسل ملفًا باسم '${msg.fileInfo?.name || 'ملف'}' ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
             case 'code':
                 const codeMatch = msg.text?.match(/```(\w+)/);
                 const lang = codeMatch ? ` من نوع ${codeMatch[1]}` : '';

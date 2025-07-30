@@ -12,12 +12,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SmartReplyInputSchema = z.object({
-  message: z.string().describe('The content of the incoming message.'),
+  message: z.string().describe('The recent conversation history.'),
 });
 export type SmartReplyInput = z.infer<typeof SmartReplyInputSchema>;
 
 const SmartReplyOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('An array of suggested replies.'),
+  suggestions: z.array(z.string()).describe('An array of short, context-aware suggested replies.'),
 });
 export type SmartReplyOutput = z.infer<typeof SmartReplyOutputSchema>;
 
@@ -29,13 +29,14 @@ const smartReplyPrompt = ai.definePrompt({
   name: 'smartReplyPrompt',
   input: {schema: SmartReplyInputSchema},
   output: {schema: SmartReplyOutputSchema},
-  prompt: `You are a helpful assistant designed to provide smart reply suggestions for incoming messages.
+  prompt: `You are an expert chat assistant that specializes in analyzing conversation contexts to provide relevant, smart replies.
+Your task is to analyze the following conversation history, understand the relationship and context, and identify the nature of the last message (e.g., is it a question, a statement, a shared image, code, etc.).
 
-  Given the following message, generate three suggested replies that would be appropriate and helpful.
+Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "أنت".
+The replies should be in Arabic.
 
-  Message: {{{message}}}
-
-  Your response should be an array of strings.
+Conversation History:
+{{{message}}}
   `,
 });
 
