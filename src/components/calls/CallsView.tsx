@@ -14,7 +14,8 @@ interface CallsViewProps {
 }
 
 const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
-    
+    const { selectedChatId } = useAppContext();
+
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />
@@ -22,6 +23,12 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
             <p className="text-muted-foreground mt-2">هذه الميزة ستكون متاحة قريباً!</p>
         </div>
     );
+
+    // If a chat is selected, show the chat interface directly.
+    // This ensures that clicking "message" from the friends list works reliably.
+    if (selectedChatId) {
+        return <ChatInterface />;
+    }
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-100">
@@ -55,11 +62,11 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                  <TabsContent value="chats" className="flex-1 bg-white">
                     <ChatInterface />
                 </TabsContent>
-                <TabsContent value="calls" className="mt-2 flex-1 px-4 md:px-6">
-                    <CallsList />
-                </TabsContent>
                  <TabsContent value="friends" className="flex-1 bg-white">
                     <UsersView setActiveTab={setActiveTab} />
+                </TabsContent>
+                <TabsContent value="calls" className="mt-2 flex-1 px-4 md:px-6">
+                    <CallsList />
                 </TabsContent>
                  <TabsContent value="groups" className="flex-1 bg-white">
                     <ComingSoonContent title="المجموعات" icon={Users} />

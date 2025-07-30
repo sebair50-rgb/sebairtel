@@ -30,7 +30,6 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                 title: "تمت الإضافة بنجاح!",
                 description: `لقد بدأت محادثة مع ${user.name}.`,
             });
-            // Switch to friends tab after adding one
             setActiveList('friends');
         }
     };
@@ -39,7 +38,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
         const chat = await createChat(user);
         if (chat) {
             setSelectedChatId(chat.id);
-            setActiveTab('contact'); 
+            // No need to call setActiveTab here, the parent component will handle the view change.
         }
     };
 
@@ -56,7 +55,10 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
 
 
     const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' }) => (
-         <div 
+         <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
             className="flex items-center justify-between gap-4 py-3 cursor-pointer"
             onClick={action === 'message' ? () => handleMessageFriend(user) : undefined}
         >
@@ -77,7 +79,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                     مراسلة
                 </Button>
             )}
-        </div>
+        </motion.div>
     );
 
     return (
@@ -132,13 +134,15 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                     <h2 className="text-lg font-semibold text-muted-foreground mb-2">{title}</h2>
                     {listToShow.length > 0 ? (
                         <div className="divide-y">
-                            {listToShow.map(user => (
-                                <UserCard 
-                                    key={user.id} 
-                                    user={user} 
-                                    action={activeList === 'friends' ? 'message' : 'add'} 
-                                />
-                            ))}
+                             <AnimatePresence>
+                                {listToShow.map(user => (
+                                    <UserCard 
+                                        key={user.id} 
+                                        user={user} 
+                                        action={activeList === 'friends' ? 'message' : 'add'} 
+                                    />
+                                ))}
+                            </AnimatePresence>
                         </div>
                     ) : (
                         <div className="text-center text-muted-foreground pt-16">
