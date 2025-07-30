@@ -30,7 +30,6 @@ export interface Message {
     };
     replyTo?: string | null;
     likedBy?: string[];
-    suggestions?: string[];
 }
 
 

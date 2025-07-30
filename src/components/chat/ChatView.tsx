@@ -25,7 +25,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage, currentUser, updateMessage, getSmartReplies } = useAppContext();
+  const { addMessage, currentUser, updateMessage } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
@@ -117,7 +117,6 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       ) : (
         <>
             <ChatToolbar 
-                onSmartReply={getSmartReplies}
                 onSelectSmartReply={handleSelectSmartReply}
              />
              <MessageInput

@@ -9,8 +9,7 @@ import {
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
-import { smartReplySuggestions } from '@/ai/flows/smart-reply';
-import { textToSpeech } from '@/ai/flows/tts-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow.ts';
 
 interface AppContextType {
   currentUser: User | null;
@@ -42,7 +41,6 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
-  getSmartReplies: () => Promise<string[]>;
   readChatAloud: () => Promise<void>;
   isReadingAloud: boolean;
 }
@@ -482,28 +480,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 return 'أرسل رسالة';
         }
     };
-
-    const getSmartReplies = async (): Promise<string[]> => {
-        if (!selectedChatId) return [];
-
-        const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-        const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) return [];
-
-        const conversationHistory = snapshot.docs
-            .reverse()
-            .map(doc => {
-                const msg = doc.data() as Message;
-                const description = getMessageDescription(msg);
-                return `${msg.user}: ${description}`;
-            })
-            .join('\n');
-        
-        const response = await smartReplySuggestions({ message: conversationHistory });
-        return response.suggestions;
-    };
   
     const readChatAloud = async (): Promise<void> => {
         if (audioPlayerRef.current && isReadingAloud) {
@@ -577,7 +553,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
-    getSmartReplies,
     readChatAloud,
     isReadingAloud,
   };
@@ -594,3 +569,4 @@ export const useAppContext = () => {
 };
 
     
+
