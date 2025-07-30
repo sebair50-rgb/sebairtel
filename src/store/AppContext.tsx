@@ -24,7 +24,7 @@ interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<User>) => Promise<void>;
+  updateUserProfile: (data: Partial<Omit<User, 'avatar'>>) => Promise<void>;
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -503,7 +503,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'idle' });
   };
 
-    const updateUserProfile = async (data: Partial<User>) => {
+    const updateUserProfile = async (data: Partial<Omit<User, 'avatar'>>) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
 
         const updateData: { [key: string]: any } = {};
@@ -512,13 +512,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await updateProfile(auth.currentUser, { displayName: data.name });
             updateData.name = data.name;
         }
-
-        if (data.avatar) {
-             // This is where a real app would upload to Firebase Storage.
-             // Storing large data URLs in Firestore is not recommended.
-             // For now, we are preventing this to avoid crashes.
-             console.warn("Avatar update is disabled to prevent database errors.");
-        }
+        
+        // Avatar update logic is removed from here to prevent errors.
+        // A real implementation would require Firebase Storage.
 
         if (Object.keys(updateData).length > 0) {
             const userDocRef = doc(db, 'users', auth.currentUser.uid);

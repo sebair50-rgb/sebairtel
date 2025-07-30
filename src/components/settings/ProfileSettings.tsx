@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
@@ -17,7 +18,22 @@ const ProfileSettings = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [name, setName] = useState(currentUser?.name || '');
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+
+    const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Firestore has a 1MB limit per document. Storing images as base64 is not ideal.
+            // For now, we will just show a toast message.
+            // A real implementation should use Firebase Storage.
+            toast({
+                title: "الميزة قيد التطوير",
+                description: "تتطلب ميزة رفع الصور إعداد خدمة التخزين (Storage)، وهو ما لا يمكن إتمامه حاليًا. سيتم تفعيلها قريبًا!",
+            });
+        }
+    };
+
 
     const handleSaveChanges = () => {
         if (!currentUser) return;
@@ -40,6 +56,7 @@ const ProfileSettings = () => {
 
         startTransition(async () => {
             try {
+                // Pass only the name to be updated. Avatar logic is removed to prevent crashes.
                 await updateUserProfile({ name });
                 
                 toast({
@@ -56,13 +73,6 @@ const ProfileSettings = () => {
             }
         });
     };
-    
-    const handleAvatarClick = () => {
-        toast({
-            title: "الميزة قيد التطوير",
-            description: "تتطلب ميزة رفع الصور إعداد خدمة التخزين (Storage)، وهو ما لا يمكن إتمامه حاليًا. سيتم تفعيلها قريبًا!",
-        });
-    }
 
     if (!currentUser) {
         return (
@@ -89,13 +99,29 @@ const ProfileSettings = () => {
                 <CardDescription>هذه هي معلومات ملفك الشخصي العامة.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarSelect}
+                    className="hidden"
+                    accept="image/*"
+                />
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="w-24 h-24 text-4xl">
-                            <AvatarImage src={currentUser?.avatar || undefined} alt={name} />
-                            <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
+                            {avatarPreview ? (
+                                <Image src={avatarPreview} alt="Preview" layout="fill" className="object-cover" />
+                            ) : (
+                                <>
+                                    <AvatarImage src={currentUser?.avatar || undefined} alt={name} />
+                                    <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
+                                </>
+                            )}
                         </Avatar>
-                        <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" onClick={handleAvatarClick}>
+                        <Button 
+                          size="icon" 
+                          className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" 
+                          onClick={() => fileInputRef.current?.click()}>
                             <Camera className="w-4 h-4"/>
                             <span className="sr-only">تغيير الصورة</span>
                         </Button>
