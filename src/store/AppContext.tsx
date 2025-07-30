@@ -73,6 +73,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setUsers([]);
       setFriends([]);
       setSuggestedUsers([]);
+      setCalls([]);
       return;
     };
 
@@ -129,12 +130,26 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, (error) => {
         console.error("Firestore chats listener error:", error);
     });
+
+    const callsQuery = query(collection(db, `users/${authUser.uid}/calls`), orderBy('timestamp', 'desc'));
+    const unsubscribeCalls = onSnapshot(callsQuery, (snapshot) => {
+        const callsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                time: data.timestamp?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) || ''
+            } as Call;
+        });
+        setCalls(callsData);
+    });
     
     return () => {
       unsubscribeUser();
       unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
+      unsubscribeCalls();
     };
   }, [authUser, authLoading]);
 
@@ -211,7 +226,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
     };
     
-    setChats(prevChats => [createdChatForState, ...prevChats]);
+    // This is crucial for the UI to update immediately
+    setChats(prevChats => [createdChatForState, ...prevChats].sort((a,b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
     
     return createdChatForState;
 };
@@ -246,19 +262,53 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   // --- Call Management ---
+  const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
+    if(!currentUser) return;
+    
+    const callData: Omit<Call, 'id' | 'time'> = {
+        user: user.name,
+        avatar: user.avatar,
+        type: type,
+        timestamp: serverTimestamp() as any,
+        duration: duration || '0:00'
+    };
+    // Add to current user's call log
+    await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
+
+    // Add to the other user's call log
+    const otherUserCallType = type === 'outgoing' ? 'incoming' : (type === 'incoming' ? 'outgoing' : 'missed');
+    const otherUserCallData: Omit<Call, 'id'| 'time'> = {
+        user: currentUser.name,
+        avatar: currentUser.avatar,
+        type: otherUserCallType,
+        timestamp: serverTimestamp() as any,
+        duration: duration || '0:00'
+    };
+    await addDoc(collection(db, `users/${user.id}/calls`), otherUserCallData);
+  }
+
   const initiateCall = (user: User, type: 'audio' | 'video') => {
       if (callState.status !== 'idle') return;
       setCallState({ status: 'outgoing', user, type });
+      addCallLog(user, 'outgoing');
 
-      // Simulate incoming call for demo purposes
+      // Simulate connection/end for demo
       setTimeout(() => {
           setCallState(prev => {
               if (prev.status === 'outgoing') {
-                  return { ...prev, status: 'incoming' };
+                  return { ...prev, status: 'connected' };
               }
               return prev;
           })
       }, 3000);
+      setTimeout(() => {
+          setCallState(prev => {
+              if (prev.status === 'connected') {
+                  endCall();
+              }
+              return prev;
+          })
+      }, 8000);
   };
 
   const answerCall = () => {

@@ -48,35 +48,45 @@ const CallsList = () => {
             <div className="px-4 md:px-0">
                 <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setFilter(value as any)}>
                     <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-200">
-                        <TabsTrigger value="missed">الفائتة</TabsTrigger>
                         <TabsTrigger value="all">كل المكالمات</TabsTrigger>
+                        <TabsTrigger value="missed">الفائتة</TabsTrigger>
                     </TabsList>
                 </Tabs>
             </div>
             <ScrollArea className="flex-1 mt-4">
-                <div className="space-y-2 px-4 md:px-0">
-                    {filteredCalls.map(call => (
-                        <Card key={call.id} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-xl shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarFallback>{call.avatar}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <CallIcon type={call.type} />
-                                        <span>{call.type === 'incoming' ? 'مكالمة واردة' : call.type === 'outgoing' ? 'مكالمة صادرة' : 'مكالمة فائتة'}</span>
-                                        <span>&middot;</span>
-                                        <span>{call.time}</span>
+                 {filteredCalls.length > 0 ? (
+                    <div className="space-y-2 px-4 md:px-0">
+                        {filteredCalls.map(call => (
+                            <Card key={call.id} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-xl shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarFallback>{call.avatar}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <CallIcon type={call.type} />
+                                            <span>{call.type === 'incoming' ? 'مكالمة واردة' : call.type === 'outgoing' ? 'مكالمة صادرة' : 'مكالمة فائتة'}</span>
+                                            <span>&middot;</span>
+                                            <span>{call.time}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10" onClick={() => handleCall(call)}>
-                                <Phone />
-                            </Button>
-                        </Card>
-                    ))}
-                </div>
+                                <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10" onClick={() => handleCall(call)}>
+                                    <Phone />
+                                </Button>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-muted-foreground pt-16">
+                        <PhoneMissed size={48} className="mx-auto mb-4" />
+                        <p className="font-semibold">لا توجد مكالمات</p>
+                        <p className="text-sm">
+                            {filter === 'missed' ? 'ليس لديك أي مكالمات فائتة.' : 'لم تقم بإجراء أو استقبال أي مكالمات بعد.'}
+                        </p>
+                    </div>
+                )}
             </ScrollArea>
         </div>
     );
