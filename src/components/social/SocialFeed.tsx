@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -10,6 +9,7 @@ import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
 import LiveFeed from './LiveFeed';
 import UsersView from '../users/UsersView';
+import MarketView from './MarketView';
 
 const SocialFeed = () => {
     const { posts, setActiveTab } = useAppContext();
@@ -60,8 +60,8 @@ const SocialFeed = () => {
                                 <UsersView setActiveTab={setActiveTab} />
                             </div>
                         </TabsContent>
-                        <TabsContent value="market">
-                            <ComingSoonContent title="السوق" icon={ShoppingCart} />
+                        <TabsContent value="market" className="mt-6">
+                            <MarketView />
                         </TabsContent>
                         <TabsContent value="services">
                             <ComingSoonContent title="خدماتي" icon={Briefcase} />
