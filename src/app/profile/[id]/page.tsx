@@ -35,14 +35,17 @@ const UserProfilePage = () => {
                 
                 // Calculate mutual friends
                 if (!isOwnProfile) {
-                    const profileUserFriends = users.filter(u => 
-                        (u.friends?.includes(foundUser.id) || friends.some(f => f.id === u.id))
+                    const profileUserFriendIds = new Set(
+                        users.filter(u => friends.some(f => f.id === u.id)).map(f => f.id)
                     );
-
+                    
                     const currentUserFriendIds = new Set(friends.map(f => f.id));
                     
-                    const mutual = profileUserFriends.filter(friend => 
-                        currentUserFriendIds.has(friend.id) && friend.id !== currentUser.id && friend.id !== foundUser.id
+                    const mutual = users.filter(user => 
+                        user.id !== currentUser.id &&
+                        user.id !== foundUser.id &&
+                        currentUserFriendIds.has(user.id) &&
+                        profileUserFriendIds.has(user.id)
                     );
                     setMutualFriends(mutual);
                 }
