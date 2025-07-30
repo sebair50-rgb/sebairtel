@@ -36,6 +36,7 @@ interface AppContextType {
   initiateCall: (user: User, type: 'audio' | 'video') => void;
   answerCall: () => void;
   endCall: () => void;
+  addMissedCall: (user: User) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -276,15 +277,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
 
     // Add to the other user's call log
-    const otherUserCallType = type === 'outgoing' ? 'incoming' : (type === 'incoming' ? 'outgoing' : 'missed');
-    const otherUserCallData: Omit<Call, 'id'| 'time'> = {
-        user: currentUser.name,
-        avatar: currentUser.avatar,
-        type: otherUserCallType,
-        timestamp: serverTimestamp() as any,
-        duration: duration || '0:00'
-    };
-    await addDoc(collection(db, `users/${user.id}/calls`), otherUserCallData);
+    // For a missed call, only the current user gets the log.
+    if (type !== 'missed') {
+        const otherUserCallType = type === 'outgoing' ? 'incoming' : 'outgoing';
+        const otherUserCallData: Omit<Call, 'id'| 'time'> = {
+            user: currentUser.name,
+            avatar: currentUser.avatar,
+            type: otherUserCallType,
+            timestamp: serverTimestamp() as any,
+            duration: duration || '0:00'
+        };
+        await addDoc(collection(db, `users/${user.id}/calls`), otherUserCallData);
+    }
+  }
+
+  const addMissedCall = (user: User) => {
+    addCallLog(user, 'missed');
   }
 
   const initiateCall = (user: User, type: 'audio' | 'video') => {
@@ -347,7 +355,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     callState,
     initiateCall,
     answerCall,
-    endCall
+    endCall,
+    addMissedCall,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

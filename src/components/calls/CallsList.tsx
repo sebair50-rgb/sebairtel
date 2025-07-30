@@ -28,7 +28,7 @@ const CallIcon = ({ type }: { type: Call['type'] }) => {
 
 
 const CallsList = () => {
-    const { calls, initiateCall, users } = useAppContext();
+    const { calls, initiateCall, users, addMissedCall, suggestedUsers } = useAppContext();
     const [filter, setFilter] = React.useState<'all' | 'missed'>('all');
     const { toast } = useToast();
 
@@ -43,6 +43,16 @@ const CallsList = () => {
         }
     }
     
+    const handleAddMissedCall = () => {
+        const userForMissedCall = suggestedUsers[0];
+        if (userForMissedCall) {
+            addMissedCall(userForMissedCall);
+            toast({ description: `تمت إضافة مكالمة فائتة من ${userForMissedCall.name}`});
+        } else {
+            toast({ variant: 'destructive', description: "لا يوجد مستخدمين متاحين لإضافة مكالمة فائتة." });
+        }
+    }
+
     return (
         <div className="h-full w-full flex flex-col">
             <div className="px-4 md:px-0">
@@ -52,6 +62,9 @@ const CallsList = () => {
                         <TabsTrigger value="missed">الفائتة</TabsTrigger>
                     </TabsList>
                 </Tabs>
+                <Button onClick={handleAddMissedCall} variant="outline" className="w-full mt-2">
+                    إضافة مكالمة فائتة (تجريبي)
+                </Button>
             </div>
             <ScrollArea className="flex-1 mt-4">
                  {filteredCalls.length > 0 ? (
