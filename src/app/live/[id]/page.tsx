@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,7 +34,12 @@ const CoHostVideo = ({ user }: { user: User }) => (
     </div>
 );
 
-const InviteSheet = ({ onInvite }: { onInvite: (user: User) => void }) => {
+const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineRequest }: { 
+    onInvite: (user: User) => void;
+    joinRequests: User[];
+    onAcceptRequest: (user: User) => void;
+    onDeclineRequest: (user: User) => void;
+}) => {
     const { friends } = useAppContext();
     return (
         <Sheet>
@@ -45,9 +50,33 @@ const InviteSheet = ({ onInvite }: { onInvite: (user: User) => void }) => {
             </SheetTrigger>
             <SheetContent side="left" className="bg-slate-900 text-white border-slate-700 w-[350px] sm:w-[400px]">
                 <SheetHeader>
-                    <SheetTitle className="text-white">دعوة أصدقاء للانضمام</SheetTitle>
+                    <SheetTitle className="text-white">المشاركون والدعوات</SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100%-4rem)] mt-4 pr-4">
+                    {joinRequests.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="font-bold mb-2 text-primary">طلبات الانضمام ({joinRequests.length})</h3>
+                            <div className="space-y-4">
+                                {joinRequests.map(user => (
+                                    <div key={user.id} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={user.avatar} alt={user.name} />
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <p className="font-semibold">{user.name}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="destructive" onClick={() => onDeclineRequest(user)}>رفض</Button>
+                                            <Button size="sm" variant="secondary" onClick={() => onAcceptRequest(user)}>قبول</Button>
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+                    )}
+
+                    <h3 className="font-bold mb-2">دعوة أصدقاء</h3>
                     <div className="space-y-4">
                         {friends.map(friend => (
                             <div key={friend.id} className="flex items-center justify-between">
@@ -115,7 +144,7 @@ const LiveStreamPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { currentUser, users, friends } = useAppContext();
+    const { currentUser, users, friends, suggestedUsers } = useAppContext();
     const videoRef = useRef<HTMLVideoElement>(null);
     const videoContainerRef = useRef<HTMLDivElement>(null);
 
@@ -127,6 +156,8 @@ const LiveStreamPage = () => {
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [showChatInFullScreen, setShowChatInFullScreen] = useState(true);
     const [coHosts, setCoHosts] = useState<User[]>([]);
+    const [joinRequests, setJoinRequests] = useState<User[]>([]);
+    const [hasRequestedToJoin, setHasRequestedToJoin] = useState(false);
 
     const isMyStream = id === 'me';
     
@@ -150,15 +181,15 @@ const LiveStreamPage = () => {
     useEffect(() => {
         if(isMyStream) {
             setStreamer(currentUser);
-            // Simulate a co-host for demo purposes
-            if (friends.length > 0) {
-                setCoHosts([friends[0]]);
-            }
+            // Simulate a co-host & join request for demo purposes
+            if (friends.length > 0) setCoHosts([friends[0]]);
+            if (suggestedUsers.length > 0) setJoinRequests([suggestedUsers[0]]);
+            
         } else {
             const foundUser = users.find(u => (id as string).includes(u.id));
             setStreamer(foundUser || null);
         }
-    }, [id, currentUser, users, isMyStream, friends]);
+    }, [id, currentUser, users, isMyStream, friends, suggestedUsers]);
 
 
     useEffect(() => {
@@ -214,6 +245,26 @@ const LiveStreamPage = () => {
         }
         setCoHosts(prev => [...prev, user]);
         toast({ title: 'تم إرسال الدعوة', description: `تم إرسال دعوة إلى ${user.name} للانضمام.` });
+    }
+    
+    const handleAcceptRequest = (user: User) => {
+        setJoinRequests(prev => prev.filter(req => req.id !== user.id));
+        setCoHosts(prev => [...prev, user]);
+        toast({ title: "تم قبول الطلب", description: `انضم ${user.name} إلى البث.` });
+    }
+
+    const handleDeclineRequest = (user: User) => {
+        setJoinRequests(prev => prev.filter(req => req.id !== user.id));
+        toast({ title: "تم رفض الطلب", description: `تم رفض طلب ${user.name}.`, variant: "destructive" });
+    }
+    
+    const handleRequestToJoin = () => {
+        setHasRequestedToJoin(true);
+        toast({
+            title: "تم إرسال طلبك",
+            description: "لقد أرسلت طلبًا للانضمام إلى البث كمشارك."
+        });
+        // In a real app, this would send a request to the streamer
     }
 
     const handleExitActions = () => {
@@ -384,15 +435,35 @@ const LiveStreamPage = () => {
                         <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsMuted(!isMuted)}>
                             {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
                         </Button>
-                        {isMyStream && (
+
+                        {isMyStream ? (
                             <>
                                 <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsVideoOff(!isVideoOff)}>
                                     {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
                                 </Button>
-                                <InviteSheet onInvite={handleInviteUser} />
+                                <ParticipantsSheet 
+                                    onInvite={handleInviteUser} 
+                                    joinRequests={joinRequests}
+                                    onAcceptRequest={handleAcceptRequest}
+                                    onDeclineRequest={handleDeclineRequest}
+                                />
                             </>
+                        ) : (
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className={cn(
+                                    "bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16",
+                                    hasRequestedToJoin && "bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40"
+                                )}
+                                onClick={handleRequestToJoin}
+                                disabled={hasRequestedToJoin}
+                            >
+                                <Hand size={28} />
+                            </Button>
                         )}
-                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={() => router.back()}>
+
+                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleExitActions}>
                             <PhoneOff size={28} />
                         </Button>
                     </motion.div>
