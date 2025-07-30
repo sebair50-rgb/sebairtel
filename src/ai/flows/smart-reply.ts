@@ -26,30 +26,34 @@ export async function smartReplySuggestions(input: SmartReplyInput): Promise<Sma
   return smartReplyFlow(input);
 }
 
-const smartReplyPrompt = ai.definePrompt({
-  name: 'smartReplyPrompt',
-  input: {schema: SmartReplyInputSchema},
-  output: {schema: SmartReplyOutputSchema},
-  model: 'googleai/gemini-pro',
-  prompt: `You are an expert chat assistant that specializes in analyzing conversation contexts to provide relevant, smart replies.
-Your task is to analyze the following conversation history, understand the relationship and context, and identify the nature of the last message (e.g., is it a question, a statement, a shared image, code, etc.).
-
-Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "أنت".
-The replies should be in Arabic.
-
-Conversation History:
-{{{message}}}
-  `,
-});
-
 const smartReplyFlow = ai.defineFlow(
   {
     name: 'smartReplyFlow',
     inputSchema: SmartReplyInputSchema,
     outputSchema: SmartReplyOutputSchema,
   },
-  async input => {
-    const {output} = await smartReplyPrompt(input);
-    return output!;
+  async ({ message }) => {
+    const { output } = await ai.generate({
+      model: 'googleai/gemini-pro',
+      prompt: `You are an expert chat assistant that specializes in analyzing conversation contexts to provide relevant, smart replies.
+Your task is to analyze the following conversation history, understand the relationship and context, and identify the nature of the last message (e.g., is it a question, a statement, a shared image, code, etc.).
+
+Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "أنت".
+The replies should be in Arabic.
+
+Conversation History:
+${message}
+      `,
+      output: {
+        schema: SmartReplyOutputSchema,
+        format: 'json',
+      },
+    });
+
+    if (!output) {
+      throw new Error('Failed to generate smart replies.');
+    }
+    
+    return output;
   }
 );
