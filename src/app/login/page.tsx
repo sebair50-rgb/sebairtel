@@ -9,14 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, AtSign } from 'lucide-react';
+import { Loader2, KeyRound, AtSign, MailWarning } from 'lucide-react';
 import Logo from '@/components/shared/Logo';
 import Link from 'next/link';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, loading } = useAuth();
+    const { login, loading, authUser } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -24,15 +24,29 @@ export default function LoginPage() {
         e.preventDefault();
         try {
             await login(email, password);
-            router.push('/');
+            // AuthGuard will handle redirection
         } catch (error: any) {
+            let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                description = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+            } else if (error.code === 'auth/email-not-verified') {
+                 description = 'لم يتم التحقق من بريدك الإلكتروني. الرجاء التحقق من صندوق الوارد الخاص بك.';
+            }
+            console.error("Login Error: ", error.code, error.message);
             toast({
                 variant: "destructive",
                 title: "خطأ في تسجيل الدخول",
-                description: error.message === 'Firebase: Error (auth/invalid-credential).' ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' : error.message,
+                description: description,
             });
         }
     };
+    
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (authUser) {
+            router.push('/');
+        }
+    }, [authUser, router]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">

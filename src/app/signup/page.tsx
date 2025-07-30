@@ -35,16 +35,13 @@ export default function SignupPage() {
 
         try {
             await signup(email, password, name);
-            toast({
-                title: "تم إنشاء الحساب بنجاح!",
-                description: "تم توجيهك إلى التطبيق.",
-            });
-            router.push('/');
+            // Redirect to a verification page
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error: any) {
              toast({
                 variant: "destructive",
                 title: "خطأ في إنشاء الحساب",
-                description: error.message === 'Firebase: Error (auth/email-already-in-use).' ? 'هذا البريد الإلكتروني مستخدم بالفعل.' : error.message,
+                description: error.code === 'auth/email-already-in-use' ? 'هذا البريد الإلكتروني مستخدم بالفعل.' : 'حدث خطأ غير متوقع، الرجاء المحاولة مرة أخرى.',
             });
         }
     };

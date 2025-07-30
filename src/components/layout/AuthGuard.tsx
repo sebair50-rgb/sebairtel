@@ -2,32 +2,36 @@
 "use client";
 
 import { useAuth } from '@/store/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import Logo from '../shared/Logo';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { authUser, loading: authLoading } = useAuth();
+  const { authUser, loading } = useAuth();
   const router = useRouter();
-  const [isInitialCheck, setIsInitialCheck] = useState(true);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // If auth state is done loading
-    if (!authLoading) {
-      // And there's no user, redirect to login
-      if (!authUser) {
-        router.push('/login');
-      } else {
-        // If there is a user, the check is complete
-        setIsInitialCheck(false);
-      }
-    }
-  }, [authUser, authLoading, router]);
+    if (loading) return; // Wait until loading is false
 
-  // While auth state is loading OR if there is no authenticated user yet, show loader.
-  // This prevents flashing the app content before the redirect can happen.
-  if (authLoading || isInitialCheck) {
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/verify-email');
+    
+    // If not authenticated, redirect to login page, unless they are already on an auth page.
+    if (!authUser) {
+      if (!isAuthPage) {
+        router.push('/login');
+      }
+    } else {
+       // If authenticated and on an auth page, redirect to home.
+       if (isAuthPage) {
+           router.push('/');
+       }
+    }
+  }, [authUser, loading, router, pathname]);
+
+  // While loading, show a spinner
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
@@ -36,9 +40,21 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
+  
+  // If authenticated and not on an auth page, or if not authenticated and on an auth page, show children
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/verify-email');
+  if ((authUser && !isAuthPage) || (!authUser && isAuthPage)) {
+    return <>{children}</>;
+  }
 
-  // If we have an authenticated user and the initial check is done, render the app.
-  return <>{children}</>;
+  // Fallback loading state to prevent flicker
+  return (
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <Logo />
+        <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
+        <p className="text-muted-foreground mt-2">جاري التوجيه...</p>
+      </div>
+    );
 };
 
 export default AuthGuard;
