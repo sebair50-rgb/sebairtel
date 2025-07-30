@@ -12,7 +12,6 @@ import { useAppContext } from '@/store/AppContext';
 import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import NewsView from './NewsView';
 
 const SocialFeed = () => {
@@ -29,8 +28,8 @@ const SocialFeed = () => {
     
     return (
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
-             <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
-                <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full">
+             <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
+                <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
                     <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
                        {socialTabs.map(tab => (
                             <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
@@ -39,33 +38,33 @@ const SocialFeed = () => {
                             </TabsTrigger>
                        ))}
                     </TabsList>
-                </Tabs>
-            </header>
+                </header>
             
-            <ScrollArea className="flex-1">
-                 <div className="p-4 md:p-6">
-                    <TabsContent value="feed" className="mt-0">
-                        <div className="max-w-2xl mx-auto space-y-6">
-                            <CreatePostCard />
-                            {posts.map(post => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="live" className="mt-0">
-                        <LiveFeed />
-                    </TabsContent>
-                     <TabsContent value="news" className="mt-0">
-                        <NewsView />
-                    </TabsContent>
-                    <TabsContent value="business" className="mt-0">
-                        <MarketView />
-                    </TabsContent>
-                    <TabsContent value="market" className="mt-0">
-                        <StoreView />
-                    </TabsContent>
-                 </div>
-            </ScrollArea>
+                <ScrollArea className="flex-1">
+                    <div className="p-4 md:p-6">
+                        <TabsContent value="feed" className="mt-0">
+                            <div className="max-w-2xl mx-auto space-y-6">
+                                <CreatePostCard />
+                                {posts.map(post => (
+                                    <PostCard key={post.id} post={post} />
+                                ))}
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="live" className="mt-0">
+                            <LiveFeed />
+                        </TabsContent>
+                        <TabsContent value="news" className="mt-0">
+                            <NewsView />
+                        </TabsContent>
+                        <TabsContent value="business" className="mt-0">
+                            <MarketView />
+                        </TabsContent>
+                        <TabsContent value="market" className="mt-0">
+                            <StoreView />
+                        </TabsContent>
+                    </div>
+                </ScrollArea>
+             </Tabs>
         </div>
     );
 };
