@@ -438,61 +438,89 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'idle' });
   };
   
-  const getSmartReplies = async (): Promise<string[]> => {
-    if (!selectedChatId) return [];
+    const getMessageDescription = (msg: Message): string => {
+        switch (msg.type) {
+            case 'text':
+                return msg.text || '';
+            case 'image':
+                return 'أرسل صورة';
+            case 'video':
+                return 'أرسل فيديو';
+            case 'audio':
+                return 'أرسل رسالة صوتية';
+            case 'file':
+                return `أرسل ملفًا باسم ${msg.fileInfo?.name || 'ملف'}`;
+            case 'code':
+                const codeMatch = msg.text?.match(/```(\w+)/);
+                const lang = codeMatch ? ` من نوع ${codeMatch[1]}` : '';
+                return `أرسل مقطعًا برمجيًا${lang}`;
+            default:
+                return 'أرسل رسالة';
+        }
+    };
 
-    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(1));
-    const snapshot = await getDocs(q);
+    const getSmartReplies = async (): Promise<string[]> => {
+        if (!selectedChatId) return [];
 
-    if (snapshot.empty) return [];
+        const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+        const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
+        const snapshot = await getDocs(q);
 
-    const lastMessage = snapshot.docs[0].data() as Message;
-    if (!lastMessage.text) return [];
+        if (snapshot.empty) return [];
 
-    const response = await smartReplySuggestions({ message: lastMessage.text });
-    return response.suggestions;
-  }
+        const conversationHistory = snapshot.docs
+            .reverse()
+            .map(doc => {
+                const msg = doc.data() as Message;
+                const description = getMessageDescription(msg);
+                return `${msg.user}: ${description}`;
+            })
+            .join('\n');
+        
+        const response = await smartReplySuggestions({ message: conversationHistory });
+        return response.suggestions;
+    };
   
-  const readChatAloud = async (): Promise<void> => {
-    if (audioPlayerRef.current && isReadingAloud) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current = null;
-        setIsReadingAloud(false);
-        return;
-    }
-    
-    if (!selectedChatId) return;
+    const readChatAloud = async (): Promise<void> => {
+        if (audioPlayerRef.current && isReadingAloud) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current = null;
+            setIsReadingAloud(false);
+            return;
+        }
 
-    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(10));
-    const snapshot = await getDocs(q);
+        if (!selectedChatId) return;
 
-    if (snapshot.empty) return;
-    
-    const conversationText = snapshot.docs
-        .reverse()
-        .map(doc => {
-            const msg = doc.data() as Message;
-            return `${msg.user}: ${msg.text || 'مرفق'}`;
-        })
-        .join('\n');
-    
-    const { audioUrl } = await textToSpeech({ text: conversationText });
+        const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+        const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
+        const snapshot = await getDocs(q);
 
-    const audio = new Audio(audioUrl);
-    audioPlayerRef.current = audio;
-    audio.onplay = () => setIsReadingAloud(true);
-    audio.onpause = () => {
-        setIsReadingAloud(false);
-        audioPlayerRef.current = null;
+        if (snapshot.empty) return;
+
+        const conversationText = snapshot.docs
+            .reverse()
+            .map(doc => {
+                const msg = doc.data() as Message;
+                const description = getMessageDescription(msg);
+                return `${msg.user}: ${description}`;
+            })
+            .join('\n');
+
+        const { audioUrl } = await textToSpeech({ text: conversationText });
+
+        const audio = new Audio(audioUrl);
+        audioPlayerRef.current = audio;
+        audio.onplay = () => setIsReadingAloud(true);
+        audio.onpause = () => {
+            setIsReadingAloud(false);
+            audioPlayerRef.current = null;
+        };
+        audio.onended = () => {
+            setIsReadingAloud(false);
+            audioPlayerRef.current = null;
+        };
+        audio.play();
     };
-    audio.onended = () => {
-        setIsReadingAloud(false);
-        audioPlayerRef.current = null;
-    };
-    audio.play();
-  }
 
 
   const value = {
@@ -540,3 +568,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    
