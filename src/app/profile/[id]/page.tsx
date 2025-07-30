@@ -7,19 +7,27 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, UserPlus, MessageSquare, Users, MoreVertical } from 'lucide-react';
+import { ArrowRight, UserPlus, MessageSquare, Users, MoreVertical, UserX, Share2, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const UserProfilePage = () => {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { users, currentUser, friends, createChat, setSelectedChatId, setActiveTab } = useAppContext();
+    const { users, currentUser, friends, createChat, setSelectedChatId, setActiveTab, unfriendUser } = useAppContext();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [mutualFriends, setMutualFriends] = useState<User[]>([]);
@@ -74,6 +82,38 @@ const UserProfilePage = () => {
             description: "(ميزة قيد التطوير)",
         });
     }
+
+    const handleShareProfile = () => {
+        navigator.clipboard.writeText(window.location.href);
+        toast({
+            title: "تم نسخ الرابط",
+            description: "يمكنك الآن مشاركة ملفه الشخصي.",
+        });
+    };
+
+    const handleBlockUser = () => {
+        if(!profileUser) return;
+        toast({
+            variant: "destructive",
+            title: `تم حظر ${profileUser.name}`,
+            description: "(ميزة قيد التطوير)",
+        });
+    };
+    
+    const handleRemoveFriend = async () => {
+        if(!profileUser) return;
+        try {
+            await unfriendUser(profileUser.id);
+            toast({
+                title: `تمت إزالة ${profileUser.name} من الأصدقاء`,
+            });
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'فشل في إزالة الصديق'
+            });
+        }
+    };
 
     if (isLoading) {
         return <ProfileSkeleton />;
@@ -142,9 +182,30 @@ const UserProfilePage = () => {
                                         إضافة صديق
                                     </Button>
                                 )}
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreVertical />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={handleShareProfile}>
+                                            <Share2 className="ml-2 h-4 w-4" />
+                                            <span>مشاركة الملف الشخصي</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        {isFriend && (
+                                            <DropdownMenuItem onClick={handleRemoveFriend} className="text-destructive focus:text-destructive">
+                                                <UserMinus className="ml-2 h-4 w-4" />
+                                                <span>إزالة الصديق</span>
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem onClick={handleBlockUser} className="text-destructive focus:text-destructive">
+                                            <UserX className="ml-2 h-4 w-4" />
+                                            <span>حظر المستخدم</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         )}
                     </CardContent>
@@ -217,3 +278,5 @@ const ProfileSkeleton = () => (
 
 
 export default UserProfilePage;
+
+    

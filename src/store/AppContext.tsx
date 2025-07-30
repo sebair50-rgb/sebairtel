@@ -44,6 +44,7 @@ interface AppContextType {
   friends: User[];
   suggestedUsers: User[];
   createChat: (friend: User) => Promise<Chat | null>;
+  unfriendUser: (friendId: string) => Promise<void>;
   callState: CallState;
   initiateCall: (user: User, type: 'audio' | 'video') => void;
   answerCall: () => void;
@@ -394,6 +395,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     return createdChatForState;
 };
 
+    const unfriendUser = async (friendId: string) => {
+        if (!currentUser) return;
+        const q = query(
+            collection(db, 'chats'),
+            where('users', '==', [currentUser.id, friendId].sort())
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const chatDoc = querySnapshot.docs[0];
+            await deleteDoc(doc(db, 'chats', chatDoc.id));
+            setChats(prev => prev.filter(c => c.id !== chatDoc.id));
+        } else {
+            // Alternative check if users array was stored in different order
+             const qAlt = query(
+                collection(db, 'chats'),
+                where('users', '==', [friendId, currentUser.id].sort())
+            );
+            const querySnapshotAlt = await getDocs(qAlt);
+            if (!querySnapshotAlt.empty) {
+                const chatDoc = querySnapshotAlt.docs[0];
+                await deleteDoc(doc(db, 'chats', chatDoc.id));
+                 setChats(prev => prev.filter(c => c.id !== chatDoc.id));
+            } else {
+                 console.warn("No chat found to delete between these users.");
+            }
+        }
+    };
+
   const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
     if (!currentUser || !settings.notifications.all || !settings.notifications.messages) return;
     const chatRef = doc(db, 'chats', chatId);
@@ -592,6 +622,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     friends,
     suggestedUsers,
     createChat,
+    unfriendUser,
     callState,
     initiateCall,
     answerCall,
@@ -613,3 +644,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    
