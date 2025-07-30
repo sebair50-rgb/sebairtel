@@ -4,8 +4,18 @@ export default {
   darkMode: ['class'],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/ai/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/apps/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/calls/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/chat/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/layout/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/notifications/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/settings/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/shared/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/social/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/ui/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/users/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     container: {
