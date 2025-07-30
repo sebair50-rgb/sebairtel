@@ -19,7 +19,7 @@ const SocialFeed = () => {
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
-        { value: 'feed', label: 'الموجز', icon: Compass },
+        { value: 'feed', label: 'المنشورات العامه', icon: Compass },
         { value: 'live', label: 'البث المباشر', icon: Video },
         { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
@@ -40,7 +40,7 @@ const SocialFeed = () => {
                     </TabsList>
                 </header>
             
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                     <div className="p-4 md:p-6">
                         <TabsContent value="feed" className="mt-0">
                             <div className="max-w-2xl mx-auto space-y-6">
@@ -53,7 +53,7 @@ const SocialFeed = () => {
                         <TabsContent value="live" className="mt-0">
                             <LiveFeed />
                         </TabsContent>
-                        <TabsContent value="news" className="mt-0">
+                         <TabsContent value="news" className="mt-0">
                             <NewsView />
                         </TabsContent>
                         <TabsContent value="business" className="mt-0">
@@ -63,7 +63,7 @@ const SocialFeed = () => {
                             <StoreView />
                         </TabsContent>
                     </div>
-                </ScrollArea>
+                </div>
              </Tabs>
         </div>
     );
