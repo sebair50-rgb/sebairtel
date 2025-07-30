@@ -4,13 +4,34 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MailCheck } from 'lucide-react';
+import { MailCheck, Loader2 } from 'lucide-react';
 import Logo from '@/components/shared/Logo';
+import { useAuth } from '@/store/AuthContext';
+import React from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VerifyEmailPage() {
-    const searchParams = useSearchParams();
+    const { resendVerificationEmail, loading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
+    const searchParams = useSearchParams();
     const email = searchParams.get('email');
+
+    const handleResendEmail = async () => {
+        try {
+            await resendVerificationEmail();
+            toast({
+                title: "تم إرسال الرابط",
+                description: `تم إرسال رابط تحقق جديد إلى ${email}.`,
+            });
+        } catch (error: any) {
+             toast({
+                variant: "destructive",
+                title: "حدث خطأ",
+                description: "فشل إرسال البريد. قد تكون قد طلبت رابطًا عدة مرات. حاول مرة أخرى لاحقًا.",
+            });
+        }
+    }
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -31,13 +52,16 @@ export default function VerifyEmailPage() {
                             الرجاء الضغط على الرابط لتفعيل حسابك.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
                             إذا لم تجد البريد، الرجاء التحقق من مجلد الرسائل غير المرغوب فيها (Spam).
                         </p>
+                        <Button onClick={handleResendEmail} disabled={loading} variant="secondary" className="w-full">
+                            {loading ? <Loader2 className="animate-spin" /> : "إعادة إرسال رابط التحقق"}
+                        </Button>
                     </CardContent>
                     <CardFooter className="flex justify-center">
-                        <Button onClick={() => router.push('/login')}>
+                        <Button variant="outline" onClick={() => router.push('/login')}>
                             العودة إلى صفحة تسجيل الدخول
                         </Button>
                     </CardFooter>

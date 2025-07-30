@@ -22,6 +22,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,7 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         await setDoc(userDocRef, newUser);
         
-        await signOut(auth);
+        // Don't sign out, keep the user object for resend logic
+        // await signOut(auth); 
         
         return userCredential;
       } finally {
@@ -85,12 +87,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signOut(auth);
   }
 
+  const resendVerificationEmail = async () => {
+      if (auth.currentUser) {
+          await sendEmailVerification(auth.currentUser);
+      } else {
+          throw new Error("No user is currently signed in to resend verification email.");
+      }
+  }
+
   const value = {
     authUser,
     loading,
     login,
     signup,
     logout,
+    resendVerificationEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
