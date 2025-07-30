@@ -59,16 +59,16 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                   </Avatar>
                   {/* Online indicator can be added here */}
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-w-0">
                     <h3 className={cn("font-semibold truncate", selectedChatId === chat.id && "text-primary")}>{chat.name}</h3>
                     <p className="text-sm text-muted-foreground truncate">
                         {chat.lastMessageText || '...'}
                     </p>
                 </div>
-                <div className="flex flex-col items-end gap-1.5 text-xs text-muted-foreground self-start">
+                <div className="flex flex-col items-end gap-1.5 text-xs text-muted-foreground self-start shrink-0">
                     <span>{chat.lastMessageTime}</span>
                     {chat.unreadCount && chat.unreadCount > 0 && (
-                    <Badge variant="default" className="bg-accent text-accent-foreground h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                    <Badge variant="default" className="bg-primary text-primary-foreground h-5 w-5 p-0 flex items-center justify-center rounded-full">
                         {chat.unreadCount}
                     </Badge>
                     )}
