@@ -21,14 +21,17 @@ const SocialFeed = () => {
     );
 
     return (
-        <div className="w-full h-full flex flex-col">
-            <div className="p-4 md:p-6 pb-0">
-                <h1 className="text-3xl font-bold">المجتمع</h1>
-            </div>
+        <div className="w-full h-full flex flex-col bg-slate-100">
+            <header className="bg-white p-4 flex items-center justify-between border-b">
+                <div className="flex items-center gap-2">
+                    <Users className="w-8 h-8 text-primary" />
+                    <h1 className="text-2xl font-bold">المجتمع</h1>
+                </div>
+            </header>
             <ScrollArea className="h-full">
-                <div className="max-w-2xl mx-auto p-4 pt-2 md:p-6 md:pt-2 space-y-6">
+                <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
                     <Tabs defaultValue="posts" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
+                        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-slate-200">
                             <TabsTrigger value="news">الأخبار</TabsTrigger>
                             <TabsTrigger value="services">خدماتي</TabsTrigger>
                             <TabsTrigger value="market">السوق</TabsTrigger>

@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { useAppContext } from '@/store/AppContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing } from 'lucide-react';
@@ -11,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from '@/lib/utils';
 import type { Call } from '@/lib/types';
 import { Button } from '../ui/button';
+import { Card } from '../ui/card';
 
 const CallIcon = ({ type }: { type: Call['type'] }) => {
     switch (type) {
@@ -33,44 +33,41 @@ const CallsList = () => {
     const filteredCalls = filter === 'missed' ? calls.filter(call => call.type === 'missed') : calls;
     
     return (
-         <ScrollArea className="h-full">
-            <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6">
+        <div className="h-full w-full flex flex-col">
+            <div className="px-4 md:px-0">
                 <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setFilter(value as any)}>
-                    <TabsList className="grid w-full grid-cols-2 gap-1">
+                    <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-200">
                         <TabsTrigger value="missed">الفائتة</TabsTrigger>
                         <TabsTrigger value="all">كل المكالمات</TabsTrigger>
                     </TabsList>
                 </Tabs>
-                <Card>
-                    <CardContent className="p-0">
-                        <ul className="divide-y">
-                            {filteredCalls.map(call => (
-                                <li key={call.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <Avatar>
-                                            <AvatarFallback>{call.avatar}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <CallIcon type={call.type} />
-                                                <span>{call.type === 'incoming' ? 'مكالمة واردة' : call.type === 'outgoing' ? 'مكالمة صادرة' : 'مكالمة فائتة'}</span>
-                                                <span>&middot;</span>
-                                                <span>{call.time}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Button variant="ghost" size="icon">
-                                        <Phone className="text-primary" />
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
-                    </CardContent>
-                </Card>
-
             </div>
-        </ScrollArea>
+            <ScrollArea className="flex-1 mt-4">
+                <div className="space-y-2 px-4 md:px-0">
+                    {filteredCalls.map(call => (
+                        <Card key={call.id} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-xl shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarFallback>{call.avatar}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <CallIcon type={call.type} />
+                                        <span>{call.type === 'incoming' ? 'مكالمة واردة' : call.type === 'outgoing' ? 'مكالمة صادرة' : 'مكالمة فائتة'}</span>
+                                        <span>&middot;</span>
+                                        <span>{call.time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10">
+                                <Phone />
+                            </Button>
+                        </Card>
+                    ))}
+                </div>
+            </ScrollArea>
+        </div>
     );
 }
 

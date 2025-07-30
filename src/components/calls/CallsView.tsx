@@ -23,41 +23,41 @@ const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'calls' }) => {
     );
 
     return (
-        <div className="w-full h-full flex flex-col">
-             <div className="p-4 md:p-6 pb-0">
-                 <div className="flex items-center gap-2 mb-6">
+        <div className="w-full h-full flex flex-col bg-slate-100">
+             <header className="bg-white p-4 flex items-center justify-between border-b">
+                <div className="flex items-center gap-2">
                     <Phone className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">تواصل</h1>
+                    <h1 className="text-2xl font-bold">تواصل</h1>
                 </div>
-            </div>
+            </header>
              <Tabs defaultValue={defaultTab} className="w-full flex flex-col flex-1">
-                <div className="px-4 md:px-6">
-                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-1 h-auto">
-                        <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm">
+                <div className="px-4 md:px-6 pt-4">
+                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
+                        <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <MessageSquare className="ml-1 sm:ml-2" />
                             دردشتي
                         </TabsTrigger>
-                        <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm">
+                        <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Phone className="ml-1 sm:ml-2" />
                             مكالماتي
                         </TabsTrigger>
-                        <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm">
+                        <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="ml-1 sm:ml-2" />
                             مجموعاتي
                         </TabsTrigger>
-                        <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm">
+                        <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="ml-1 sm:ml-2" />
                             الأصدقاء
                         </TabsTrigger>
                     </TabsList>
                 </div>
-                <TabsContent value="calls" className="mt-6 flex-1 px-4 md:px-6">
+                <TabsContent value="calls" className="mt-2 flex-1 px-4 md:px-6">
                     <CallsList />
                 </TabsContent>
-                 <TabsContent value="chats" className="mt-6 flex-1 px-4 md:px-6">
+                 <TabsContent value="chats" className="flex-1">
                     <ChatInterface />
                 </TabsContent>
-                <TabsContent value="groups" className="mt-6 flex-1">
+                <TabsContent value="groups" className="mt-2 flex-1">
                     <ComingSoonContent title="المجموعات" icon={Users} />
                 </TabsContent>
                 <TabsContent value="friends" className="flex-1">
