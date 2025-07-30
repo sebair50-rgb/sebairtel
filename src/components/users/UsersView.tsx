@@ -52,7 +52,10 @@ const UsersView = () => {
 
 
     const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' }) => (
-         <div className="flex items-center justify-between gap-2 py-3">
+         <div 
+            className="flex items-center justify-between gap-2 py-3 cursor-pointer"
+            onClick={action === 'message' ? () => handleMessageFriend(user) : undefined}
+        >
             <Avatar className="h-16 w-16 border">
                 <AvatarFallback>{user.avatar}</AvatarFallback>
             </Avatar>
@@ -60,15 +63,15 @@ const UsersView = () => {
                 <p className="font-bold text-lg">{user.name}</p>
                  {action === 'add' ? (
                     <div className="flex gap-2 mt-1">
-                        <Button className="flex-1 bg-primary hover:bg-primary/90" size="sm" onClick={() => handleAddFriend(user)}>
+                        <Button className="flex-1 bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}>
                             <UserPlus size={16} className="ml-1" />
                             إضافة صديق
                         </Button>
-                        <Button variant="secondary" className="flex-1" size="sm">إزالة</Button>
+                        <Button variant="secondary" className="flex-1" size="sm" onClick={(e) => e.stopPropagation()}>إزالة</Button>
                     </div>
                 ) : (
                     <div className="flex gap-2 mt-1">
-                         <Button className="flex-1" size="sm" onClick={() => handleMessageFriend(user)}>
+                         <Button className="flex-1" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
                             <MessageSquare size={16} className="ml-1" />
                             مراسلة
                         </Button>
@@ -163,5 +166,3 @@ const UsersView = () => {
 };
 
 export default UsersView;
-
-    
