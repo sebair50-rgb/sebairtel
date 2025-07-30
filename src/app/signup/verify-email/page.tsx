@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/shared/Logo';
@@ -79,4 +79,3 @@ export default function VerifyEmailPage() {
     </div>
   );
 }
-
