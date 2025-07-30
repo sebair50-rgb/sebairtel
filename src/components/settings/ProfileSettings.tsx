@@ -17,30 +17,14 @@ const ProfileSettings = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [name, setName] = useState(currentUser?.name || '');
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(currentUser?.avatar || null);
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
-
     const [isPending, startTransition] = useTransition();
-
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setAvatarFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAvatarPreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
         const hasNameChanged = name.trim() !== currentUser.name;
-        const hasAvatarChanged = !!avatarFile;
 
-        if (!hasNameChanged && !hasAvatarChanged) {
+        if (!hasNameChanged) {
             toast({ description: "لا توجد تغييرات لحفظها." });
             return;
         }
@@ -56,16 +40,7 @@ const ProfileSettings = () => {
 
         startTransition(async () => {
             try {
-                let avatarDataUrl: string | undefined = undefined;
-                if (avatarFile) {
-                    avatarDataUrl = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result as string);
-                        reader.readAsDataURL(avatarFile);
-                    });
-                }
-                
-                await updateUserProfile({ name, avatar: avatarDataUrl });
+                await updateUserProfile({ name });
                 
                 toast({
                     title: "تم بنجاح!",
@@ -78,11 +53,16 @@ const ProfileSettings = () => {
                     title: "حدث خطأ",
                     description: "فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.",
                 });
-            } finally {
-                setAvatarFile(null);
             }
         });
     };
+    
+    const handleAvatarClick = () => {
+        toast({
+            title: "الميزة قيد التطوير",
+            description: "تتطلب ميزة رفع الصور إعداد خدمة التخزين (Storage)، وهو ما لا يمكن إتمامه حاليًا. سيتم تفعيلها قريبًا!",
+        });
+    }
 
     if (!currentUser) {
         return (
@@ -100,7 +80,7 @@ const ProfileSettings = () => {
         )
     }
 
-    const hasChanges = (name.trim() !== currentUser.name && name.trim() !== '') || !!avatarFile;
+    const hasChanges = (name.trim() !== currentUser.name && name.trim() !== '');
 
     return (
         <Card>
@@ -109,20 +89,13 @@ const ProfileSettings = () => {
                 <CardDescription>هذه هي معلومات ملفك الشخصي العامة.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                    accept="image/png, image/jpeg, image/gif"
-                />
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="w-24 h-24 text-4xl">
-                            <AvatarImage src={avatarPreview || undefined} alt={name} />
+                            <AvatarImage src={currentUser?.avatar || undefined} alt={name} />
                             <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
-                        <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" onClick={() => fileInputRef.current?.click()}>
+                        <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" onClick={handleAvatarClick}>
                             <Camera className="w-4 h-4"/>
                             <span className="sr-only">تغيير الصورة</span>
                         </Button>

@@ -514,9 +514,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (data.avatar) {
-             // In a real app, upload to Firebase Storage and get URL.
-             // For this prototype, we'll save the data URL directly.
-             updateData.avatar = data.avatar;
+             // This is where a real app would upload to Firebase Storage.
+             // Storing large data URLs in Firestore is not recommended.
+             // For now, we are preventing this to avoid crashes.
+             console.warn("Avatar update is disabled to prevent database errors.");
         }
 
         if (Object.keys(updateData).length > 0) {
