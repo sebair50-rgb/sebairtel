@@ -10,10 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Camera, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 const ProfileSettings = () => {
@@ -73,7 +73,13 @@ const ProfileSettings = () => {
         }
 
         if (avatarPreview && avatarFile) {
-            updatePayload.avatar = avatarPreview;
+             toast({
+                variant: "destructive",
+                title: "خطأ في رفع الصورة",
+                description: "ميزة رفع الصور معطلة مؤقتاً.",
+            });
+            setAvatarPreview(null);
+            setAvatarFile(null);
         }
 
         if (Object.keys(updatePayload).length === 0) {
@@ -133,7 +139,7 @@ const ProfileSettings = () => {
     const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
     const hasChanges =
       (name.trim() !== currentUser.name && name.trim() !== "") ||
-      (formattedDob && formattedDob !== currentUser.dob) ||
+      (formattedDob !== currentUser.dob) ||
       !!avatarFile;
 
 
@@ -192,7 +198,7 @@ const ProfileSettings = () => {
                                     )}
                                 >
                                     <CalendarIcon className="ml-2 h-4 w-4" />
-                                    {dob ? format(dob, "PPP", { locale: require('date-fns/locale/ar') }) : <span>اختر تاريخ ميلادك</span>}
+                                    {dob ? format(dob, "PPP", { locale: ar }) : <span>اختر تاريخ ميلادك</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
