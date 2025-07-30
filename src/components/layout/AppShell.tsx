@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import MainSidebar from '@/components/layout/MainSidebar';
 import SocialFeed from '@/components/social/SocialFeed';
 import SettingsView from '@/components/settings/SettingsView';
@@ -35,9 +35,9 @@ const AppShell = () => {
       case 'apps':
         return <AppsView />;
       case 'contact':
-        return <CallsView />;
+        return <CallsView setActiveTab={setActiveTab} />;
       default:
-        return <CallsView />;
+        return <CallsView setActiveTab={setActiveTab} />;
     }
   };
 
