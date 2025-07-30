@@ -51,18 +51,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
-   useEffect(() => {
+  useEffect(() => {
     // On initial load, check if a theme is saved in localStorage.
     // If not, default to 'light'.
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      document.documentElement.className = savedTheme; // Apply saved theme
+    if (!savedTheme) {
+        document.documentElement.className = 'light';
+        localStorage.setItem('theme', 'light');
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
+        document.documentElement.className = savedTheme;
     }
   }, []);
-
 
   useEffect(() => {
     if (authLoading) return;
@@ -84,18 +83,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     });
 
-    // Fetch all users except current user
-    const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-      setUsers(usersData);
-      
-      // MOCK: Separate friends from other users for now
-      // In a real app, this would come from a 'friends' subcollection or an array in the user doc
-      const currentFriends = usersData.filter(u => u.isFriend);
-      setFriends(currentFriends);
-    });
-
     // Fetch posts
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
@@ -115,7 +102,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
-             // Find the other user's info to display name and avatar
              const otherUserInfo = Object.values(data.userInfo).find((user: any) => user.id !== authUser.uid);
 
              return {
@@ -132,11 +118,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     return () => {
       unsubscribeUser();
-      unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
     };
   }, [authUser, authLoading]);
+
+  // Derived state for friends from chats and all users
+  useEffect(() => {
+      if (!authUser) return;
+
+      const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
+      const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+        const allUsersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(allUsersData);
+      });
+
+      return () => unsubscribeUsers();
+  }, [authUser]);
+
+
+  useEffect(() => {
+      if (!authUser) return;
+      
+      const friendIds = new Set(chats.flatMap(chat => chat.users).filter(id => id !== authUser.id));
+      
+      const currentFriends = users.filter(user => friendIds.has(user.id));
+      setFriends(currentFriends);
+
+  }, [chats, users, authUser]);
+
 
   const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
     if (!currentUser) return;
@@ -165,15 +175,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         ...messageData,
         timestamp: serverTimestamp(),
     };
-
-    // Explicitly handle potentially undefined fields
-    if (messageData.src === undefined) delete dataToSend.src;
-    if (messageData.fileInfo === undefined) delete dataToSend.fileInfo;
-
-
+    
     await addDoc(messagesColRef, dataToSend);
 
-    // Update last message info on the chat document
     await updateDoc(chatRef, {
         lastMessageTimestamp: serverTimestamp(),
         lastMessageText: messageData.text || (messageData.type !== 'text' ? `مرفق ${messageData.type}` : ''),
@@ -185,8 +189,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       
       const chatsRef = collection(db, "chats");
       const sortedUsers = [currentUser.id, otherUserId].sort();
-      // Firestore doesn't support querying for array equality on multiple fields
-      // So we create a unique ID for the chat based on sorted user IDs
       const chatId = sortedUsers.join('_');
       const chatDocRef = doc(chatsRef, chatId);
       const chatDoc = await getDoc(chatDocRef);
@@ -197,7 +199,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
-      if (!otherUserDoc.exists()) return null;
+      if (!otherUserDoc.exists()) {
+          console.error("Attempted to create chat with non-existent user:", otherUserId);
+          return null;
+      }
       const otherUser = otherUserDoc.data() as User;
       
       const newChatData = {
@@ -215,7 +220,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               }
           },
           lastMessageTimestamp: serverTimestamp(),
-          lastMessageText: '',
+          lastMessageText: `لقد بدأت محادثة مع ${otherUser.name}`,
           unreadCount: 0,
       };
       
