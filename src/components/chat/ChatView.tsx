@@ -51,9 +51,14 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
             text,
             status: 'sent',
             type: options.type,
-            src: options.media?.src,
-            fileInfo: options.media?.fileInfo,
         };
+
+        // Conditionally add media fields to avoid sending `undefined` to Firestore
+        if (options.media) {
+            newMessageData.src = options.media.src;
+            newMessageData.fileInfo = options.media.fileInfo;
+        }
+
         await addMessage(chat.id, newMessageData);
     }
   }, [addMessage, currentUser, chat.id, editingMessage, updateMessage]);
