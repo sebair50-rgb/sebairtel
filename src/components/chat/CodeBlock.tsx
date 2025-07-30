@@ -30,7 +30,14 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   }, [code]);
   
   const codeType = useMemo(() => {
-    if (code.startsWith('```html') || /<[a-z][\s\S]*>/i.test(codeContent)) {
+    const languageMatch = code.match(/^```(\w+)/);
+    if (languageMatch && languageMatch[1]) {
+        const lang = languageMatch[1].toLowerCase();
+        if (['html', 'javascript', 'js', 'python', 'css'].includes(lang)) {
+            return lang;
+        }
+    }
+    if (/<[a-z][\s\S]*>/i.test(codeContent)) {
       return 'html';
     }
     return 'javascript';
@@ -39,6 +46,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(codeContent);
     setIsCopied(true);
+    toast({ description: "تم نسخ الكود!" });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -56,7 +64,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
         const logs: string[] = [];
         const originalConsoleLog = console.log;
         console.log = (...args) => {
-          logs.push(args.map(arg => JSON.stringify(arg, null, 2)).join(' '));
+          logs.push(args.map(arg => {
+            try {
+              return JSON.stringify(arg, null, 2);
+            } catch (e) {
+              return '[Circular Reference]';
+            }
+          }).join(' '));
           originalConsoleLog(...args);
         };
         
@@ -111,7 +125,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   const hasOutput = showPreview || executionResult !== null || executionError !== null || aiResponse !== null;
 
   return (
-    <div className="font-code text-sm my-2 w-full max-w-2xl text-left" dir="ltr">
+    <div className="font-code text-sm my-2 w-full text-left" dir="ltr">
       <Card className="bg-gray-900 text-gray-100 border-gray-700 shadow-lg overflow-hidden">
         <div className="px-4 py-2 flex justify-between items-center bg-gray-800/50 border-b border-gray-700">
           <span className="text-xs text-gray-400 capitalize">{codeType} Code</span>
@@ -122,7 +136,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
         <CardContent className="p-0">
           <pre className="p-4 overflow-x-auto bg-gray-900"><code className={`language-${codeType}`}>{codeContent}</code></pre>
         </CardContent>
-        <div className="px-2 py-2 flex items-center gap-1 bg-gray-800/50 border-t border-gray-700">
+        <div className="px-2 py-2 flex items-center gap-1 bg-gray-800/50 border-t border-gray-700 overflow-x-auto">
           {actionConfig.map(({ action, icon: Icon, label }) => (
             <Button
               key={action}
@@ -131,11 +145,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
               onClick={() => (action === 'run' ? handleRunCode() : handleAiAction(action))}
               disabled={isLoading}
               className={cn(
-                "flex-1 text-xs text-gray-300 hover:bg-gray-700 hover:text-white",
+                "flex-shrink-0 text-xs text-gray-300 hover:bg-gray-700 hover:text-white",
                 activeAction === action && "bg-primary/20 text-primary"
               )}
             >
-              <Icon size={14} className="mr-2" />
+              <Icon size={14} className="mr-1" />
               {label}
             </Button>
           ))}
@@ -163,7 +177,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
                 
                 <div className="p-4 bg-black/20 max-h-64 overflow-y-auto">
                     {aiResponse && (
-                        <div className="prose prose-sm prose-invert max-w-none text-gray-300 whitespace-pre-wrap">{aiResponse}</div>
+                        <div className="prose prose-sm prose-invert max-w-none text-gray-300 whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: aiResponse.replace(/```(\w+)?\n([\s\S]+?)```/g, '<pre class="bg-gray-800 rounded p-2 my-2"><code>$2</code></pre>') }} />
                     )}
                     
                     {showPreview && codeType === 'html' && (
@@ -193,5 +207,3 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
 };
 
 export default CodeBlock;
-
-    

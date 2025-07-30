@@ -65,13 +65,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
         isOwnMessage ? "flex-row-reverse" : "flex-row",
     )}>
       <div className={cn(
-          "relative flex flex-col max-w-[80%] lg:max-w-[70%]",
+          "relative flex flex-col w-full",
            isOwnMessage ? "items-end" : "items-start"
       )}>
         <div
           id={`message-${message.id}`}
           className={cn(
-            "p-2 w-fit min-w-[80px] relative overflow-hidden",
+            "p-2 min-w-[80px] relative overflow-hidden max-w-[80%] lg:max-w-[70%]",
             isOwnMessage
               ? "bg-[#D9FDD3] text-black"
               : "bg-white text-black",
@@ -104,7 +104,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           )}
         </div>
         
-        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-[8rem] md:-left-[8.5rem]" : "-right-[8rem] md:-right-[8.5rem]")}>
+        <div className={cn("absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center z-20 bg-card/80 backdrop-blur-sm rounded-full border shadow-sm", isOwnMessage ? "-left-1 md:left-2" : "-right-1 md:right-2")}>
            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onLike}>
               <Heart size={16} className={cn(isLiked && 'fill-red-500 text-red-500', "hover:text-red-500 transition-colors")}/>
            </Button>
