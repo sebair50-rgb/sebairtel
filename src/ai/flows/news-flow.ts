@@ -22,7 +22,7 @@ const ArticleSchema = z.object({
     summary: z.string().describe('A concise summary of the article, 2-3 sentences long.'),
     source: z.string().describe('The original source of the news (e.g., a known news agency).'),
     url: z.string().url().describe('The URL to the original article.'),
-    publishedAt: z.string().describe('The publication date in ISO 8601 format.'),
+    publishedAt: z.string().describe('The publication date in "Month Day, Year" format (e.g., "August 15, 2024").'),
 });
 
 const NewsResponseSchema = z.object({
@@ -47,7 +47,7 @@ Analyze the following topic:
 {{{topic}}}
 ---
 
-Based on your analysis, provide a structured list of 5 news articles. Ensure the URL is a valid, real URL to an actual news article from the source you cite.
+Based on your analysis, provide a structured list of 5 news articles. Ensure the URL is a valid, real URL to an actual news article from the source you cite. Format the publication date as "Month Day, Year".
 `,
 });
 

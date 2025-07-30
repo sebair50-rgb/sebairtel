@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Compass } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -23,7 +23,7 @@ const SocialFeed = () => {
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
         { value: 'live', label: 'البث المباشر', icon: Video },
-        { value: 'feed', label: 'المنشورات العامه', icon: LayoutGrid },
+        { value: 'feed', label: 'المنشورات العامة', icon: LayoutGrid },
     ];
     
     return (
