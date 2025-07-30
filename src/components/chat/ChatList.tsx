@@ -47,7 +47,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                 key={chat.id}
                 onClick={() => onSelectChat(chat.id)}
                 className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-lg text-right transition-colors',
+                    'w-full grid grid-cols-[auto_1fr] items-center gap-3 p-3 rounded-lg text-right transition-colors',
                     selectedChatId === chat.id
                     ? 'bg-primary/10'
                     : 'hover:bg-muted'
@@ -59,19 +59,21 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                   </Avatar>
                   {/* Online indicator can be added here */}
                 </div>
-                <div className="flex-1 min-w-0">
-                    <h3 className={cn("font-semibold truncate", selectedChatId === chat.id && "text-primary")}>{chat.name}</h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                        {chat.lastMessageText || '...'}
-                    </p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 text-xs text-muted-foreground self-start shrink-0">
-                    <span>{chat.lastMessageTime}</span>
-                    {chat.unreadCount && chat.unreadCount > 0 && (
-                    <Badge variant="default" className="bg-primary text-primary-foreground h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                        {chat.unreadCount}
-                    </Badge>
-                    )}
+                <div className="min-w-0 flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                        <h3 className={cn("font-semibold truncate", selectedChatId === chat.id && "text-primary")}>{chat.name}</h3>
+                        <span className="text-xs text-muted-foreground shrink-0">{chat.lastMessageTime}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <p className="text-sm text-muted-foreground truncate">
+                            {chat.lastMessageText || '...'}
+                        </p>
+                        {chat.unreadCount && chat.unreadCount > 0 && (
+                            <Badge variant="default" className="bg-primary text-primary-foreground h-5 w-5 p-0 flex items-center justify-center rounded-full shrink-0">
+                                {chat.unreadCount}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
                 </button>
             ))}
