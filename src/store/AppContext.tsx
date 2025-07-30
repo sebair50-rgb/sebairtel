@@ -3,12 +3,13 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
 
 interface AppSettings {
     theme: 'light' | 'dark' | 'system';
@@ -23,6 +24,7 @@ interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
+  updateUserProfile: (data: Partial<User>) => Promise<void>;
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -504,8 +506,25 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'idle' });
   };
 
+    const updateUserProfile = async (data: Partial<User>) => {
+        if (!auth.currentUser) throw new Error("Not authenticated");
+
+        const updateData: { [key: string]: any } = { ...data };
+        if (data.name) {
+            updateData.avatar = data.name.charAt(0).toUpperCase();
+            await updateProfile(auth.currentUser, { displayName: data.name });
+        }
+
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userDocRef, updateData);
+
+        // We don't need to manually update `currentUser` state here
+        // because the onSnapshot listener will do it automatically.
+    };
+
   const value = {
     currentUser,
+    updateUserProfile,
     posts,
     addPost,
     updatePost,
