@@ -10,7 +10,6 @@ import {
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
-import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 
 interface AppSettings {
     theme: 'light' | 'dark' | 'system';
@@ -54,9 +53,6 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
-  fetchSmartReplies: () => Promise<void>;
-  smartReplies: string[];
-  clearSmartReplies: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -97,7 +93,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
-  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -118,7 +113,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const chatRef = doc(db, 'chats', chatId);
     const fieldName = `unreadCount.${authUser.uid}`;
     
-    // Check if document exists before updating
     const chatDoc = await getDoc(chatRef);
     if (chatDoc.exists()) {
       await updateDoc(chatRef, { [fieldName]: 0 });
@@ -129,7 +123,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (selectedChatId) {
         markChatAsRead(selectedChatId);
-        clearSmartReplies();
     }
   }, [selectedChatId, markChatAsRead]);
 
@@ -189,7 +182,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              if (data.userInfo && data.userInfo[otherUserId]) {
                  otherUserInfo = data.userInfo[otherUserId];
              } else {
-                 // Fallback to fetch user if not in userInfo
                  if (otherUserId) {
                      const userDoc = await getDoc(doc(db, 'users', otherUserId));
                      if (userDoc.exists()) {
@@ -204,7 +196,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  id: doc.id,
                  ...data,
                  name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
-                 avatar: otherUserInfo ? otherUserInfo.avatar : "?",
+                 avatar: otherUserInfo ? otherUserInfo.avatar : "",
                  lastMessageText: data.lastMessageText || '...',
                  lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || '',
                  unreadCount: { [authUser.uid]: unreadCount },
@@ -384,7 +376,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     let lastMessageText = getMessageDescription(messageData as Message);
 
-    // Handle unread counts and notifications
     const chatDoc = await getDoc(chatRef);
     if(chatDoc.exists()) {
         const chatData = chatDoc.data() as Chat;
@@ -517,10 +508,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         const updateData: { [key: string]: any } = {};
 
-        if (data.name && data.name !== auth.currentUser.displayName) {
+        if (data.name && data.name !== currentUser?.name) {
             await updateProfile(auth.currentUser, { displayName: data.name });
             updateData.name = data.name;
-            updateData.avatar = data.name.charAt(0).toUpperCase();
+        }
+
+        if (data.avatar) {
+             // In a real app, upload to Firebase Storage and get URL.
+             // For this prototype, we'll save the data URL directly.
+             updateData.avatar = data.avatar;
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -529,30 +525,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
     
-    const fetchSmartReplies = async () => {
-        if (!selectedChatId) return;
-
-        const messagesRef = collection(db, 'chats', selectedChatId, 'messages');
-        const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(10));
-        const snapshot = await getDocs(q);
-        const history = snapshot.docs.map(doc => {
-            const msg = doc.data();
-            return `${msg.user}: ${msg.text || '[attachment]'}`;
-        }).reverse().join('\n');
-        
-        try {
-            const response = await smartReplySuggestions({ history });
-            setSmartReplies(response.suggestions);
-        } catch (error) {
-            console.error("Failed to fetch smart replies", error);
-            setSmartReplies([]);
-        }
-    }
-
-    const clearSmartReplies = () => {
-        setSmartReplies([]);
-    }
-
   const value = {
     currentUser,
     updateUserProfile,
@@ -584,9 +556,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
-    fetchSmartReplies,
-    smartReplies,
-    clearSmartReplies,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

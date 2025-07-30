@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useAppContext } from '@/store/AppContext';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -56,7 +56,8 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                         <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
                             <div className="relative">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarFallback>{chat.avatar}</AvatarFallback>
+                                    <AvatarImage src={chat.avatar} alt={chat.name} />
+                                    <AvatarFallback>{chat.name?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                             </div>
                             <div className="min-w-0 flex flex-col gap-1">

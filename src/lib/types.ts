@@ -4,7 +4,7 @@ import type { Timestamp } from 'firebase/firestore';
 export interface User {
   id: string; // Changed to string for Firestore UID
   name: string;
-  avatar: string;
+  avatar: string; // Now represents photoURL
   isFriend?: boolean;
   requestSent?: boolean;
   email?: string;
@@ -16,7 +16,7 @@ export interface Message {
     id: string; // Changed for Firestore
     user: string;
     userId: string;
-    avatar: string;
+    avatar: string; // photoURL
     text?: string;
     time: string;
     timestamp: Timestamp;
@@ -36,7 +36,7 @@ export interface Message {
 export interface Chat {
   id: string; // Firestore document ID
   name: string;
-  avatar: string;
+  avatar: string; // photoURL
   users: string[]; // array of user uids
   userInfo: { [key: string]: { id: string; name: string; avatar: string; }};
   unreadCount?: { [key: string]: number }; // Unread count per user UID
@@ -58,7 +58,7 @@ export interface Post {
   id: string; // Firestore document ID
   user: string;
   userId: string;
-  avatar: string;
+  avatar: string; // photoURL
   content: string;
   media?: {
     type: 'image' | 'video';
@@ -74,7 +74,7 @@ export interface Post {
 export interface Call {
     id: string;
     user: string;
-    avatar: string;
+    avatar: string; // photoURL
     type: 'incoming' | 'outgoing' | 'missed';
     time: string;
     timestamp: Timestamp;
@@ -96,7 +96,7 @@ export interface Notification {
     fromUser: {
         id: string;
         name: string;
-        avatar: string;
+        avatar: string; // photoURL
     };
     timestamp: Timestamp;
     isRead: boolean;

@@ -54,12 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: user.uid,
             name,
             email: user.email!,
-            avatar: name.charAt(0).toUpperCase(),
+            avatar: '', // Avatar will be empty initially, can be updated later
         };
         await setDoc(userDocRef, newUser);
-        
-        // Don't sign out, keep the user object for resend logic
-        // await signOut(auth); 
         
         return userCredential;
       } finally {

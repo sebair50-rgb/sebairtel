@@ -4,7 +4,7 @@
 import React from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Video } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from '@/lib/utils';
@@ -73,7 +73,8 @@ const CallsList = () => {
                             <Card key={call.id} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-xl shadow-sm">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="h-12 w-12">
-                                        <AvatarFallback>{call.avatar}</AvatarFallback>
+                                        <AvatarImage src={call.avatar} alt={call.user} />
+                                        <AvatarFallback>{call.user?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Input } from '@/components/ui/input';
 import { Search, UserPlus, MessageSquare } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,6 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
         const chat = await createChat(user);
         if (chat) {
             setSelectedChatId(chat.id);
-            // No need to call setActiveTab here, the parent component will handle the view change.
         }
     };
 
@@ -63,7 +62,8 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
             onClick={action === 'message' ? () => handleMessageFriend(user) : undefined}
         >
             <Avatar className="h-12 w-12 border">
-                <AvatarFallback>{user.avatar}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 text-right overflow-hidden">
                 <p className="font-bold text-lg truncate">{user.name}</p>

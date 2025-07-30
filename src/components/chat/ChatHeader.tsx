@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { Chat } from '@/lib/types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Phone, Video, MoreVertical, Search, BellOff, Trash2, UserX } from 'lucide-react';
 import {
@@ -58,7 +58,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
             </Button>
         )}
         <Avatar>
-          <AvatarFallback>{chat.avatar}</AvatarFallback>
+          <AvatarImage src={chat.avatar} alt={chat.name} />
+          <AvatarFallback>{chat.name?.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 overflow-hidden">
           <h2 className="font-bold text-lg truncate">{chat.name}</h2>

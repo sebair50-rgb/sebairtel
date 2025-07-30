@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Send, X } from 'lucide-react';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
 
 const CreatePostCard = () => {
@@ -42,7 +42,8 @@ const CreatePostCard = () => {
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start gap-4">
           <Avatar>
-            <AvatarFallback>{currentUser?.avatar || currentUser?.name?.charAt(0)}</AvatarFallback>
+            <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
+            <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
             placeholder="بماذا تفكر يا صديقي؟"

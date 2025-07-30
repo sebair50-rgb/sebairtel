@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { Post } from '@/lib/types';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
@@ -33,7 +33,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           newLikedBy = newLikedBy.filter(id => id !== currentUser.id);
       } else {
           newLikedBy.push(currentUser.id);
-          // Create notification only when liking, not unliking
           if (post.userId !== currentUser.id) {
             createNotification(post.userId, {
                 type: 'like',
@@ -48,7 +47,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const handleSave = () => {
     setIsSaved(!isSaved);
-    // In a real app, you'd also update the backend here
     toast({ description: !isSaved ? "تم حفظ المنشور!" : "تمت إزالة الحفظ!" });
   }
 
@@ -61,7 +59,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
         <Avatar>
-          <AvatarFallback>{post.avatar}</AvatarFallback>
+          <AvatarImage src={post.avatar} alt={post.user} />
+          <AvatarFallback>{post.user?.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <p className="font-bold">{post.user}</p>

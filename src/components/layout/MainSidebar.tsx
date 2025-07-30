@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import {
   Tooltip,
@@ -38,7 +38,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
     setActiveTab(tab);
   }, [setActiveTab, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead]);
 
-  const navItems = React.useMemo(() => [
+  const navItems = useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'contact', icon: Phone, label: 'تواصل' },
     { name: 'social', icon: Users, label: 'المجتمع' },
@@ -95,7 +95,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                     </TooltipContent>
                  </Tooltip>
                  <Avatar>
-                    <AvatarFallback>{currentUser?.avatar || currentUser?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
+                    <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
             </div>
         </TooltipProvider>

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize, UserPlus, MessageSquare } from 'lucide-react';
 import { Card } from '../ui/card';
@@ -100,40 +100,34 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
             "bg-[url('https://placehold.co/800x1200/222/666.png?text=BG')] data-ai-hint='abstract background'"
             )}>
             
-            {/* Background overlay */}
             <div className="absolute inset-0 bg-black/50 rounded-2xl"></div>
 
-            {/* Video previews */}
             {type === 'video' && status === 'connected' && (
                 <>
-                {/* Main Video (Remote) */}
                 <div className="absolute inset-0 rounded-2xl overflow-hidden">
                     {!isVideoOff && <img src="https://placehold.co/800x1200/333/777.png?text=Remote" className="w-full h-full object-cover" data-ai-hint="person talking" />}
                 </div>
-                {/* Local Video Preview */}
                 <div className="absolute top-4 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/50">
                      <img src="https://placehold.co/200x300/444/888.png?text=Local" className="w-full h-full object-cover" data-ai-hint="person selfie" />
                 </div>
                 </>
             )}
 
-            {/* Header Info */}
             <div className="relative z-10 flex items-center justify-between">
                 <div className="text-lg font-semibold">{status === 'connected' ? 'مكالمة جارية' : ''}</div>
                 <Button variant="ghost" size="icon" className="text-white"><Maximize /></Button>
             </div>
             
-            {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center flex-1 text-center -mt-16">
                  <Avatar className={cn("h-32 w-32 border-4 border-white/50 shadow-lg", status === 'outgoing' && 'animate-pulse')}>
-                    <AvatarFallback className="text-5xl">{user.avatar}</AvatarFallback>
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback className="text-5xl">{user.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <h1 className="text-4xl font-bold mt-4">{user.name}</h1>
                 <p className="text-xl text-white/80 mt-2">{getStatusText()}</p>
             </div>
 
-             {/* Footer Controls */}
-            <div className="relative z-10">
+             <div className="relative z-10">
                 {status === 'incoming' ? renderIncomingControls() : renderCallControls()}
             </div>
         </Card>

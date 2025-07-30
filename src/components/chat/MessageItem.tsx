@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+
 
 interface MessageItemProps {
   message: Message;
@@ -68,6 +70,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           isOwnMessage ? "flex-row-reverse" : "flex-row"
         )}
       >
+        {!isOwnMessage && (
+            <Avatar className="w-8 h-8 self-end mb-1">
+                <AvatarImage src={message.avatar} alt={message.user} />
+                <AvatarFallback>{message.user?.charAt(0)}</AvatarFallback>
+            </Avatar>
+        )}
         <div 
            id={`message-${message.id}`}
            className={cn(

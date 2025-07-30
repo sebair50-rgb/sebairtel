@@ -4,7 +4,7 @@
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Heart, UserPlus, PhoneMissed, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -55,7 +55,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
         >
             <div className="relative">
                 <Avatar className="h-12 w-12">
-                    <AvatarFallback>{notification.fromUser.avatar}</AvatarFallback>
+                    <AvatarImage src={notification.fromUser.avatar} alt={notification.fromUser.name} />
+                    <AvatarFallback>{notification.fromUser.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className={cn(
                     "absolute -bottom-1 -right-1 rounded-full p-1.5 flex items-center justify-center",
