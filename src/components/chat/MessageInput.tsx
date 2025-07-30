@@ -19,6 +19,7 @@ interface MessageInputProps {
 
 export interface MessageInputHandles {
   setText: (text: string) => void;
+  focus: () => void;
 }
 
 const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSendMessage, editingMessage, onCancelEdit }, ref) => {
@@ -36,6 +37,9 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
     useImperativeHandle(ref, () => ({
       setText: (text: string) => {
         setText(text);
+        textareaRef.current?.focus();
+      },
+       focus: () => {
         textareaRef.current?.focus();
       }
     }));
@@ -63,6 +67,11 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
             setText('');
         };
         reader.readAsDataURL(file);
+        
+        // Reset file input
+        if(e.target) {
+            e.target.value = "";
+        }
     }, [onSendMessage, text]);
 
     const handleSend = useCallback(() => {
@@ -154,7 +163,7 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
             )}
             
             <AnimatePresence>
-            {recordedAudio && (
+            {recordedAudio && !isRecording && (
                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
                     <Card className="flex items-center gap-2 p-2 rounded-2xl shadow-sm bg-card">
                         <Button variant="ghost" size="icon" className="text-destructive rounded-full" onClick={handleCancelAudio}>
@@ -211,9 +220,11 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
                         >
                             <Button 
                                 size="icon" 
-                                className="bg-primary hover:bg-primary/90 rounded-full w-12 h-12"
+                                className={cn(
+                                    "bg-primary hover:bg-primary/90 rounded-full w-12 h-12 transition-colors duration-300",
+                                    isRecording && "bg-destructive hover:bg-destructive/90"
+                                )}
                                 onClick={hasContent ? handleSend : handleMicClick}
-                                disabled={!hasContent && isRecording && !mediaRecorderRef.current}
                             >
                                 {hasContent ? <Send /> : (isRecording ? <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1}}><Square className="fill-white" /></motion.div> : <Mic />) }
                             </Button>
@@ -230,3 +241,5 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
 MessageInput.displayName = 'MessageInput';
 
 export default React.memo(MessageInput);
+
+    

@@ -222,12 +222,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     await setDoc(newChatRef, newChatData);
 
+    // This is crucial for the UI to update immediately
     const createdChatForState: Chat = {
         ...newChatData,
         lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
     };
     
-    // This is crucial for the UI to update immediately
     setChats(prevChats => [createdChatForState, ...prevChats].sort((a,b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
     
     return createdChatForState;
@@ -245,9 +245,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     await addDoc(messagesColRef, dataToSend);
 
+    let lastMessageText = '...';
+    if(messageData.type === 'text') {
+        lastMessageText = messageData.text || '';
+    } else if (messageData.type === 'audio') {
+        lastMessageText = '🎤 رسالة صوتية';
+    } else if (messageData.type === 'image') {
+        lastMessageText = '🖼️ صورة';
+    } else if (messageData.type === 'video') {
+        lastMessageText = '🎬 فيديو';
+    } else if (messageData.type === 'file') {
+        lastMessageText = '📎 ملف';
+    }
+
+
     await updateDoc(chatRef, {
         lastMessageTimestamp: serverTimestamp(),
-        lastMessageText: messageData.text || (messageData.type !== 'text' ? `مرفق ${messageData.type}` : ''),
+        lastMessageText: lastMessageText,
     });
   };
   
@@ -369,3 +383,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    

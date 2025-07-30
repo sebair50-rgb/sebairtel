@@ -144,3 +144,5 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
 };
 
 export default React.memo(ChatView);
+
+    
