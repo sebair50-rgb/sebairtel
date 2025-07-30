@@ -1,79 +1,64 @@
-
 "use client";
 
-import React from 'react';
-import { useAppContext } from '@/store/AppContext';
-import PostCard from './PostCard';
-import { ScrollArea } from '../ui/scroll-area';
+import React, { useState } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Video, ShoppingCart, Users, Briefcase, Newspaper, Building2 } from 'lucide-react';
+import { Compass, Video, Briefcase, Store } from 'lucide-react';
+
+import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
+import { useAppContext } from '@/store/AppContext';
 import LiveFeed from './LiveFeed';
-import UsersView from '../users/UsersView';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
-import NewsView from './NewsView';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 const SocialFeed = () => {
-    const { posts, setActiveTab } = useAppContext();
+    const { posts } = useAppContext();
+    const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
-    const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
-        <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
-            <Icon size={64} className="text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-bold">{title}</h2>
-            <p className="text-muted-foreground mt-2">هذه الميزة ستكون متاحة قريباً!</p>
-        </div>
-    );
-
+    const socialTabs = [
+        { value: 'feed', label: 'الموجز', icon: Compass },
+        { value: 'live', label: 'البث المباشر', icon: Video },
+        { value: 'business', label: 'الأعمال التجارية', icon: Briefcase },
+        { value: 'market', label: 'السوق', icon: Store },
+    ];
+    
     return (
-        <div className="w-full h-full flex flex-col bg-slate-100">
-            <header className="bg-white p-4 flex items-center justify-between border-b">
-                <div className="flex items-center gap-2">
-                    <Users className="w-8 h-8 text-primary" />
-                    <h1 className="text-2xl font-bold">المجتمع</h1>
-                </div>
+        <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
+             <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
+                <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 h-auto p-1.5">
+                       {socialTabs.map(tab => (
+                            <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                                <tab.icon className="ml-1 sm:ml-2" />
+                                {tab.label}
+                            </TabsTrigger>
+                       ))}
+                    </TabsList>
+                </Tabs>
             </header>
-            <ScrollArea className="h-full">
-                <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-                    <Tabs defaultValue="posts" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 bg-slate-200">
-                            <TabsTrigger value="news">الأخبار</TabsTrigger>
-                            <TabsTrigger value="market">السوق</TabsTrigger>
-                            <TabsTrigger value="business">الأعمال التجارية</TabsTrigger>
-                            <TabsTrigger value="friends">الأصدقاء</TabsTrigger>
-                            <TabsTrigger value="live">بث مباشر</TabsTrigger>
-                            <TabsTrigger value="posts">العامة</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="posts" className="mt-6 space-y-6 max-w-2xl mx-auto">
+            
+            <ScrollArea className="flex-1">
+                 <div className="p-4 md:p-6">
+                    <TabsContent value="feed" className="mt-0">
+                        <div className="max-w-2xl mx-auto space-y-6">
                             <CreatePostCard />
-                            <div className="space-y-6">
-                                {posts.map(post => (
-                                    <PostCard
-                                        key={post.id}
-                                        post={post}
-                                    />
-                                ))}
-                            </div>
-                        </TabsContent>
-                         <TabsContent value="live" className="mt-6">
-                            <LiveFeed />
-                        </TabsContent>
-                        <TabsContent value="friends" className="mt-6">
-                            <div className="max-w-2xl mx-auto">
-                                <UsersView setActiveTab={setActiveTab} />
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="business" className="mt-6">
-                            <MarketView />
-                        </TabsContent>
-                        <TabsContent value="market" className="mt-6">
-                            <StoreView />
-                        </TabsContent>
-                        <TabsContent value="news" className="mt-6">
-                             <NewsView />
-                        </TabsContent>
-                    </Tabs>
-                </div>
+                            {posts.map(post => (
+                                <PostCard key={post.id} post={post} />
+                            ))}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="live" className="mt-0">
+                        <LiveFeed />
+                    </TabsContent>
+                    <TabsContent value="business" className="mt-0">
+                        <MarketView />
+                    </TabsContent>
+                    <TabsContent value="market" className="mt-0">
+                        <StoreView />
+                    </TabsContent>
+                 </div>
             </ScrollArea>
         </div>
     );
