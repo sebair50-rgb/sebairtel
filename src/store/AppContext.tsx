@@ -29,7 +29,7 @@ interface AppContextType {
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
   friends: User[];
   suggestedUsers: User[];
-  createChat: (friend: User) => Promise<string | null>;
+  createChat: (friend: User) => Promise<Chat | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -132,13 +132,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
       if (!currentUser || users.length === 0) return;
 
+      // A user is a "friend" if a chat exists with them.
       const chatPartnerIds = new Set(
           chats.flatMap(chat => chat.users).filter(userId => userId !== currentUser.id)
       );
 
-      const friendsList = users.filter(user => chatPartnerIds.has(user.id));
-      const suggestionsList = users.filter(user => !chatPartnerIds.has(user.id));
+      const friendsList: User[] = [];
+      const suggestionsList: User[] = [];
 
+      users.forEach(user => {
+          if (chatPartnerIds.has(user.id)) {
+              friendsList.push(user);
+          } else {
+              suggestionsList.push(user);
+          }
+      });
+      
       setFriends(friendsList);
       setSuggestedUsers(suggestionsList);
 
@@ -162,46 +171,45 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       await updateDoc(postRef, data);
   }
 
-  const createChat = async (friend: User): Promise<string | null> => {
-      if (!currentUser) return null;
+  const createChat = async (friend: User): Promise<Chat | null> => {
+    if (!currentUser) return null;
 
-      const existingChat = chats.find(chat => chat.users.includes(friend.id));
-      
-      if (existingChat) {
-          return existingChat.id;
-      }
-      
-      const newChatRef = doc(collection(db, 'chats'));
-      const newChatData = {
-          id: newChatRef.id,
-          users: [currentUser.id, friend.id],
-          userInfo: {
-              [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
-              [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
-          },
-          lastMessageTimestamp: serverTimestamp(),
-          lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
-          unreadCount: 0,
-      };
+    // First, check if a chat already exists locally
+    const existingChat = chats.find(chat => chat.users.includes(friend.id));
+    if (existingChat) {
+        return existingChat;
+    }
 
-      await setDoc(newChatRef, newChatData);
-      
-      // Add the new chat to the local state immediately
-      const createdChat: Chat = {
-          id: newChatRef.id,
-          users: newChatData.users,
-          userInfo: newChatData.userInfo,
-          name: friend.name,
-          avatar: friend.avatar,
-          lastMessageText: newChatData.lastMessageText,
-          // These will be updated by the listener, but good to have placeholders
-          lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
-          unreadCount: 0,
-      }
-      setChats(prevChats => [createdChat, ...prevChats]);
-      
-      return newChatRef.id;
-  };
+    // If not, create a new one
+    const newChatRef = doc(collection(db, 'chats'));
+    const newChatData = {
+        id: newChatRef.id,
+        users: [currentUser.id, friend.id],
+        userInfo: {
+            [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+            [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
+        },
+        lastMessageTimestamp: serverTimestamp(),
+        lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
+        unreadCount: 0,
+        isMuted: false,
+        isBlocked: false,
+    };
+
+    await setDoc(newChatRef, newChatData);
+
+    const createdChatForState: Chat = {
+        ...newChatData,
+        name: friend.name,
+        avatar: friend.avatar,
+        lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
+    };
+    
+    // Add the new chat to the local state immediately so the UI can update
+    setChats(prevChats => [createdChatForState, ...prevChats]);
+    
+    return createdChatForState;
+};
 
   const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
     if (!currentUser) return;
