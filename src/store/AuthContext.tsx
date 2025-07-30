@@ -10,6 +10,7 @@ import {
   signOut,
   updateProfile,
   sendEmailVerification,
+  verifyBeforeUpdateEmail,
   type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -23,6 +24,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
+  updateUserEmail: (newEmail: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,6 +94,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }
 
+  const updateUserEmail = async (newEmail: string) => {
+    if (auth.currentUser) {
+        await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+        // Note: The email in Firestore will need to be updated via a different mechanism
+        // once the user verifies the new email, ideally via a backend trigger or a page the user is redirected to.
+        // For now, we only handle the auth part.
+    } else {
+        throw new Error("No user is currently signed in to update email.");
+    }
+  }
+
+
   const value = {
     authUser,
     loading,
@@ -99,6 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     logout,
     resendVerificationEmail,
+    updateUserEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
