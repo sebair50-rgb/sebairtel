@@ -5,11 +5,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Link, Newspaper, Zap, CheckCircle, AlertTriangle, Info, ListChecks, MessageSquareQuote } from 'lucide-react';
+import { Loader2, Link, Newspaper, Zap, CheckCircle, AlertTriangle, Info, ListChecks, MessageSquareQuote, ShieldCheck, TrendingUp, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeNewsArticle, NewsAnalysisOutput } from '@/ai/flows/news-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
+import Image from 'next/image';
+import { Separator } from '../ui/separator';
+import { Textarea } from '../ui/textarea';
 
 interface AnalyzedArticle extends NewsAnalysisOutput {
     id: string;
@@ -79,6 +82,13 @@ const NewsView = () => {
             </Badge>
         )
     };
+
+    const mockTrendingTopics = ["الذكاء الاصطناعي", "الاقتصاد العالمي", "التكنولوجيا", "الاستدامة", "الرعاية الصحية"];
+    const mockPersonalizedNews = [
+        { id: 1, title: "مستقبل تطوير الويب باستخدام أدوات الذكاء الاصطناعي", category: "Technology", image: "https://placehold.co/600x400/7C3AED/FFFFFF.png?text=AI", dataAiHint: "artificial intelligence" },
+        { id: 2, title: "الأسواق المالية تتفاعل مع التغييرات الاقتصادية الجديدة", category: "Business", image: "https://placehold.co/600x400/F97316/FFFFFF.png?text=Business", dataAiHint: "finance business" },
+        { id: 3, title: "ابتكارات في مجال الطاقة المتجددة تغير خريطة العالم", category: "Science", image: "https://placehold.co/600x400/10B981/FFFFFF.png?text=Science", dataAiHint: "renewable energy" },
+    ];
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
@@ -164,8 +174,65 @@ const NewsView = () => {
                     </AlertDescription>
                 </Alert>
              )}
+
+            <Separator />
+
+            <div className="space-y-8 mt-8">
+                 {/* Personalized News Section */}
+                <div>
+                    <h2 className="text-2xl font-bold flex items-center gap-2 mb-4"><UserCheck /> أخبار تهمك</h2>
+                    <div className="grid md:grid-cols-3 gap-6">
+                        {mockPersonalizedNews.map(item => (
+                            <Card key={item.id} className="overflow-hidden group cursor-pointer">
+                                <div className="relative aspect-video">
+                                    <Image src={item.image} data-ai-hint={item.dataAiHint} alt={item.title} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform" />
+                                </div>
+                                <CardHeader>
+                                    <Badge variant="secondary" className="w-fit">{item.category}</Badge>
+                                    <CardTitle className="text-base mt-2">{item.title}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                     {/* Trending Topics Section */}
+                    <div>
+                         <h2 className="text-2xl font-bold flex items-center gap-2 mb-4"><TrendingUp /> اتجاهات اليوم</h2>
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {mockTrendingTopics.map(topic => (
+                                        <Badge key={topic} variant="outline" className="text-base p-2 cursor-pointer hover:bg-accent">{topic}</Badge>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Fact Check Section */}
+                    <div>
+                        <h2 className="text-2xl font-bold flex items-center gap-2 mb-4"><ShieldCheck /> التحقق من الحقائق</h2>
+                        <Card>
+                            <CardHeader>
+                                <CardDescription>ألصق نصًا أو ادعاءً للتحقق من صحته بواسطة الذكاء الاصطناعي.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Textarea placeholder="مثال: هل صحيح أن الأرض مسطحة؟" className="bg-muted" />
+                                <Button className="w-full" onClick={() => toast({ description: "سيتم تفعيل هذه الميزة قريبًا" })}>
+                                    <ShieldCheck className="ml-2" />
+                                    تحقق الآن
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
 
 export default NewsView;
+
+    
