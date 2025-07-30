@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +18,55 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+
+
+const CoHostVideo = ({ user }: { user: User }) => (
+    <div className="bg-slate-800 rounded-lg overflow-hidden aspect-video flex flex-col items-center justify-center text-white relative">
+        <Avatar className="w-16 h-16 text-2xl">
+            <AvatarImage src={user.avatar} alt={user.name} />
+            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <p className="font-bold mt-2">{user.name}</p>
+        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 text-xs rounded-md">
+            مشارك
+        </div>
+    </div>
+);
+
+const InviteSheet = ({ onInvite }: { onInvite: (user: User) => void }) => {
+    const { friends } = useAppContext();
+    return (
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16">
+                    <UserPlus size={28} />
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="bg-slate-900 text-white border-slate-700 w-[350px] sm:w-[400px]">
+                <SheetHeader>
+                    <SheetTitle className="text-white">دعوة أصدقاء للانضمام</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100%-4rem)] mt-4 pr-4">
+                    <div className="space-y-4">
+                        {friends.map(friend => (
+                            <div key={friend.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Avatar>
+                                        <AvatarImage src={friend.avatar} alt={friend.name} />
+                                        <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="font-semibold">{friend.name}</p>
+                                </div>
+                                <Button size="sm" onClick={() => onInvite(friend)}>دعوة</Button>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </SheetContent>
+        </Sheet>
+    )
+}
 
 const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage, isOverlay = false }) => (
     <div className={cn(
@@ -66,7 +115,7 @@ const LiveStreamPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { currentUser, users } = useAppContext();
+    const { currentUser, users, friends } = useAppContext();
     const videoRef = useRef<HTMLVideoElement>(null);
     const videoContainerRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +126,7 @@ const LiveStreamPage = () => {
     const [streamer, setStreamer] = useState<User | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [showChatInFullScreen, setShowChatInFullScreen] = useState(true);
-
+    const [coHosts, setCoHosts] = useState<User[]>([]);
 
     const isMyStream = id === 'me';
     
@@ -101,11 +150,15 @@ const LiveStreamPage = () => {
     useEffect(() => {
         if(isMyStream) {
             setStreamer(currentUser);
+            // Simulate a co-host for demo purposes
+            if (friends.length > 0) {
+                setCoHosts([friends[0]]);
+            }
         } else {
             const foundUser = users.find(u => (id as string).includes(u.id));
             setStreamer(foundUser || null);
         }
-    }, [id, currentUser, users, isMyStream]);
+    }, [id, currentUser, users, isMyStream, friends]);
 
 
     useEffect(() => {
@@ -154,6 +207,14 @@ const LiveStreamPage = () => {
         return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
     }, []);
 
+    const handleInviteUser = (user: User) => {
+        if(coHosts.some(h => h.id === user.id)) {
+            toast({ description: `${user.name} موجود بالفعل في البث.` });
+            return;
+        }
+        setCoHosts(prev => [...prev, user]);
+        toast({ title: 'تم إرسال الدعوة', description: `تم إرسال دعوة إلى ${user.name} للانضمام.` });
+    }
 
     const handleExitActions = () => {
         if (document.fullscreenElement) {
@@ -221,24 +282,26 @@ const LiveStreamPage = () => {
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row items-center justify-center text-white">
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
-                 <AnimatePresence>
-                    {!isFullScreen && (
-                        <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="absolute top-6 right-6 z-10 bg-black/50 backdrop-blur-sm rounded-full"
-                                onClick={handleExitActions}
-                            >
-                                <ArrowRight />
-                            </Button>
-                        </motion.div>
-                    )}
-                 </AnimatePresence>
-
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-6 right-6 z-30 bg-black/50 backdrop-blur-sm rounded-full"
+                    onClick={handleExitActions}
+                >
+                    <ArrowRight />
+                </Button>
 
                 <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
-                    {renderStreamContent()}
+                    <div className="absolute inset-0 grid grid-cols-1 grid-rows-1 gap-1">
+                         <div className="w-full h-full">{renderStreamContent()}</div>
+                    </div>
+                    
+                     {coHosts.length > 0 && (
+                        <div className="absolute top-24 left-4 w-48 space-y-2 z-20">
+                           {coHosts.map(host => <CoHostVideo key={host.id} user={host} />)}
+                        </div>
+                    )}
+
 
                     <AnimatePresence>
                         {isFullScreen && (
@@ -250,7 +313,6 @@ const LiveStreamPage = () => {
                             >
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-4">
-                                        <Button variant="ghost" size="icon" className="bg-black/50 rounded-full" onClick={handleExitActions}><ArrowRight /></Button>
                                         <h3 className="font-bold text-lg">{streamer?.name}</h3>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -323,9 +385,12 @@ const LiveStreamPage = () => {
                             {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
                         </Button>
                         {isMyStream && (
-                             <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsVideoOff(!isVideoOff)}>
-                                {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
-                            </Button>
+                            <>
+                                <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsVideoOff(!isVideoOff)}>
+                                    {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
+                                </Button>
+                                <InviteSheet onInvite={handleInviteUser} />
+                            </>
                         )}
                         <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={() => router.back()}>
                             <PhoneOff size={28} />
@@ -367,3 +432,5 @@ const LiveStreamSkeleton = () => (
 
 
 export default LiveStreamPage;
+
+    
