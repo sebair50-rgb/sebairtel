@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,51 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+
+const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage, isOverlay = false }) => (
+    <div className={cn(
+        "flex flex-col",
+        isOverlay 
+            ? "bg-black/70 backdrop-blur-sm h-1/3 w-full absolute bottom-0 left-0 z-20"
+            : "w-full md:w-96 h-1/2 md:h-full bg-slate-900 border-l border-slate-700"
+    )}>
+        <div className="p-4 border-b border-slate-700">
+            <h2 className="text-xl font-bold text-center">الدردشة المباشرة</h2>
+        </div>
+        <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+                {messages.map((msg) => (
+                    <div key={msg.id} className="flex items-start gap-2 text-sm">
+                        <Avatar className="w-8 h-8">
+                            <AvatarFallback>{msg.user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-semibold text-primary">{msg.user.name}</p>
+                            <p className="text-white/90">{msg.text}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </ScrollArea>
+         <Separator className="bg-slate-700" />
+         <div className="p-4">
+             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Input 
+                    placeholder="اكتب تعليقًا..." 
+                    className="bg-slate-800 border-slate-600 rounded-full text-white" 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <Button type="submit" size="icon" className="rounded-full bg-primary hover:bg-primary/90">
+                    <Send />
+                </Button>
+             </form>
+         </div>
+    </div>
+);
+
 
 const LiveStreamPage = () => {
     const { id } = useParams();
@@ -30,6 +75,9 @@ const LiveStreamPage = () => {
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [streamer, setStreamer] = useState<User | null>(null);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const [showChatInFullScreen, setShowChatInFullScreen] = useState(true);
+
 
     const isMyStream = id === 'me';
     
@@ -98,15 +146,28 @@ const LiveStreamPage = () => {
         };
     }, [isMyStream, toast]);
 
+    useEffect(() => {
+        const handleFullScreenChange = () => {
+            setIsFullScreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullScreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    }, []);
+
+
     const handleEndStream = () => {
         router.back();
     };
 
-    const handleFullScreen = () => {
-        if (videoContainerRef.current) {
-            if (videoContainerRef.current.requestFullscreen) {
-                videoContainerRef.current.requestFullscreen();
-            }
+    const handleToggleFullScreen = () => {
+        if (!videoContainerRef.current) return;
+
+        if (!document.fullscreenElement) {
+            videoContainerRef.current.requestFullscreen().catch(err => {
+                alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            document.exitFullscreen();
         }
     };
 
@@ -157,14 +218,21 @@ const LiveStreamPage = () => {
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row items-center justify-center text-white">
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-6 right-6 z-20 bg-black/50 backdrop-blur-sm rounded-full"
-                    onClick={() => router.back()}
-                >
-                    <ArrowRight />
-                </Button>
+                <AnimatePresence>
+                {!isFullScreen && (
+                    <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                         <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute top-6 right-6 z-20 bg-black/50 backdrop-blur-sm rounded-full"
+                            onClick={() => router.back()}
+                        >
+                            <ArrowRight />
+                        </Button>
+                    </motion.div>
+                )}
+                </AnimatePresence>
+
                 <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
                     {renderStreamContent()}
                     
@@ -185,66 +253,76 @@ const LiveStreamPage = () => {
                             </CardHeader>
                         </Card>
                     </div>
-                     <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute bottom-4 right-4 z-10 bg-black/50 backdrop-blur-sm rounded-full"
-                        onClick={handleFullScreen}
-                    >
-                        <Maximize />
-                    </Button>
-                </div>
 
-                <div className="flex items-center justify-center gap-4 mt-6">
-                    <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsMuted(!isMuted)}>
-                        {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
-                    </Button>
-                    {isMyStream && (
-                         <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsVideoOff(!isVideoOff)}>
-                            {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
+                    <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+                         <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="bg-black/50 backdrop-blur-sm rounded-full"
+                            onClick={handleToggleFullScreen}
+                        >
+                           {isFullScreen ? <Minimize /> : <Maximize /> }
                         </Button>
-                    )}
-                    <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleEndStream}>
-                        <PhoneOff size={28} />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Live Chat Panel */}
-            <div className="w-full md:w-96 h-1/2 md:h-full bg-slate-900 flex flex-col border-l border-slate-700">
-                <div className="p-4 border-b border-slate-700">
-                    <h2 className="text-xl font-bold text-center">الدردشة المباشرة</h2>
-                </div>
-                <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
-                        {messages.map((msg) => (
-                            <div key={msg.id} className="flex items-start gap-2 text-sm">
-                                <Avatar className="w-8 h-8">
-                                    <AvatarFallback>{msg.user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold text-primary">{msg.user.name}</p>
-                                    <p className="text-white/90">{msg.text}</p>
-                                </div>
-                            </div>
-                        ))}
+                        {isFullScreen && (
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="bg-black/50 backdrop-blur-sm rounded-full"
+                                onClick={() => setShowChatInFullScreen(!showChatInFullScreen)}
+                            >
+                               {showChatInFullScreen ? <MessageSquareOff /> : <MessageSquare />}
+                            </Button>
+                        )}
                     </div>
-                </ScrollArea>
-                 <Separator className="bg-slate-700" />
-                 <div className="p-4">
-                     <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                        <Input 
-                            placeholder="اكتب تعليقًا..." 
-                            className="bg-slate-800 border-slate-600 rounded-full text-white" 
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                        />
-                        <Button type="submit" size="icon" className="rounded-full bg-primary hover:bg-primary/90">
-                            <Send />
+
+                    <AnimatePresence>
+                    {isFullScreen && showChatInFullScreen && (
+                        <motion.div initial={{ opacity: 0, y: '100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '100%' }}>
+                            <LiveChatPanel
+                                messages={messages}
+                                newMessage={newMessage}
+                                setNewMessage={setNewMessage}
+                                handleSendMessage={handleSendMessage}
+                                isOverlay={true}
+                            />
+                        </motion.div>
+                    )}
+                    </AnimatePresence>
+
+                </div>
+                <AnimatePresence>
+                {!isFullScreen && (
+                    <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-4 mt-6">
+                        <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsMuted(!isMuted)}>
+                            {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
                         </Button>
-                     </form>
-                 </div>
+                        {isMyStream && (
+                             <Button variant="ghost" size="icon" className="bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16" onClick={() => setIsVideoOff(!isVideoOff)}>
+                                {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
+                            </Button>
+                        )}
+                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleEndStream}>
+                            <PhoneOff size={28} />
+                        </Button>
+                    </motion.div>
+                )}
+                </AnimatePresence>
+
             </div>
+
+            {/* Live Chat Panel (non-fullscreen) */}
+            <AnimatePresence>
+            {!isFullScreen && (
+                <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }} className="w-full md:w-96 h-1/2 md:h-full">
+                    <LiveChatPanel
+                        messages={messages}
+                        newMessage={newMessage}
+                        setNewMessage={setNewMessage}
+                        handleSendMessage={handleSendMessage}
+                    />
+                </motion.div>
+            )}
+            </AnimatePresence>
         </div>
     );
 };
@@ -265,4 +343,6 @@ const LiveStreamSkeleton = () => (
 
 export default LiveStreamPage;
  
+    
+
     
