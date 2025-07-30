@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Compass, Video, Briefcase, Store, Newspaper } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -19,7 +19,7 @@ const SocialFeed = () => {
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
-        { value: 'feed', label: 'المنشورات العامه', icon: Compass },
+        { value: 'feed', label: 'المنشورات العامه', icon: LayoutGrid },
         { value: 'live', label: 'البث المباشر', icon: Video },
         { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
