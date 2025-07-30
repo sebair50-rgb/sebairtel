@@ -27,6 +27,9 @@ interface AppContextType {
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
   deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
+  friends: User[];
+  suggestedUsers: User[];
+  createChat: (friend: User) => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -44,6 +47,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
 
+  const [users, setUsers] = useState<User[]>([]);
+  const [friends, setFriends] = useState<User[]>([]);
+  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+
   useEffect(() => {
     // On initial load, force light theme.
     document.documentElement.className = 'light';
@@ -56,6 +63,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCurrentUser(null);
       setPosts([]);
       setChats([]);
+      setUsers([]);
+      setFriends([]);
+      setSuggestedUsers([]);
       return;
     };
 
@@ -63,10 +73,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
         if(doc.exists()) {
             setCurrentUser({ id: doc.id, ...doc.data() } as User);
-        } else {
-            // This case should be handled by AuthContext creating the user doc
-            console.log("User document doesn't exist yet.");
         }
+    });
+    
+    // Fetch all users
+    const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersData);
     });
 
     // Fetch posts
@@ -104,11 +118,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     return () => {
       unsubscribeUser();
+      unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
     };
   }, [authUser, authLoading]);
 
+  // Separate friends and suggested users
+  useEffect(() => {
+      if (!currentUser || users.length === 0) return;
+
+      const chatPartnerIds = new Set(
+          chats.flatMap(chat => chat.users).filter(userId => userId !== currentUser.id)
+      );
+
+      const friendsList = users.filter(user => chatPartnerIds.has(user.id));
+      const suggestionsList = users.filter(user => !chatPartnerIds.has(user.id));
+
+      setFriends(friendsList);
+      setSuggestedUsers(suggestionsList);
+
+  }, [users, chats, currentUser]);
 
   const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
     if (!currentUser) return;
@@ -127,6 +157,30 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const postRef = doc(db, "posts", postId);
       await updateDoc(postRef, data);
   }
+
+  const createChat = async (friend: User): Promise<string | null> => {
+      if (!currentUser) return null;
+
+      const existingChat = chats.find(c => c.users.includes(friend.id));
+      if (existingChat) {
+          return existingChat.id;
+      }
+
+      const newChatRef = doc(collection(db, 'chats'));
+      const newChatData: Partial<Chat> = {
+          id: newChatRef.id,
+          users: [currentUser.id, friend.id],
+          userInfo: {
+              [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+              [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
+          },
+          lastMessageTimestamp: serverTimestamp() as any,
+          lastMessageText: 'Say hi!',
+      };
+
+      await setDoc(newChatRef, newChatData);
+      return newChatRef.id;
+  };
 
   const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
     if (!currentUser) return;
@@ -174,6 +228,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     addMessage,
     deleteMessage,
     updateMessage,
+    friends,
+    suggestedUsers,
+    createChat,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
