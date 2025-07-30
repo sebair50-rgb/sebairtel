@@ -16,6 +16,8 @@ interface AppContextType {
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   notifications: Notification[];
+  createNotification: (targetUserId: string, notificationData: Omit<Notification, 'id' | 'timestamp' | 'time' | 'isRead' | 'userId'>) => Promise<void>;
+  markNotificationsAsRead: () => Promise<void>;
   calls: Call[];
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
@@ -75,6 +77,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setFriends([]);
       setSuggestedUsers([]);
       setCalls([]);
+      setNotifications([]);
       return;
     };
 
@@ -144,6 +147,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
         setCalls(callsData);
     });
+
+    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'));
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+      const notificationsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+              id: doc.id,
+              ...data,
+          } as Notification;
+      });
+      setNotifications(notificationsData);
+    });
     
     return () => {
       unsubscribeUser();
@@ -151,6 +166,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       unsubscribePosts();
       unsubscribeChats();
       unsubscribeCalls();
+      unsubscribeNotifications();
     };
   }, [authUser, authLoading]);
 
@@ -198,9 +214,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const createChat = async (friend: User): Promise<Chat | null> => {
     if (!currentUser) return null;
 
-    const existingChat = chats.find(chat => chat.users.includes(friend.id));
+    const existingChatQuery = query(
+      collection(db, 'chats'), 
+      where('users', 'array-contains', currentUser.id)
+    );
+    const querySnapshot = await getDocs(existingChatQuery);
+    const existingChat = querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Chat))
+      .find(chat => chat.users.includes(friend.id));
+
     if (existingChat) {
-        return existingChat;
+      return existingChat;
     }
 
     const newChatRef = doc(collection(db, 'chats'));
@@ -221,6 +245,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     await setDoc(newChatRef, newChatData);
+
+    await createNotification(friend.id, {
+        type: 'request',
+        user: currentUser.name,
+        message: `بدأ ${currentUser.name} محادثة معك.`,
+        referenceId: newChatRef.id,
+        referenceType: 'chat',
+    });
+
 
     // This is crucial for the UI to update immediately
     const createdChatForState: Chat = {
@@ -276,6 +309,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        await updateDoc(msgRef, updatedMessage);
   }
 
+  // --- Notification Management ---
+  const createNotification = async (targetUserId: string, notificationData: Omit<Notification, 'id' | 'timestamp' | 'time' | 'isRead' | 'userId'>) => {
+      if (!currentUser) return;
+      
+      const notificationWithTimestamp: Omit<Notification, 'id' | 'time'> = {
+          ...notificationData,
+          userId: currentUser.id,
+          isRead: false,
+          timestamp: serverTimestamp() as any,
+      };
+
+      await addDoc(collection(db, `users/${targetUserId}/notifications`), notificationWithTimestamp);
+  };
+
+  const markNotificationsAsRead = async () => {
+    if (!currentUser || notifications.length === 0) return;
+
+    const unreadNotifications = notifications.filter(n => !n.isRead);
+    if (unreadNotifications.length === 0) return;
+
+    const batch = writeBatch(db);
+    unreadNotifications.forEach(notification => {
+        const notificationRef = doc(db, `users/${currentUser.id}/notifications`, notification.id);
+        batch.update(notificationRef, { isRead: true });
+    });
+
+    await batch.commit();
+  };
+
   // --- Call Management ---
   const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
     if(!currentUser) return;
@@ -287,8 +349,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         timestamp: serverTimestamp() as any,
         duration: duration || '0:00'
     };
-    // Add to current user's call log
-    await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
+    const newCallRef = await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
+
+    if (type === 'missed') {
+        await createNotification(currentUser.id, {
+            type: 'missed_call',
+            user: user.name,
+            message: `لديك مكالمة فائتة من ${user.name}.`,
+            referenceId: newCallRef.id,
+            referenceType: 'call'
+        });
+    }
+
 
     // Add to the other user's call log
     // For a missed call, only the current user gets the log.
@@ -350,6 +422,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     addPost,
     updatePost,
     notifications,
+    createNotification,
+    markNotificationsAsRead,
     calls,
     settings,
     setSettings,
@@ -383,5 +457,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    

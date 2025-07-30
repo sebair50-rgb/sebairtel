@@ -2,12 +2,11 @@
 "use client";
 
 import React from 'react';
-import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone } from 'lucide-react';
+import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { useRouter } from 'next/navigation';
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +15,16 @@ import {
 } from "@/components/ui/tooltip"
 import useIsMobile from '@/hooks/use-is-mobile';
 import Logo from '../shared/Logo';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Badge } from '../ui/badge';
+import NotificationsView from '../notifications/NotificationsView';
+
 
 interface MainSidebarProps {
   activeTab: string;
@@ -24,9 +33,11 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
-  const router = useRouter();
+  const { currentUser, selectedChatId, setSelectedChatId, notifications } = useAppContext();
   const isMobile = useIsMobile();
+  const [isNotificationsOpen, setIsNotificationsOpen] = React.useState(false);
+
+  const unreadNotifications = notifications.filter(n => !n.isRead).length;
 
   const handleTabClick = (tab: string) => {
     if (tab === 'contact') {
@@ -44,6 +55,27 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   ];
   
   const showMobileNav = isMobile && selectedChatId === null;
+
+  const NotificationButton = () => (
+     <Sheet open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+        <SheetTrigger asChild>
+             <Button variant="ghost" size="icon" className="relative rounded-lg w-12 h-12">
+                <Bell size={24} className='text-muted-foreground'/>
+                {unreadNotifications > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                        {unreadNotifications}
+                    </Badge>
+                )}
+            </Button>
+        </SheetTrigger>
+        <SheetContent>
+            <SheetHeader>
+                <SheetTitle>الإشعارات</SheetTitle>
+            </SheetHeader>
+            <NotificationsView onNotificationClick={() => setIsNotificationsOpen(false)} />
+        </SheetContent>
+    </Sheet>
+  );
 
   return (
     <>
@@ -76,6 +108,14 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                 ))}
             </div>
             <div className='flex flex-col items-center gap-2'>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                       <NotificationButton />
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                        <p>الإشعارات</p>
+                    </TooltipContent>
+                 </Tooltip>
                  <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant='ghost' size="icon" onClick={onLogout} className="rounded-lg w-12 h-12">
@@ -111,6 +151,10 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
               <span className="mt-1">{item.label}</span>
             </button>
           ))}
+            {/* Mobile Notification Button */}
+            <div className="flex flex-col items-center justify-center w-full h-14">
+                <NotificationButton />
+            </div>
         </nav>
       )}
     </>
