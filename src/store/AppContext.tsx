@@ -10,6 +10,7 @@ import {
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 
 interface AppSettings {
     theme: 'light' | 'dark' | 'system';
@@ -53,6 +54,9 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
+  fetchSmartReplies: () => Promise<void>;
+  smartReplies: string[];
+  clearSmartReplies: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -93,6 +97,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -124,6 +129,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (selectedChatId) {
         markChatAsRead(selectedChatId);
+        clearSmartReplies();
     }
   }, [selectedChatId, markChatAsRead]);
 
@@ -509,18 +515,43 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const updateUserProfile = async (data: Partial<User>) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
 
-        const updateData: { [key: string]: any } = { ...data };
-        if (data.name) {
-            updateData.avatar = data.name.charAt(0).toUpperCase();
+        const updateData: { [key: string]: any } = {};
+
+        if (data.name && data.name !== auth.currentUser.displayName) {
             await updateProfile(auth.currentUser, { displayName: data.name });
+            updateData.name = data.name;
+            updateData.avatar = data.name.charAt(0).toUpperCase();
         }
 
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        await updateDoc(userDocRef, updateData);
-
-        // We don't need to manually update `currentUser` state here
-        // because the onSnapshot listener will do it automatically.
+        if (Object.keys(updateData).length > 0) {
+            const userDocRef = doc(db, 'users', auth.currentUser.uid);
+            await updateDoc(userDocRef, updateData);
+        }
     };
+    
+    const fetchSmartReplies = async () => {
+        if (!selectedChatId) return;
+
+        const messagesRef = collection(db, 'chats', selectedChatId, 'messages');
+        const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        const history = snapshot.docs.map(doc => {
+            const msg = doc.data();
+            return `${msg.user}: ${msg.text || '[attachment]'}`;
+        }).reverse().join('\n');
+        
+        try {
+            const response = await smartReplySuggestions({ history });
+            setSmartReplies(response.suggestions);
+        } catch (error) {
+            console.error("Failed to fetch smart replies", error);
+            setSmartReplies([]);
+        }
+    }
+
+    const clearSmartReplies = () => {
+        setSmartReplies([]);
+    }
 
   const value = {
     currentUser,
@@ -553,6 +584,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
+    fetchSmartReplies,
+    smartReplies,
+    clearSmartReplies,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
