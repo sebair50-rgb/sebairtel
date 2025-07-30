@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -11,6 +12,7 @@ import LiveFeed from './LiveFeed';
 import UsersView from '../users/UsersView';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
+import NewsView from './NewsView';
 
 const SocialFeed = () => {
     const { posts, setActiveTab } = useAppContext();
@@ -67,8 +69,8 @@ const SocialFeed = () => {
                         <TabsContent value="market" className="mt-6">
                             <StoreView />
                         </TabsContent>
-                        <TabsContent value="news">
-                            <ComingSoonContent title="الأخبار" icon={Newspaper} />
+                        <TabsContent value="news" className="mt-6">
+                             <NewsView />
                         </TabsContent>
                     </Tabs>
                 </div>
