@@ -10,14 +10,25 @@ import {
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
 
+interface AppSettings {
+    theme: 'light' | 'dark' | 'system';
+    notifications: {
+        all: boolean;
+        messages: boolean;
+        mentions: boolean;
+        calls: boolean;
+    };
+    privacy: boolean;
+}
+
 interface AppContextType {
   currentUser: User | null;
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   calls: Call[];
-  settings: { notifications: boolean; privacy: boolean };
-  setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
+  settings: AppSettings;
+  setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   chats: Chat[];
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   selectedChatId: string | null;
@@ -44,6 +55,17 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const defaultSettings: AppSettings = {
+    theme: 'system',
+    notifications: {
+        all: true,
+        messages: true,
+        mentions: true,
+        calls: true,
+    },
+    privacy: false,
+};
+
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -56,13 +78,33 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState('contact');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [settings, setSettings] = useState({ notifications: true, privacy: false });
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    if (typeof window !== 'undefined') {
+        const savedSettings = localStorage.getItem('app-settings');
+        return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    }
+    return defaultSettings;
+  });
 
   const [users, setUsers] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('app-settings', JSON.stringify(settings));
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+        if (settings.theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            root.classList.add(systemTheme);
+        } else {
+            root.classList.add(settings.theme);
+        }
+    }
+  }, [settings]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
@@ -321,7 +363,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 };
 
   const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
-    if (!currentUser) return;
+    if (!currentUser || !settings.notifications.all || !settings.notifications.messages) return;
     const chatRef = doc(db, 'chats', chatId);
     const messagesColRef = collection(chatRef, 'messages');
     
@@ -370,6 +412,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+      if (!settings.notifications.all) return;
       const userNotificationsRef = collection(db, `users/${userId}/notifications`);
       await addDoc(userNotificationsRef, {
           ...notification,
@@ -418,7 +461,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const addMissedCall = async (user: User) => {
-      if(!currentUser) return;
+      if(!currentUser || !settings.notifications.all || !settings.notifications.calls) return;
       await addCallLog(user, 'missed');
       await createNotification(currentUser.id, {
           type: 'missed_call',
