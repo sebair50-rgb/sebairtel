@@ -129,6 +129,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -567,36 +568,64 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       });
   }
 
+  const playRingingSound = () => {
+    if (audioRef.current) {
+        audioRef.current.pause();
+    }
+    audioRef.current = new Audio('/ringing.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+  };
+
+  const stopRingingSound = () => {
+      if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+      }
+  };
+
   const initiateCall = (user: User, type: 'audio' | 'video') => {
       if (callState.status !== 'idle') return;
+      
       setCallState({ status: 'outgoing', user, type });
       addCallLog(user, 'outgoing');
+      playRingingSound();
 
+      // Simulate call connection or timeout
+      const callTimeout = setTimeout(() => {
+          setCallState(prev => {
+              if (prev.status === 'outgoing') {
+                  stopRingingSound();
+                  // Simulate that the other user didn't answer
+                  addMissedCall(user);
+                  return { status: 'idle' };
+              }
+              return prev;
+          });
+      }, 15000); // 15 seconds timeout
+
+      // Temporary timeout to simulate connection
       setTimeout(() => {
           setCallState(prev => {
               if (prev.status === 'outgoing') {
+                  stopRingingSound();
+                  clearTimeout(callTimeout);
                   return { ...prev, status: 'connected' };
               }
               return prev;
           })
-      }, 3000);
-      setTimeout(() => {
-          setCallState(prev => {
-              if (prev.status === 'connected') {
-                  endCall();
-              }
-              return prev;
-          })
-      }, 8000);
+      }, 5000);
   };
 
   const answerCall = () => {
       if (callState.status === 'incoming') {
           setCallState({ ...callState, status: 'connected' });
+          // Stop incoming call ringtone if any
       }
   };
 
   const endCall = () => {
+      stopRingingSound();
       setCallState({ status: 'idle' });
   };
 
@@ -679,3 +708,4 @@ export const useAppContext = () => {
   }
   return context;
 };
+
