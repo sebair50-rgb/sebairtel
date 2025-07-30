@@ -40,7 +40,7 @@ export interface Chat {
   avatar: string;
   users: string[]; // array of user uids
   userInfo: { [key: string]: { id: string; name: string; avatar: string; }};
-  unreadCount?: number;
+  unreadCount?: { [key: string]: number }; // Unread count per user UID
   lastMessageTime?: string;
   lastMessageText?: string;
   lastMessageTimestamp?: Timestamp;
@@ -92,7 +92,7 @@ export interface CallState {
 
 export interface Notification {
     id: string;
-    type: 'like' | 'comment' | 'new_friend' | 'missed_call';
+    type: 'like' | 'comment' | 'new_friend' | 'missed_call' | 'new_message';
     message: string;
     fromUser: {
         id: string;

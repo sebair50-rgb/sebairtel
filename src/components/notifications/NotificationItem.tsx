@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { Heart, UserPlus, PhoneMissed } from 'lucide-react';
+import { Heart, UserPlus, PhoneMissed, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/lib/types';
 
@@ -26,6 +26,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
                 return <UserPlus className="w-5 h-5 text-white" />;
             case 'missed_call':
                 return <PhoneMissed className="w-5 h-5 text-white" />;
+            case 'new_message':
+                return <MessageSquare className="w-5 h-5 text-white" />;
             default:
                 return null;
         }
@@ -36,6 +38,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
             case 'like': return 'bg-red-500';
             case 'new_friend': return 'bg-blue-500';
             case 'missed_call': return 'bg-yellow-500';
+            case 'new_message': return 'bg-green-500';
             default: return 'bg-gray-500';
         }
     }
@@ -57,7 +60,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification }) => 
                 </div>
             </div>
             <div className="flex-1">
-                <p className="text-sm" dangerouslySetInnerHTML={{ __html: notification.message.replace(notification.fromUser.name, `<strong>${notification.fromUser.name}</strong>`) }} />
+                <p className="text-sm" dangerouslySetInnerHTML={{ __html: notification.message }} />
                 <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
             </div>
              {!notification.isRead && (

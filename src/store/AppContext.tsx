@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch 
+  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment
 } from 'firebase/firestore';
 
 interface AppContextType {
@@ -63,6 +63,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+
+  const markChatAsRead = useCallback(async (chatId: string) => {
+    if (!authUser) return;
+    const chatRef = doc(db, 'chats', chatId);
+    const fieldName = `unreadCount.${authUser.uid}`;
+    await updateDoc(chatRef, { [fieldName]: 0 });
+  }, [authUser]);
+
+  useEffect(() => {
+    if (selectedChatId) {
+        markChatAsRead(selectedChatId);
+    }
+  }, [selectedChatId, markChatAsRead]);
 
 
   useEffect(() => {
@@ -238,7 +251,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         },
         lastMessageTimestamp: serverTimestamp() as any,
         lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
-        unreadCount: 0,
+        unreadCount: { [currentUser.id]: 0, [friend.id]: 0 },
         isMuted: false,
         isBlocked: false,
     };
@@ -286,11 +299,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         lastMessageText = '📎 ملف';
     }
 
+    // Handle unread counts and notifications
+    const chatDoc = await getDoc(chatRef);
+    if(chatDoc.exists()) {
+        const chatData = chatDoc.data() as Chat;
+        const otherUserId = chatData.users.find(id => id !== currentUser.id);
 
-    await updateDoc(chatRef, {
-        lastMessageTimestamp: serverTimestamp(),
-        lastMessageText: lastMessageText,
-    });
+        if (otherUserId) {
+             const unreadCountField = `unreadCount.${otherUserId}`;
+             await updateDoc(chatRef, {
+                lastMessageTimestamp: serverTimestamp(),
+                lastMessageText: lastMessageText,
+                [unreadCountField]: increment(1)
+            });
+
+            await createNotification(otherUserId, {
+                type: 'new_message',
+                message: `لديك رسالة جديدة من <strong>${currentUser.name}</strong>: ${lastMessageText.substring(0, 50)}`,
+                fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+                link: `/chats/${chatId}`
+            });
+        }
+    }
   };
   
 
