@@ -155,8 +155,12 @@ const LiveStreamPage = () => {
     }, []);
 
 
-    const handleEndStream = () => {
-        router.back();
+    const handleExitActions = () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            router.back();
+        }
     };
 
     const handleToggleFullScreen = () => {
@@ -218,25 +222,19 @@ const LiveStreamPage = () => {
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row items-center justify-center text-white">
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
-                <AnimatePresence>
-                {!isFullScreen && (
-                    <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                         <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="absolute top-6 right-6 z-20 bg-black/50 backdrop-blur-sm rounded-full"
-                            onClick={() => router.back()}
-                        >
-                            <ArrowRight />
-                        </Button>
-                    </motion.div>
-                )}
-                </AnimatePresence>
+                 <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-6 right-6 z-30 bg-black/50 backdrop-blur-sm rounded-full"
+                    onClick={handleExitActions}
+                >
+                    <ArrowRight />
+                </Button>
 
                 <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
                     {renderStreamContent()}
                     
-                     <div className="absolute top-4 left-4 z-10">
+                     <div className="absolute top-4 left-4 z-20">
                         <Card className="bg-black/50 border-none text-white">
                             <CardHeader className="flex flex-row items-center gap-3 p-3">
                                  <div className="relative">
@@ -254,7 +252,7 @@ const LiveStreamPage = () => {
                         </Card>
                     </div>
 
-                    <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+                    <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
                          <Button 
                             variant="ghost" 
                             size="icon" 
@@ -292,8 +290,8 @@ const LiveStreamPage = () => {
                         </motion.div>
                     )}
                     </AnimatePresence>
-
                 </div>
+
                 <AnimatePresence>
                 {!isFullScreen && (
                     <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center gap-4 mt-6">
@@ -305,7 +303,7 @@ const LiveStreamPage = () => {
                                 {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
                             </Button>
                         )}
-                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleEndStream}>
+                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleExitActions}>
                             <PhoneOff size={28} />
                         </Button>
                     </motion.div>
@@ -314,7 +312,6 @@ const LiveStreamPage = () => {
 
             </div>
 
-            {/* Live Chat Panel (non-fullscreen) */}
             <AnimatePresence>
             {!isFullScreen && (
                 <motion.div initial={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }} className="w-full md:w-96 h-1/2 md:h-full">
@@ -346,5 +343,3 @@ const LiveStreamSkeleton = () => (
 
 
 export default LiveStreamPage;
- 
-    
