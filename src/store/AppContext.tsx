@@ -521,10 +521,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             updateData.bio = data.bio;
         }
         
-        if (data.phone !== undefined && data.phone !== (currentUser?.phone || '')) {
-            updateData.phone = data.phone;
-        }
-
         if (data.avatar && data.avatar !== currentUser?.avatar) {
              if (data.avatar.length > 1048487) {
                 throw new Error("File size is over 1MB.");
