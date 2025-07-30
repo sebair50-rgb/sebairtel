@@ -27,6 +27,11 @@ interface AppSettings {
         profilePhoto: 'everyone' | 'friends';
         friendRequests: FriendRequestSetting;
     };
+    sounds: {
+        messageTone: string;
+        notificationTone: string;
+        callRingtone: string;
+    };
 }
 
 interface AppContextType {
@@ -78,6 +83,11 @@ const defaultSettings: AppSettings = {
         profilePhoto: 'everyone',
         friendRequests: 'everyone',
     },
+    sounds: {
+        messageTone: 'default',
+        notificationTone: 'default',
+        callRingtone: 'default',
+    },
 };
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
@@ -94,11 +104,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof window !== 'undefined') {
-        const savedSettings = localStorage.getItem('app-settings');
-        if (savedSettings) {
-            const parsedSettings = JSON.parse(savedSettings);
-            // Merge with defaults to ensure all keys are present
-            return { ...defaultSettings, ...parsedSettings };
+        try {
+            const savedSettings = localStorage.getItem('app-settings');
+            if (savedSettings) {
+                const parsedSettings = JSON.parse(savedSettings);
+                // Merge with defaults to ensure all keys are present, including nested ones
+                return { 
+                    ...defaultSettings, 
+                    ...parsedSettings,
+                    notifications: { ...defaultSettings.notifications, ...parsedSettings.notifications },
+                    privacy: { ...defaultSettings.privacy, ...parsedSettings.privacy },
+                    sounds: { ...defaultSettings.sounds, ...parsedSettings.sounds },
+                };
+            }
+        } catch (error) {
+            console.error("Failed to parse settings from localStorage", error);
         }
     }
     return defaultSettings;

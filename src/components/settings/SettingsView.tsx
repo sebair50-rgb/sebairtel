@@ -1,8 +1,7 @@
-
 "use client";
 
 import React, { useState } from 'react';
-import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock } from 'lucide-react';
+import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music } from 'lucide-react';
 import useIsMobile from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -12,19 +11,21 @@ import NotificationSettings from './NotificationSettings';
 import AccountSettings from './AccountSettings';
 import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 import PrivacySettings from './PrivacySettings';
+import SoundSettings from './SoundSettings';
 
 interface SettingsViewProps {
     onLogout: () => void;
 }
 
-type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'account' | 'privacy' | 'language' | 'help';
+type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'sounds' | 'account' | 'privacy' | 'language' | 'help';
 
 const settingsSections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
     { id: 'profile', label: 'الملف الشخصي', icon: User },
     { id: 'appearance', label: 'المظهر', icon: Palette },
     { id: 'notifications', label: 'الإشعارات', icon: Bell },
-    { id: 'account', label: 'الحساب والأمان', icon: Shield },
+    { id: 'sounds', label: 'النغمات والأصوات', icon: Music },
     { id: 'privacy', label: 'الخصوصية', icon: Lock },
+    { id: 'account', label: 'الحساب والأمان', icon: Shield },
     { id: 'language', label: 'اللغة', icon: Languages },
     { id: 'help', label: 'المساعدة', icon: HelpCircle },
 ];
@@ -45,6 +46,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 return <AccountSettings />;
             case 'privacy':
                 return <PrivacySettings />;
+            case 'sounds':
+                return <SoundSettings />;
             default:
                 return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">هذه الميزة سيتم تفعيلها قريبًا.</p></div>;
         }
