@@ -102,7 +102,16 @@ const UserProfilePage = () => {
 
     return (
         <ScrollArea className="h-full w-full bg-slate-50">
-            <div className="container max-w-4xl mx-auto p-4 md:p-6">
+            <div className="relative container max-w-4xl mx-auto p-4 md:p-6">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-6 right-6 z-10 bg-background/50 backdrop-blur-sm rounded-full"
+                    onClick={() => router.back()}
+                >
+                    <ArrowRight />
+                </Button>
+
                 <Card className="overflow-hidden shadow-lg">
                     <div className="h-32 md:h-48 bg-gradient-to-r from-primary/20 to-accent/20" />
                     <CardContent className="p-4 md:p-6 pt-0">
