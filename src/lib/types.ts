@@ -42,6 +42,7 @@ export interface Chat {
   // messages are now a subcollection
   unreadCount?: number;
   lastMessageTime?: string;
+  lastMessageText?: string;
   lastMessageTimestamp?: Timestamp;
   isMuted?: boolean;
   isBlocked?: boolean;

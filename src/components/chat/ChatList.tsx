@@ -62,7 +62,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                 <div className="flex-1 overflow-hidden">
                     <h3 className={cn("font-semibold truncate", selectedChatId === chat.id && "text-primary")}>{chat.name}</h3>
                     <p className="text-sm text-muted-foreground truncate">
-                        {chat.messages[chat.messages.length - 1]?.text?.split('\n')[0] || '...'}
+                        {chat.lastMessageText || '...'}
                     </p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 text-xs text-muted-foreground self-start">
