@@ -10,6 +10,7 @@ import {
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
 import { textToSpeech } from '@/ai/flows/tts-flow.ts';
+import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 
 interface AppContextType {
   currentUser: User | null;
@@ -43,6 +44,9 @@ interface AppContextType {
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
   readChatAloud: () => Promise<void>;
   isReadingAloud: boolean;
+  smartReplies: string[];
+  fetchSmartReplies: () => Promise<void>;
+  clearSmartReplies: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,6 +74,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // Audio playback state
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Smart Replies state
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
@@ -235,6 +242,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setSuggestedUsers(suggestionsList);
 
   }, [users, chats, currentUser]);
+  
+  const getMessageDescription = (msg: Message): string => {
+    switch (msg.type) {
+        case 'text':
+            return msg.text || '';
+        case 'image':
+            return `أرسل صورة ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+        case 'video':
+            return `أرسل فيديو ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+        case 'audio':
+            return 'أرسل رسالة صوتية';
+        case 'file':
+             return `أرسل ملفًا باسم '${msg.fileInfo?.name || 'ملف'}' ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+        case 'code':
+            const codeMatch = msg.text?.match(/```(\w+)/);
+            const lang = codeMatch ? ` من نوع ${codeMatch[1]}` : '';
+            return `أرسل مقطعًا برمجيًا${lang}`;
+        default:
+            return 'أرسل رسالة';
+    }
+  };
 
   const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
     if (!currentUser) return;
@@ -318,20 +346,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     await addDoc(messagesColRef, dataToSend);
 
-    let lastMessageText = '...';
-    if(messageData.type === 'text') {
-        lastMessageText = messageData.text || '';
-    } else if (messageData.type === 'audio') {
-        lastMessageText = '🎤 رسالة صوتية';
-    } else if (messageData.type === 'image') {
-        lastMessageText = '🖼️ صورة';
-    } else if (messageData.type === 'video') {
-        lastMessageText = '🎬 فيديو';
-    } else if (messageData.type === 'file') {
-        lastMessageText = '📎 ملف';
-    } else if (messageData.type === 'code') {
-        lastMessageText = '💻 كود';
-    }
+    let lastMessageText = getMessageDescription(messageData as Message);
 
     // Handle unread counts and notifications
     const chatDoc = await getDoc(chatRef);
@@ -460,67 +475,72 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'idle' });
   };
   
-    const getMessageDescription = (msg: Message): string => {
-        switch (msg.type) {
-            case 'text':
-                return msg.text || '';
-            case 'image':
-                return `أرسل صورة ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
-            case 'video':
-                return `أرسل فيديو ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
-            case 'audio':
-                return 'أرسل رسالة صوتية';
-            case 'file':
-                 return `أرسل ملفًا باسم '${msg.fileInfo?.name || 'ملف'}' ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
-            case 'code':
-                const codeMatch = msg.text?.match(/```(\w+)/);
-                const lang = codeMatch ? ` من نوع ${codeMatch[1]}` : '';
-                return `أرسل مقطعًا برمجيًا${lang}`;
-            default:
-                return 'أرسل رسالة';
-        }
-    };
+  const readChatAloud = async (): Promise<void> => {
+      if (audioPlayerRef.current && isReadingAloud) {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current = null;
+          setIsReadingAloud(false);
+          return;
+      }
+
+      if (!selectedChatId) return;
+
+      const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+      const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) return;
+
+      const conversationText = snapshot.docs
+          .reverse()
+          .map(doc => {
+              const msg = doc.data() as Message;
+              const description = getMessageDescription(msg);
+              return `${msg.user}: ${description}`;
+          })
+          .join('\n');
+
+      const { audioUrl } = await textToSpeech({ text: conversationText });
+
+      const audio = new Audio(audioUrl);
+      audioPlayerRef.current = audio;
+      audio.onplay = () => setIsReadingAloud(true);
+      audio.onpause = () => {
+          setIsReadingAloud(false);
+          audioPlayerRef.current = null;
+      };
+      audio.onended = () => {
+          setIsReadingAloud(false);
+          audioPlayerRef.current = null;
+      };
+      audio.play();
+  };
   
-    const readChatAloud = async (): Promise<void> => {
-        if (audioPlayerRef.current && isReadingAloud) {
-            audioPlayerRef.current.pause();
-            audioPlayerRef.current = null;
-            setIsReadingAloud(false);
-            return;
-        }
+  const fetchSmartReplies = async (): Promise<void> => {
+    if (!selectedChatId) return;
 
-        if (!selectedChatId) return;
+    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
+    const snapshot = await getDocs(q);
 
-        const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-        const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
-        const snapshot = await getDocs(q);
+    if (snapshot.empty) return;
 
-        if (snapshot.empty) return;
+    const conversationHistory = snapshot.docs
+        .reverse()
+        .map(doc => {
+            const msg = doc.data() as Message;
+            const description = getMessageDescription(msg);
+            return `${msg.user}: ${description}`;
+        })
+        .join('\n');
+    
+    const { suggestions } = await smartReplySuggestions({ history: conversationHistory });
+    setSmartReplies(suggestions);
+  }
 
-        const conversationText = snapshot.docs
-            .reverse()
-            .map(doc => {
-                const msg = doc.data() as Message;
-                const description = getMessageDescription(msg);
-                return `${msg.user}: ${description}`;
-            })
-            .join('\n');
-
-        const { audioUrl } = await textToSpeech({ text: conversationText });
-
-        const audio = new Audio(audioUrl);
-        audioPlayerRef.current = audio;
-        audio.onplay = () => setIsReadingAloud(true);
-        audio.onpause = () => {
-            setIsReadingAloud(false);
-            audioPlayerRef.current = null;
-        };
-        audio.onended = () => {
-            setIsReadingAloud(false);
-            audioPlayerRef.current = null;
-        };
-        audio.play();
-    };
+  const clearSmartReplies = () => {
+      setSmartReplies([]);
+  }
 
 
   const value = {
@@ -555,6 +575,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     createNotification,
     readChatAloud,
     isReadingAloud,
+    smartReplies,
+    fetchSmartReplies,
+    clearSmartReplies,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -567,6 +590,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    
-

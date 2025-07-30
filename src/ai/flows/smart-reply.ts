@@ -4,7 +4,7 @@
 /**
  * @fileOverview Smart reply suggestion flow.
  *
- * - smartReplySuggestions - A function that generates smart reply suggestions for a given message.
+ * - smartReplySuggestions - A function that generates smart reply suggestions for a given message history.
  * - SmartReplyInput - The input type for the smartReplySuggestions function.
  * - SmartReplyOutput - The return type for the smartReplySuggestions function.
  */
@@ -13,12 +13,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SmartReplyInputSchema = z.object({
-  message: z.string().describe('The recent conversation history.'),
+  history: z.string().describe('The recent conversation history.'),
 });
 export type SmartReplyInput = z.infer<typeof SmartReplyInputSchema>;
 
 const SmartReplyOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('An array of short, context-aware suggested replies.'),
+  suggestions: z.array(z.string()).describe('An array of 3 short, context-aware suggested replies in Arabic.'),
 });
 export type SmartReplyOutput = z.infer<typeof SmartReplyOutputSchema>;
 
@@ -37,10 +37,10 @@ const smartReplyPrompt = ai.definePrompt({
 Your task is to analyze the following conversation history, understand the relationship and context, and identify the nature of the last message (e.g., is it a question, a statement, a shared image, code, etc.).
 
 Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "أنت".
-The replies should be in Arabic.
+The replies must be in Arabic.
 
 Conversation History:
-{{{message}}}
+{{{history}}}
     `,
 });
 
@@ -51,8 +51,8 @@ const smartReplyFlow = ai.defineFlow(
     inputSchema: SmartReplyInputSchema,
     outputSchema: SmartReplyOutputSchema,
   },
-  async ({ message }) => {
-    const { output } = await smartReplyPrompt({ message });
+  async ({ history }) => {
+    const { output } = await smartReplyPrompt({ history });
     if (!output) {
       throw new Error('Failed to generate smart replies.');
     }

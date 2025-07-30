@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -25,7 +26,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage, currentUser, updateMessage } = useAppContext();
+  const { addMessage, currentUser, updateMessage, clearSmartReplies } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
@@ -35,6 +36,13 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   useEffect(() => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
+
+  // Clear smart replies when changing chat
+  useEffect(() => {
+    return () => {
+        clearSmartReplies();
+    }
+  }, [chat.id, clearSmartReplies]);
 
   const handleSendMessage = useCallback(async (text: string, options: { type: Message['type'], media?: any }) => {
     if (!currentUser) return;
@@ -100,6 +108,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
 
   const handleSelectSmartReply = (reply: string) => {
     handleSendMessage(reply, { type: 'text' });
+    clearSmartReplies();
   }
 
   return (
@@ -132,6 +141,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>{showConfirmation.title}</AlertDialogTitle>
+
                 <AlertDialogDescription>
                   {showConfirmation.message}
                 </AlertDialogDescription>
