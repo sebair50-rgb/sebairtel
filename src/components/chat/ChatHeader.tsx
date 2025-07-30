@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
 import useIsMobile from '@/hooks/use-is-mobile';
+import { useRouter } from 'next/navigation';
 
 
 interface ChatHeaderProps {
@@ -26,9 +27,10 @@ interface ChatHeaderProps {
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) => {
   const { toast } = useToast();
-  const { setChats, initiateCall, friends } = useAppContext();
+  const { setChats, initiateCall, friends, currentUser } = useAppContext();
   const [isMuted, setIsMuted] = React.useState(chat.isMuted || false);
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   const handleMute = () => {
     const newMutedState = !isMuted;
@@ -37,8 +39,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
     toast({ title: newMutedState ? `تم كتم إشعارات ${chat.name}` : `تم إلغاء كتم ${chat.name}` });
   }
 
+  const friendId = chat.users.find(uid => uid !== currentUser?.id);
+  
+  const handleNavigateToProfile = () => {
+    if (friendId) {
+        router.push(`/profile/${friendId}`);
+    }
+  };
+
   const handleCall = (type: 'audio' | 'video') => {
-      const friendId = chat.users.find(uid => uid !== "100"); // Assuming "100" is current user's ID
       if(friendId) {
         const friend = friends.find(f => f.id === friendId);
         if (friend) {
@@ -57,13 +66,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
               <ArrowRight size={20} />
             </Button>
         )}
-        <Avatar>
-          <AvatarImage src={chat.avatar} alt={chat.name} />
-          <AvatarFallback>{chat.name?.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 overflow-hidden">
-          <h2 className="font-bold text-lg truncate">{chat.name}</h2>
-          <p className="text-xs text-muted-foreground">متصل الآن</p>
+        <div className="flex items-center gap-3 cursor-pointer" onClick={handleNavigateToProfile}>
+          <Avatar>
+            <AvatarImage src={chat.avatar} alt={chat.name} />
+            <AvatarFallback>{chat.name?.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 overflow-hidden">
+            <h2 className="font-bold text-lg truncate">{chat.name}</h2>
+            <p className="text-xs text-muted-foreground">متصل الآن</p>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-1 md:gap-2">

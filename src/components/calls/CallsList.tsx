@@ -12,6 +12,7 @@ import type { Call, User } from '@/lib/types';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const CallIcon = ({ type }: { type: Call['type'] }) => {
     switch (type) {
@@ -31,18 +32,32 @@ const CallsList = () => {
     const { calls, initiateCall, users, addMissedCall, suggestedUsers } = useAppContext();
     const [filter, setFilter] = React.useState<'all' | 'missed'>('all');
     const { toast } = useToast();
+    const router = useRouter();
 
     const filteredCalls = filter === 'missed' ? calls.filter(call => call.type === 'missed') : calls;
 
+    const findUserForCall = (call: Call): User | undefined => {
+        return users.find(u => u.name === call.user) || friends.find(f => f.name === call.user);
+    }
+
     const handleCall = (call: Call) => {
-        const user = users.find(u => u.name === call.user);
+        const user = findUserForCall(call);
         if (user) {
             initiateCall(user, 'audio');
         } else {
             toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
         }
     }
+
+    const handleNavigateToProfile = (call: Call) => {
+        const user = findUserForCall(call);
+        if (user) {
+            router.push(`/profile/${user.id}`);
+        }
+    }
     
+    const { friends } = useAppContext();
+
     const handleAddMissedCall = () => {
         const userForMissedCall = suggestedUsers[0];
         if (userForMissedCall) {
@@ -71,7 +86,7 @@ const CallsList = () => {
                     <div className="space-y-2 px-4 md:px-0">
                         {filteredCalls.map(call => (
                             <Card key={call.id} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors rounded-xl shadow-sm">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={() => handleNavigateToProfile(call)}>
                                     <Avatar className="h-12 w-12">
                                         <AvatarImage src={call.avatar} alt={call.user} />
                                         <AvatarFallback>{call.user?.charAt(0)}</AvatarFallback>
@@ -86,7 +101,7 @@ const CallsList = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10" onClick={() => handleCall(call)}>
+                                <Button variant="ghost" size="icon" className="text-primary rounded-full hover:bg-primary/10" onClick={(e) => { e.stopPropagation(); handleCall(call); }}>
                                     <Phone />
                                 </Button>
                             </Card>

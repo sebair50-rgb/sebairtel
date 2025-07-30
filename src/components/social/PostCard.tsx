@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
+import { useRouter } from 'next/navigation';
 
 interface PostCardProps {
   post: Post;
@@ -20,6 +21,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
   const { updatePost, currentUser, createNotification } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
+  const router = useRouter();
 
   if (!currentUser) return null;
 
@@ -54,17 +56,25 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     navigator.clipboard.writeText(`Check out this post by ${post.user}!`);
     toast({ description: "تم نسخ رابط المشاركة!" });
   }
+  
+  const handleNavigateToProfile = () => {
+      if(post.userId) {
+          router.push(`/profile/${post.userId}`);
+      }
+  }
 
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
-        <Avatar>
-          <AvatarImage src={post.avatar} alt={post.user} />
-          <AvatarFallback>{post.user?.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <p className="font-bold">{post.user}</p>
-          <p className="text-xs text-muted-foreground">{post.time}</p>
+        <div className="flex items-center gap-4 cursor-pointer" onClick={handleNavigateToProfile}>
+            <Avatar>
+                <AvatarImage src={post.avatar} alt={post.user} />
+                <AvatarFallback>{post.user?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+                <p className="font-bold">{post.user}</p>
+                <p className="text-xs text-muted-foreground">{post.time}</p>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="p-4 pt-0">
