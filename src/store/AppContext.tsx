@@ -7,8 +7,10 @@ import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment
+  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
+import { smartReplySuggestions } from '@/ai/flows/smart-reply';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 
 interface AppContextType {
   currentUser: User | null;
@@ -40,6 +42,8 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
+  getSmartReplies: () => Promise<string[]>;
+  readChatAloud: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -262,6 +266,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         type: 'new_friend',
         message: `بدأ ${currentUser.name} محادثة معك.`,
         fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+        link: `/chats/${newChatRef.id}`
     });
 
     const createdChatForState: Chat = {
@@ -390,6 +395,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           type: 'missed_call',
           message: `لديك مكالمة فائتة من ${user.name}.`,
           fromUser: user,
+          link: `/calls`
       });
   }
 
@@ -425,6 +431,45 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const endCall = () => {
       setCallState({ status: 'idle' });
   };
+  
+  const getSmartReplies = async (): Promise<string[]> => {
+    if (!selectedChatId) return [];
+
+    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return [];
+
+    const lastMessage = snapshot.docs[0].data() as Message;
+    if (!lastMessage.text) return [];
+
+    const response = await smartReplySuggestions({ message: lastMessage.text });
+    return response.suggestions;
+  }
+  
+  const readChatAloud = async (): Promise<void> => {
+    if (!selectedChatId) return;
+
+    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
+    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(10));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return;
+    
+    const conversationText = snapshot.docs
+        .reverse() // so they are in chronological order
+        .map(doc => {
+            const msg = doc.data() as Message;
+            return `${msg.user}: ${msg.text || 'مرفق'}`;
+        })
+        .join('\n');
+    
+    const { audioUrl } = await textToSpeech({ text: conversationText });
+
+    const audio = new Audio(audioUrl);
+    audio.play();
+  }
 
 
   const value = {
@@ -457,6 +502,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
+    getSmartReplies,
+    readChatAloud,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

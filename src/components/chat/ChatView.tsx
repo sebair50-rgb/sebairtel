@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import ChatToolbar from './ChatToolbar';
 
 interface ChatViewProps {
   chat: Chat;
@@ -25,7 +26,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage, currentUser, updateMessage } = useAppContext();
+  const { addMessage, currentUser, updateMessage, getSmartReplies, readChatAloud } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
@@ -98,6 +99,10 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       }
   }
 
+  const handleSelectSmartReply = (reply: string) => {
+    onSendMessage(reply, { type: 'text' });
+  }
+
   return (
     <div className="flex flex-col h-full bg-background w-full bg-[url('https://placehold.co/1000x1000/e5ddd5/e5ddd5.png')] bg-center bg-fixed" style={{backgroundImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAABCAYAAAA/4QAYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAUSURBVHjaY/iPY/gfA/WHAFMPAFM2A27sP89VAAAAAElFTkSuQmCC")`}}>
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
@@ -111,12 +116,19 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
             لقد قمت بحظر هذا المستخدم.
         </div>
       ) : (
-         <MessageInput
-            ref={messageInputRef}
-            onSendMessage={handleSendMessage}
-            editingMessage={editingMessage}
-            onCancelEdit={() => setEditingMessage(null)}
-         />
+        <>
+            <ChatToolbar 
+                onSmartReply={getSmartReplies}
+                onReadChat={readChatAloud}
+                onSelectSmartReply={handleSelectSmartReply}
+             />
+             <MessageInput
+                ref={messageInputRef}
+                onSendMessage={handleSendMessage}
+                editingMessage={editingMessage}
+                onCancelEdit={() => setEditingMessage(null)}
+             />
+        </>
       )}
        {showConfirmation && (
           <AlertDialog open={showConfirmation.show} onOpenChange={(isOpen) => !isOpen && setShowConfirmation(null)}>
@@ -144,5 +156,3 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
 };
 
 export default React.memo(ChatView);
-
-    
