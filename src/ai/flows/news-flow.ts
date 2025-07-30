@@ -33,7 +33,7 @@ export async function analyzeNewsArticle(input: NewsAnalysisInput): Promise<News
 
 const newsAnalysisPrompt = ai.definePrompt({
   name: 'newsAnalysisPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-pro',
   input: { schema: NewsAnalysisInputSchema },
   output: { schema: NewsAnalysisOutputSchema },
   prompt: `You are an expert news analyst. Your task is to analyze the provided article text and extract key information in a structured format.
