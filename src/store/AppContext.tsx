@@ -24,7 +24,7 @@ interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<Omit<User, 'avatar'>>) => Promise<void>;
+  updateUserProfile: (data: Partial<Omit<User, 'id'>>) => Promise<void>;
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -503,7 +503,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCallState({ status: 'idle' });
   };
 
-    const updateUserProfile = async (data: Partial<Omit<User, 'avatar'>>) => {
+    const updateUserProfile = async (data: Partial<Omit<User, 'id'>>) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
 
         const updateData: { [key: string]: any } = {};
@@ -512,10 +512,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await updateProfile(auth.currentUser, { displayName: data.name });
             updateData.name = data.name;
         }
-        
-        // Avatar update logic is removed from here to prevent errors.
-        // A real implementation would require Firebase Storage.
 
+        if (data.dob && data.dob !== currentUser?.dob) {
+            updateData.dob = data.dob;
+        }
+
+        if (data.avatar && data.avatar !== currentUser?.avatar) {
+             if (data.avatar.length > 1048487) {
+                throw new Error("File size is over 1MB.");
+            }
+            updateData.avatar = data.avatar;
+        }
+        
         if (Object.keys(updateData).length > 0) {
             const userDocRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userDocRef, updateData);

@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name,
             email: user.email!,
             avatar: `https://placehold.co/128x128/E6E6FA/333333.png?text=${name.charAt(0)}`,
+            dob: '',
         };
         await setDoc(userDocRef, newUser);
         

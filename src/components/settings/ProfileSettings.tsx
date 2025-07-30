@@ -1,16 +1,20 @@
 
 "use client";
 
-import React, { useState, useTransition, useRef } from 'react';
+import React, { useState, useTransition, useRef, useEffect } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
@@ -18,19 +22,38 @@ const ProfileSettings = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [name, setName] = useState(currentUser?.name || '');
+    const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+
+     useEffect(() => {
+        if (currentUser) {
+            setName(currentUser.name || '');
+            setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
+            setAvatarPreview(null);
+            setAvatarFile(null);
+        }
+    }, [currentUser]);
+
 
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Firestore has a 1MB limit per document. Storing images as base64 is not ideal.
-            // For now, we will just show a toast message.
-            // A real implementation should use Firebase Storage.
-            toast({
-                title: "الميزة قيد التطوير",
-                description: "تتطلب ميزة رفع الصور إعداد خدمة التخزين (Storage)، وهو ما لا يمكن إتمامه حاليًا. سيتم تفعيلها قريبًا!",
-            });
+            if (file.size > 1048576) { // 1MB limit
+                 toast({
+                    variant: "destructive",
+                    title: "حجم الصورة كبير جداً",
+                    description: "الرجاء اختيار صورة حجمها أقل من 1 ميجابايت.",
+                });
+                return;
+            }
+            setAvatarFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAvatarPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -38,14 +61,27 @@ const ProfileSettings = () => {
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
-        const hasNameChanged = name.trim() !== currentUser.name;
+        const updatePayload: Partial<Omit<User, 'id'>> = {};
 
-        if (!hasNameChanged) {
+        if (name.trim() && name.trim() !== currentUser.name) {
+            updatePayload.name = name.trim();
+        }
+        
+        const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
+        if (formattedDob && formattedDob !== currentUser.dob) {
+            updatePayload.dob = formattedDob;
+        }
+
+        if (avatarPreview && avatarFile) {
+            updatePayload.avatar = avatarPreview;
+        }
+
+        if (Object.keys(updatePayload).length === 0) {
             toast({ description: "لا توجد تغييرات لحفظها." });
             return;
         }
 
-        if (!name.trim()) {
+        if (updatePayload.name === '') {
              toast({
                 variant: "destructive",
                 title: "الاسم مطلوب",
@@ -56,19 +92,23 @@ const ProfileSettings = () => {
 
         startTransition(async () => {
             try {
-                // Pass only the name to be updated. Avatar logic is removed to prevent crashes.
-                await updateUserProfile({ name });
-                
+                await updateUserProfile(updatePayload);
+                setAvatarPreview(null);
+                setAvatarFile(null);
                 toast({
                     title: "تم بنجاح!",
                     description: "تم تحديث معلومات ملفك الشخصي بنجاح.",
                 });
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to update profile:", error);
+                const description = error.message.includes('bytes')
+                    ? "حجم الصورة كبير جدًا. الرجاء اختيار صورة أصغر."
+                    : "فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.";
+
                 toast({
                     variant: "destructive",
                     title: "حدث خطأ",
-                    description: "فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.",
+                    description,
                 });
             }
         });
@@ -89,8 +129,13 @@ const ProfileSettings = () => {
             </Card>
         )
     }
+    
+    const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
+    const hasChanges =
+      (name.trim() !== currentUser.name && name.trim() !== "") ||
+      (formattedDob && formattedDob !== currentUser.dob) ||
+      !!avatarFile;
 
-    const hasChanges = (name.trim() !== currentUser.name && name.trim() !== '');
 
     return (
         <Card>
@@ -109,14 +154,8 @@ const ProfileSettings = () => {
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="w-24 h-24 text-4xl">
-                            {avatarPreview ? (
-                                <Image src={avatarPreview} alt="Preview" layout="fill" className="object-cover" />
-                            ) : (
-                                <>
-                                    <AvatarImage src={currentUser?.avatar || undefined} alt={name} />
-                                    <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
-                                </>
-                            )}
+                            <AvatarImage src={avatarPreview || currentUser?.avatar || undefined} alt={name} />
+                            <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
                         <Button 
                           size="icon" 
@@ -140,6 +179,34 @@ const ProfileSettings = () => {
                      <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني</Label>
                         <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="dob">تاريخ الميلاد</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !dob && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="ml-2 h-4 w-4" />
+                                    {dob ? format(dob, "PPP", { locale: require('date-fns/locale/ar') }) : <span>اختر تاريخ ميلادك</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={dob}
+                                    onSelect={setDob}
+                                    initialFocus
+                                    captionLayout="dropdown-buttons"
+                                    fromYear={1950}
+                                    toYear={new Date().getFullYear()}
+                                />
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 
