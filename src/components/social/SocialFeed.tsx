@@ -19,11 +19,11 @@ const SocialFeed = () => {
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
-        { value: 'feed', label: 'المنشورات العامه', icon: LayoutGrid },
-        { value: 'live', label: 'البث المباشر', icon: Video },
         { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
+        { value: 'live', label: 'البث المباشر', icon: Video },
+        { value: 'feed', label: 'المنشورات العامه', icon: LayoutGrid },
     ];
     
     return (
