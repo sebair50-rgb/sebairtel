@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -26,9 +27,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({ stream }) => {
     const router = useRouter();
 
     const handleCardClick = () => {
-        // Later, this will navigate to the live stream view page
-        // For now, we can log it.
-        console.log(`Navigating to stream ${stream.id}`);
+        router.push(`/live/${stream.id}`);
     };
 
     return (
