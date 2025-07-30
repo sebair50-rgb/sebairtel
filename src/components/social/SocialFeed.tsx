@@ -12,7 +12,6 @@ import LiveFeed from './LiveFeed';
 import UsersView from '../users/UsersView';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
-import KnowledgeView from './KnowledgeView';
 
 const SocialFeed = () => {
     const { posts, setActiveTab } = useAppContext();
@@ -70,7 +69,7 @@ const SocialFeed = () => {
                             <StoreView />
                         </TabsContent>
                         <TabsContent value="news" className="mt-6">
-                             <KnowledgeView />
+                             <ComingSoonContent title="الأخبار" icon={Newspaper} />
                         </TabsContent>
                     </Tabs>
                 </div>
