@@ -42,7 +42,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'contact', icon: Phone, label: 'تواصل' },
     { name: 'social', icon: Users, label: 'المجتمع' },
-    { name: 'notifications', icon: Bell, label: 'الإشعارات', badge: unreadNotificationCount },
+    { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
   ];
@@ -72,8 +72,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                                 )}
                                 >
                                 <item.icon size={24} />
-                                 {item.badge && item.badge > 0 && (
-                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{item.badge}</Badge>
+                                 {item.badgeCount && item.badgeCount > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{item.badgeCount}</Badge>
                                 )}
                             </Button>
                         </TooltipTrigger>
@@ -117,8 +117,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
             >
               <item.icon size={20} />
               <span className="mt-1">{item.label}</span>
-              {item.badge && item.badge > 0 && (
-                <Badge className="absolute top-1 right-3 h-4 w-4 justify-center p-0 text-[8px]">{item.badge}</Badge>
+              {item.badgeCount && item.badgeCount > 0 && (
+                <Badge className="absolute top-1 right-3 h-4 w-4 justify-center p-0 text-[8px]">{item.badgeCount}</Badge>
               )}
             </button>
           ))}
