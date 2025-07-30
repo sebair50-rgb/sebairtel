@@ -23,6 +23,7 @@ const ProfileSettings = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [name, setName] = useState(currentUser?.name || '');
+    const [phone, setPhone] = useState(currentUser?.phone || '');
     const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
     const [bio, setBio] = useState(currentUser?.bio || '');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -32,6 +33,7 @@ const ProfileSettings = () => {
      useEffect(() => {
         if (currentUser) {
             setName(currentUser.name || '');
+            setPhone(currentUser.phone || '');
             setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
             setBio(currentUser.bio || '');
             setAvatarPreview(null);
@@ -70,6 +72,10 @@ const ProfileSettings = () => {
             updatePayload.name = name.trim();
         }
         
+        if (phone.trim() !== (currentUser.phone || '')) {
+            updatePayload.phone = phone.trim();
+        }
+
         const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
         if (formattedDob !== currentUser.dob) {
             updatePayload.dob = formattedDob;
@@ -146,6 +152,7 @@ const ProfileSettings = () => {
     const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
     const hasChanges =
       (name.trim() !== (currentUser.name || '') && name.trim() !== "") ||
+      (phone.trim() !== (currentUser.phone || '')) ||
       (formattedDob !== (currentUser.dob || undefined)) ||
       (bio.trim() !== (currentUser.bio || '')) ||
       !!avatarFile;
@@ -197,6 +204,10 @@ const ProfileSettings = () => {
                      <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني</Label>
                         <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">رقم الهاتف</Label>
+                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="مثال: +9665xxxxxxx" dir="ltr" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="dob">تاريخ الميلاد</Label>

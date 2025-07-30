@@ -513,6 +513,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             updateData.name = data.name;
         }
         
+        if (data.phone !== undefined && data.phone !== currentUser?.phone) {
+            updateData.phone = data.phone;
+        }
+
         if (data.dob !== undefined && data.dob !== currentUser?.dob) {
             updateData.dob = data.dob;
         }

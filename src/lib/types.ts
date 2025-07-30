@@ -10,6 +10,7 @@ export interface User {
   email?: string;
   dob?: string;
   bio?: string;
+  phone?: string;
 }
 
 export interface Message {
