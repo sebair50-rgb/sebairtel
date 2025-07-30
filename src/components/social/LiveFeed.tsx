@@ -6,21 +6,21 @@ import { Video, PlusCircle } from 'lucide-react';
 import LiveStreamCard, { type LiveStream } from './LiveStreamCard';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
+import { useRouter } from 'next/navigation';
 
 const LiveFeed = () => {
     const { toast } = useToast();
     const { users } = useAppContext();
+    const router = useRouter();
 
     const handleGoLive = () => {
-        toast({
-            title: "بث مباشر",
-            description: "سيتم تفعيل ميزة بدء البث المباشر قريبًا!",
-        });
+        // Navigate to a dedicated page for the user to start their own stream
+        router.push('/live/me');
     };
 
     // Placeholder data for live streams
     const streams: LiveStream[] = users.slice(0, 5).map((user, index) => ({
-        id: `live_${index + 1}`,
+        id: `live_${user.id}`,
         user: { name: user.name, avatar: user.avatar },
         title: `بث مباشر عن البرمجة مع ${user.name}`,
         thumbnail: `https://placehold.co/600x400.png?text=Live+${index + 1}`,
