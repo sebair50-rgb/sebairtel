@@ -18,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import ChatToolbar from './ChatToolbar';
 
 interface ChatViewProps {
   chat: Chat;
@@ -26,7 +25,7 @@ interface ChatViewProps {
 }
 
 const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
-  const { addMessage, currentUser, updateMessage, clearSmartReplies } = useAppContext();
+  const { addMessage, currentUser, updateMessage } = useAppContext();
   const { toast } = useToast();
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
@@ -37,12 +36,6 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
     setIsBlocked(chat.isBlocked || false);
   }, [chat.id, chat.isBlocked]);
 
-  // Clear smart replies when changing chat
-  useEffect(() => {
-    return () => {
-        clearSmartReplies();
-    }
-  }, [chat.id, clearSmartReplies]);
 
   const handleSendMessage = useCallback(async (text: string, options: { type: Message['type'], media?: any }) => {
     if (!currentUser) return;
@@ -106,11 +99,6 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       }
   }
 
-  const handleSelectSmartReply = (reply: string) => {
-    handleSendMessage(reply, { type: 'text' });
-    clearSmartReplies();
-  }
-
   return (
     <div className="flex flex-col h-full bg-background w-full bg-[url('https://placehold.co/1000x1000/e5ddd5/e5ddd5.png')] bg-center bg-fixed" style={{backgroundImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARMAAAABCAYAAAA/4QAYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAUSURBVHjaY/iPY/gfA/WHAFMPAFM2A27sP89VAAAAAElFTkSuQmCC")`}}>
       <ChatHeader chat={chat} onBack={onBack} onMenuAction={handleMenuAction} />
@@ -125,9 +113,6 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
         </div>
       ) : (
         <>
-            <ChatToolbar 
-                onSelectSmartReply={handleSelectSmartReply}
-             />
              <MessageInput
                 ref={messageInputRef}
                 onSendMessage={handleSendMessage}

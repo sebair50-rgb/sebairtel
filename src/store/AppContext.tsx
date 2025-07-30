@@ -9,8 +9,6 @@ import {
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
 } from 'firebase/firestore';
-import { textToSpeech } from '@/ai/flows/tts-flow.ts';
-import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 
 interface AppContextType {
   currentUser: User | null;
@@ -42,11 +40,6 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
-  readChatAloud: () => Promise<void>;
-  isReadingAloud: boolean;
-  smartReplies: string[];
-  fetchSmartReplies: () => Promise<void>;
-  clearSmartReplies: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,13 +63,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
-
-  // Audio playback state
-  const [isReadingAloud, setIsReadingAloud] = useState(false);
-  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  
-  // Smart Replies state
-  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
@@ -474,74 +460,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const endCall = () => {
       setCallState({ status: 'idle' });
   };
-  
-  const readChatAloud = async (): Promise<void> => {
-      if (audioPlayerRef.current && isReadingAloud) {
-          audioPlayerRef.current.pause();
-          audioPlayerRef.current = null;
-          setIsReadingAloud(false);
-          return;
-      }
-
-      if (!selectedChatId) return;
-
-      const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-      const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) return;
-
-      const conversationText = snapshot.docs
-          .reverse()
-          .map(doc => {
-              const msg = doc.data() as Message;
-              const description = getMessageDescription(msg);
-              return `${msg.user}: ${description}`;
-          })
-          .join('\n');
-
-      const { audioUrl } = await textToSpeech({ text: conversationText });
-
-      const audio = new Audio(audioUrl);
-      audioPlayerRef.current = audio;
-      audio.onplay = () => setIsReadingAloud(true);
-      audio.onpause = () => {
-          setIsReadingAloud(false);
-          audioPlayerRef.current = null;
-      };
-      audio.onended = () => {
-          setIsReadingAloud(false);
-          audioPlayerRef.current = null;
-      };
-      audio.play();
-  };
-  
-  const fetchSmartReplies = async (): Promise<void> => {
-    if (!selectedChatId) return;
-
-    const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-    const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(15));
-    const snapshot = await getDocs(q);
-
-    if (snapshot.empty) return;
-
-    const conversationHistory = snapshot.docs
-        .reverse()
-        .map(doc => {
-            const msg = doc.data() as Message;
-            const description = getMessageDescription(msg);
-            return `${msg.user}: ${description}`;
-        })
-        .join('\n');
-    
-    const { suggestions } = await smartReplySuggestions({ history: conversationHistory });
-    setSmartReplies(suggestions);
-  }
-
-  const clearSmartReplies = () => {
-      setSmartReplies([]);
-  }
-
 
   const value = {
     currentUser,
@@ -573,11 +491,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
-    readChatAloud,
-    isReadingAloud,
-    smartReplies,
-    fetchSmartReplies,
-    clearSmartReplies,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
