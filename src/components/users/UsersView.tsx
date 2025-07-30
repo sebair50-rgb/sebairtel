@@ -7,14 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Search, UserPlus, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import type { User as UserType } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const UsersView = () => {
-    const { friends, suggestedUsers, createChat, setSelectedChatId, setActiveTab } = useAppContext();
+interface UsersViewProps {
+    setActiveTab: (tab: string) => void;
+}
+
+
+const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
+    const { friends, suggestedUsers, createChat, setSelectedChatId } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
