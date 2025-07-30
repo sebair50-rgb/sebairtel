@@ -98,12 +98,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
-             const otherUserId = Object.keys(data.userInfo).find(uid => uid !== authUser.uid);
+             // Find the other user's info to display name and avatar
+             const otherUserInfo = Object.values(data.userInfo).find((user: any) => user.id !== authUser.uid);
+
              return {
                  id: doc.id,
                  ...data,
-                 name: otherUserId ? data.userInfo[otherUserId].name : "مستخدم محذوف",
-                 avatar: otherUserId ? data.userInfo[otherUserId].avatar : "?",
+                 name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
+                 avatar: otherUserInfo ? otherUserInfo.avatar : "?",
              } as Chat;
         });
         setChats(chatsData);
@@ -145,9 +147,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         timestamp: serverTimestamp(),
     });
 
+    // Update last message info on the chat document
     await updateDoc(chatRef, {
         lastMessageTimestamp: serverTimestamp(),
-        lastMessageText: messageData.text,
+        lastMessageText: messageData.text || (messageData.type !== 'text' ? `مرفق ${messageData.type}` : ''),
     });
   };
   
@@ -156,11 +159,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       
       const chatsRef = collection(db, "chats");
       const sortedUsers = [currentUser.id, otherUserId].sort();
-      const q = query(chatsRef, where('users', '==', sortedUsers));
+      // Firestore doesn't support querying for array equality on multiple fields
+      // So we create a unique ID for the chat based on sorted user IDs
+      const chatId = sortedUsers.join('_');
+      const chatDocRef = doc(chatsRef, chatId);
+      const chatDoc = await getDoc(chatDocRef);
 
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-          return querySnapshot.docs[0].id;
+
+      if (chatDoc.exists()) {
+          return chatDoc.id;
       }
       
       const otherUserDoc = await getDoc(doc(db, 'users', otherUserId));
@@ -171,10 +178,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           users: sortedUsers,
           userInfo: {
               [currentUser.id]: {
+                  id: currentUser.id,
                   name: currentUser.name,
                   avatar: currentUser.avatar,
               },
               [otherUserId]: {
+                  id: otherUser.id,
                   name: otherUser.name,
                   avatar: otherUser.avatar,
               }
@@ -184,9 +193,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           unreadCount: 0,
       };
       
-      const newChatRef = await addDoc(chatsRef, newChatData);
+      await setDoc(chatDocRef, newChatData);
       
-      return newChatRef.id;
+      return chatId;
   };
 
   const deleteMessage = async (chatId: string, messageId: string) => {
