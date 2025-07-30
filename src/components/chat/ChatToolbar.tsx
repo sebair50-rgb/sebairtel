@@ -3,17 +3,18 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Headphones, Sparkles, Loader2, X } from 'lucide-react';
+import { Headphones, Sparkles, Loader2, X, StopCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAppContext } from '@/store/AppContext';
 
 interface ChatToolbarProps {
     onSmartReply: () => Promise<string[]>;
-    onReadChat: () => Promise<void>;
     onSelectSmartReply: (reply: string) => void;
 }
 
-const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSmartReply, onReadChat, onSelectSmartReply }) => {
+const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSmartReply, onSelectSmartReply }) => {
+    const { readChatAloud, isReadingAloud } = useAppContext();
     const [isLoading, setIsLoading] = useState<'smart-reply' | 'read-chat' | null>(null);
     const [smartReplies, setSmartReplies] = useState<string[]>([]);
     const { toast } = useToast();
@@ -36,9 +37,15 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSmartReply, onReadChat, onS
     };
     
     const handleReadChatClick = async () => {
+        // If it's already playing, the context function will handle pausing.
+        if (isReadingAloud) {
+            readChatAloud();
+            return;
+        }
+        
         setIsLoading('read-chat');
         try {
-            await onReadChat();
+            await readChatAloud();
         } catch (error) {
             console.error('Failed to read chat aloud:', error);
             toast({ variant: 'destructive', title: 'فشل قراءة المحادثة' });
@@ -71,11 +78,11 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSmartReply, onReadChat, onS
                 )}
             </AnimatePresence>
             <div className="flex items-center justify-end gap-2">
-                <Button variant="ghost" size="icon" onClick={handleSmartReplyClick} disabled={!!isLoading} className="rounded-full">
+                <Button variant="ghost" size="icon" onClick={handleSmartReplyClick} disabled={!!isLoading || isReadingAloud} className="rounded-full">
                     {isLoading === 'smart-reply' ? <Loader2 className="animate-spin" /> : smartReplies.length > 0 ? <X/> : <Sparkles />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleReadChatClick} disabled={!!isLoading} className="rounded-full">
-                     {isLoading === 'read-chat' ? <Loader2 className="animate-spin" /> : <Headphones />}
+                <Button variant="ghost" size="icon" onClick={handleReadChatClick} disabled={isLoading === 'smart-reply'} className="rounded-full">
+                     {isLoading === 'read-chat' ? <Loader2 className="animate-spin" /> : (isReadingAloud ? <StopCircle className="text-destructive" /> : <Headphones />) }
                 </Button>
             </div>
         </div>

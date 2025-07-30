@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
@@ -44,6 +44,7 @@ interface AppContextType {
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
   getSmartReplies: () => Promise<string[]>;
   readChatAloud: () => Promise<void>;
+  isReadingAloud: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -67,6 +68,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
+
+  // Audio playback state
+  const [isReadingAloud, setIsReadingAloud] = useState(false);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
@@ -132,6 +137,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
              const otherUserInfo = Object.values(data.userInfo).find((user: any) => user.id !== authUser.uid);
+             const unreadCount = data.unreadCount ? data.unreadCount[authUser.uid] : 0;
 
              return {
                  id: doc.id,
@@ -139,7 +145,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
                  avatar: otherUserInfo ? otherUserInfo.avatar : "?",
                  lastMessageText: data.lastMessageText || '...',
-                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || ''
+                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || '',
+                 unreadCount: { [authUser.uid]: unreadCount },
              } as Chat;
         });
         
@@ -360,7 +367,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
     
     await batch.commit();
-    setUnreadNotificationCount(0);
   };
 
   const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
@@ -449,6 +455,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const readChatAloud = async (): Promise<void> => {
+    if (audioPlayerRef.current && isReadingAloud) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+        setIsReadingAloud(false);
+        return;
+    }
+    
     if (!selectedChatId) return;
 
     const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
@@ -458,7 +471,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     if (snapshot.empty) return;
     
     const conversationText = snapshot.docs
-        .reverse() // so they are in chronological order
+        .reverse()
         .map(doc => {
             const msg = doc.data() as Message;
             return `${msg.user}: ${msg.text || 'مرفق'}`;
@@ -468,6 +481,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { audioUrl } = await textToSpeech({ text: conversationText });
 
     const audio = new Audio(audioUrl);
+    audioPlayerRef.current = audio;
+    audio.onplay = () => setIsReadingAloud(true);
+    audio.onpause = () => {
+        setIsReadingAloud(false);
+        audioPlayerRef.current = null;
+    };
+    audio.onended = () => {
+        setIsReadingAloud(false);
+        audioPlayerRef.current = null;
+    };
     audio.play();
   }
 
@@ -504,6 +527,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     createNotification,
     getSmartReplies,
     readChatAloud,
+    isReadingAloud,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
