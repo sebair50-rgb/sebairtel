@@ -15,7 +15,7 @@ interface SettingsViewProps {
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
-    const { settings, setSettings, darkMode, toggleDarkMode } = useAppContext();
+    const { settings, setSettings } = useAppContext();
     const isMobile = useIsMobile();
 
     return (
@@ -64,23 +64,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                                     id="privacy"
                                     checked={settings.privacy}
                                     onCheckedChange={(checked) => setSettings(s => ({ ...s, privacy: checked }))}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Palette /> المظهر</CardTitle>
-                            <CardDescription>تخصيص شكل التطبيق.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="dark-mode">الوضع الداكن</Label>
-                                <Switch
-                                    id="dark-mode"
-                                    checked={darkMode}
-                                    onCheckedChange={toggleDarkMode}
                                 />
                             </div>
                         </CardContent>

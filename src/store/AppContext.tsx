@@ -11,8 +11,6 @@ import {
 } from 'firebase/firestore';
 
 interface AppContextType {
-  darkMode: boolean;
-  toggleDarkMode: () => void;
   currentUser: User | null;
   users: User[];
   friendRequests: User[];
@@ -50,18 +48,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [friendRequests, setFriendRequests] = useState<User[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState({ notifications: true, privacy: false });
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    // On initial load, check for saved mode. Default to light (false) if nothing is saved.
-    const savedMode = localStorage.getItem('darkMode');
-    const isDark = savedMode === 'true';
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Ensure light mode is always active by default
+    document.documentElement.classList.remove('dark');
   }, []);
 
 
@@ -230,23 +220,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        await updateDoc(msgRef, updatedMessage);
   }
 
-  const toggleDarkMode = () => {
-    setDarkMode(prev => {
-      const newMode = !prev;
-      if (newMode) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('darkMode', 'true');
-      } else {
-        document.documentElement.classList.remove('dark');
-         localStorage.setItem('darkMode', 'false');
-      }
-      return newMode;
-    });
-  };
-
   const value = {
-    darkMode,
-    toggleDarkMode,
     currentUser,
     users,
     friendRequests,
