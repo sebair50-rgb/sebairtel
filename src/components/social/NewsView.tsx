@@ -110,8 +110,8 @@ const NewsView = () => {
                     </form>
                  </CardContent>
             </Card>
-
-             <div className="space-y-6">
+            
+            <div className="space-y-6">
                 {analyzedArticles.map((article) => (
                     <Card key={article.id} className="animate-fade-in overflow-hidden">
                         <CardHeader>
@@ -142,7 +142,7 @@ const NewsView = () => {
                         </CardContent>
                     </Card>
                 ))}
-             </div>
+            </div>
              
              {analyzedArticles.length === 0 && !isLoading && (
                  <Alert variant="default" className="text-center p-8 border-dashed">
@@ -213,3 +213,5 @@ const NewsView = () => {
 };
 
 export default NewsView;
+
+    
