@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Compass } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, BrainCircuit } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -12,14 +12,14 @@ import { useAppContext } from '@/store/AppContext';
 import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
-import NewsView from './NewsView';
+import KnowledgeView from './KnowledgeView';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
-        { value: 'news', label: 'الأخبار', icon: Newspaper },
+        { value: 'knowledge', label: 'مساعد المعرفة', icon: BrainCircuit },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
         { value: 'live', label: 'البث المباشر', icon: Video },
@@ -53,8 +53,8 @@ const SocialFeed = () => {
                         <TabsContent value="live" className="mt-0">
                             <LiveFeed />
                         </TabsContent>
-                         <TabsContent value="news" className="mt-0">
-                            <NewsView />
+                         <TabsContent value="knowledge" className="mt-0">
+                            <KnowledgeView />
                         </TabsContent>
                         <TabsContent value="business" className="mt-0">
                             <MarketView />

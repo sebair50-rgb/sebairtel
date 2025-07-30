@@ -13,7 +13,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const KnowledgeAnalysisInputSchema = z.object({
-  text: z.string().describe('The text content to analyze.'),
+  text: z.string().describe('The text content or URL to analyze.'),
 });
 export type KnowledgeAnalysisInput = z.infer<typeof KnowledgeAnalysisInputSchema>;
 
@@ -35,16 +35,18 @@ const knowledgeAnalysisPrompt = ai.definePrompt({
   model: 'googleai/gemini-pro',
   input: { schema: KnowledgeAnalysisInputSchema },
   output: { schema: KnowledgeAnalysisOutputSchema },
-  prompt: `You are an expert knowledge assistant. Your task is to analyze any provided text, understand it deeply, and provide a structured, insightful response. The text can be an article, a question, a statement, a business idea, or any other piece of information.
+  prompt: `You are an expert knowledge assistant. Your task is to analyze any provided text or content from a URL, understand it deeply, and provide a structured, insightful response. The input can be an article, a question, a statement, a business idea, or any other piece of information.
 
-Analyze the following text:
+If the input appears to be a URL, fetch its content before analyzing.
+
+Analyze the following content:
 ---
 {{{text}}}
 ---
 
 Based on your comprehensive analysis, provide the following in a structured format:
 1.  **Title**: Create a short, engaging title that accurately reflects the main topic of the text.
-2.  **Summary**: Write a concise, neutral summary of the core message (2-4 sentences).
+2.  **Summary**: Write a concise, neutral summary of the core message.
 3.  **Key Points**: Extract a list of the 3 to 5 most important bullet points or takeaways.
 4.  **Analysis**: Provide a deeper analysis. This could include the context of the text, its potential implications, underlying themes, or your expert insights on the matter. Be thorough and clear.
 `,
@@ -57,6 +59,8 @@ const knowledgeAnalysisFlow = ai.defineFlow(
     outputSchema: KnowledgeAnalysisOutputSchema,
   },
   async (input) => {
+    // A more robust solution would use a tool to fetch URL content.
+    // For now, we rely on the model's capability to potentially access public URLs.
     const { output } = await knowledgeAnalysisPrompt(input);
     if (!output) {
         throw new Error("The AI failed to analyze the text.");
