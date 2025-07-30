@@ -20,17 +20,13 @@ import Logo from '../shared/Logo';
 interface MainSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onLogout: () => void;
 }
 
-const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) => {
+const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLogout }) => {
   const { currentUser, selectedChatId, setSelectedChatId } = useAppContext();
   const router = useRouter();
   const isMobile = useIsMobile();
-
-  const handleLogout = () => {
-    console.log("Logout action is disabled.");
-    // In a real app with auth, you would sign out here.
-  };
 
   const handleTabClick = (tab: string) => {
     if (tab === 'contact') {
@@ -82,12 +78,12 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab }) =>
             <div className='flex flex-col items-center gap-2'>
                  <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant='ghost' size="icon" onClick={handleLogout} className="rounded-lg w-12 h-12" disabled>
+                        <Button variant='ghost' size="icon" onClick={onLogout} className="rounded-lg w-12 h-12">
                             <LogOut size={24} className='text-muted-foreground'/>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left">
-                        <p>تم تعطيل تسجيل الخروج</p>
+                        <p>تسجيل الخروج</p>
                     </TooltipContent>
                  </Tooltip>
                  <Avatar>

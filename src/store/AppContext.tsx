@@ -4,19 +4,11 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { User, Post, Notification, Call, Chat, Message } from '@/lib/types';
 import { db } from '@/lib/firebase';
+import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch 
 } from 'firebase/firestore';
-
-// Mock current user since auth is removed
-const MOCK_USER: User = {
-  id: 'mock-user-id-123',
-  name: 'المستخدم الحالي',
-  avatar: '👤',
-  email: 'user@example.com',
-};
-
 
 interface AppContextType {
   darkMode: boolean;
@@ -45,7 +37,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USER);
+  const { authUser, loading: authLoading } = useAuth();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -59,10 +53,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) return;
-    
+    if (authLoading) return;
+    if (!authUser) {
+      setCurrentUser(null);
+      setUsers([]);
+      setPosts([]);
+      setChats([]);
+      return;
+    };
+
+    const userDocRef = doc(db, 'users', authUser.uid);
+    const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
+        if(doc.exists()) {
+            setCurrentUser({ id: doc.id, ...doc.data() } as User);
+        } else {
+            // This case should be handled by AuthContext creating the user doc
+            console.log("User document doesn't exist yet.");
+        }
+    });
+
     // Fetch all users except current user
-    const usersQuery = query(collection(db, 'users'), where('id', '!=', currentUser.id));
+    const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
     const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersData);
@@ -83,11 +94,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Fetch chats for the current user
-    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
+    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
-             const otherUserId = Object.keys(data.userInfo).find(uid => uid !== currentUser.id);
+             const otherUserId = Object.keys(data.userInfo).find(uid => uid !== authUser.uid);
              return {
                  id: doc.id,
                  ...data,
@@ -99,11 +110,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
     
     return () => {
+      unsubscribeUser();
       unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
     };
-  }, [currentUser]);
+  }, [authUser, authLoading]);
 
   const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
     if (!currentUser) return;
@@ -182,7 +194,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       await deleteDoc(msgRef);
   };
   
-  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
+  const updateUserMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
        await updateDoc(msgRef, updatedMessage);
   }
@@ -219,7 +231,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setActiveTab,
     addMessage,
     deleteMessage,
-    updateMessage,
+    updateMessage: updateUserMessage,
     createChat,
   };
 

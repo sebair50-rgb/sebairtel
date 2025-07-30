@@ -8,13 +8,19 @@ import SettingsView from '@/components/settings/SettingsView';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
 import CallsView from '../calls/CallsView';
+import { useAuth } from '@/store/AuthContext';
+import { useRouter } from 'next/navigation';
+
 
 const AppShell = () => {
   const [activeTab, setActiveTab] = useState('contact');
+  const { logout } = useAuth();
+  const router = useRouter();
+
   
-  const handleLogout = () => {
-    // Logout functionality is removed
-    console.log("Logout action is disabled.");
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
   };
 
   const renderContent = () => {
@@ -36,7 +42,7 @@ const AppShell = () => {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <MainSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 flex overflow-y-auto">
             {renderContent()}
