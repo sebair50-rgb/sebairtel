@@ -1,12 +1,13 @@
 
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppContext } from '@/store/AppContext';
-import { Music, Bell, Phone } from 'lucide-react';
+import { Music, Bell, Phone, FolderUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type SoundKey = 'messageTone' | 'notificationTone' | 'callRingtone';
 
@@ -16,18 +17,25 @@ const soundOptions = [
     { value: 'signal', label: 'إشارة', freq: 659.25 },
     { value: 'alert', label: 'تنبيه', freq: 783.99 },
     { value: 'vibrate', label: 'اهتزاز فقط', freq: 0 },
+    { value: 'custom', label: 'اختيار من الجهاز', icon: FolderUp },
 ];
 
 const playSound = (soundValue: string) => {
+    if (soundValue.startsWith('data:audio')) {
+        const audio = new Audio(soundValue);
+        audio.play().catch(e => console.error("Error playing custom sound:", e));
+        return;
+    }
+
     const sound = soundOptions.find(s => s.value === soundValue);
-    if (!sound || sound.freq === 0) return; // Don't play for vibrate
+    if (!sound || sound.freq === 0) return; // Don't play for vibrate or custom placeholder
 
     try {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 
-        oscillator.type = 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+        oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(sound.freq, audioContext.currentTime); 
         
         gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
@@ -46,17 +54,58 @@ const playSound = (soundValue: string) => {
 
 const SoundSettings = () => {
     const { settings, setSettings } = useAppContext();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const currentSoundKey = useRef<SoundKey | null>(null);
+    const { toast } = useToast();
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !currentSoundKey.current) return;
+
+        if (!file.type.startsWith('audio/')) {
+            toast({ variant: 'destructive', title: 'ملف غير صالح', description: 'الرجاء اختيار ملف صوتي.' });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const dataUrl = event.target?.result as string;
+            const key = currentSoundKey.current!;
+            setSettings(s => ({
+                ...s,
+                sounds: { ...s.sounds, [key]: dataUrl }
+            }));
+            playSound(dataUrl);
+            toast({ title: 'تم بنجاح', description: `تم تعيين نغمة مخصصة لـ: ${getLabelForKey(key)}` });
+        };
+        reader.readAsDataURL(file);
+    };
+    
+    const getLabelForKey = (key: SoundKey) => {
+        if (key === 'messageTone') return "الرسائل";
+        if (key === 'notificationTone') return "الإشعارات";
+        if (key === 'callRingtone') return "المكالمات";
+        return "";
+    }
+
 
     const handleSoundChange = (key: SoundKey, value: string) => {
-        setSettings(s => ({
-            ...s,
-            sounds: {
-                ...s.sounds,
-                [key]: value,
-            }
-        }));
-        playSound(value);
+        if (value === 'custom') {
+            currentSoundKey.current = key;
+            fileInputRef.current?.click();
+        } else {
+            setSettings(s => ({
+                ...s,
+                sounds: { ...s.sounds, [key]: value }
+            }));
+            playSound(value);
+        }
     };
+    
+    const getDisplayValue = (value: string) => {
+        if (value.startsWith('data:audio')) return 'custom';
+        return value;
+    }
 
     return (
         <Card>
@@ -65,22 +114,29 @@ const SoundSettings = () => {
                 <CardDescription>خصص أصوات التنبيهات للرسائل والمكالمات والإشعارات الأخرى.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept="audio/*"
+                />
                 <SoundOption
                     icon={Music}
                     label="نغمة الرسائل"
-                    value={settings.sounds.messageTone}
+                    value={getDisplayValue(settings.sounds.messageTone)}
                     onValueChange={(value) => handleSoundChange('messageTone', value)}
                 />
                  <SoundOption
                     icon={Bell}
                     label="نغمة الإشعارات العامة"
-                    value={settings.sounds.notificationTone}
+                    value={getDisplayValue(settings.sounds.notificationTone)}
                     onValueChange={(value) => handleSoundChange('notificationTone', value)}
                 />
                  <SoundOption
                     icon={Phone}
                     label="نغمة رنين المكالمات"
-                    value={settings.sounds.callRingtone}
+                    value={getDisplayValue(settings.sounds.callRingtone)}
                     onValueChange={(value) => handleSoundChange('callRingtone', value)}
                 />
             </CardContent>
@@ -106,7 +162,10 @@ const SoundOption = ({ icon: Icon, label, value, onValueChange }: {
             <SelectContent>
                 {soundOptions.map(option => (
                     <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        <div className="flex items-center gap-2">
+                             {option.icon && <option.icon className="w-4 h-4" />}
+                             {option.label}
+                        </div>
                     </SelectItem>
                 ))}
             </SelectContent>
