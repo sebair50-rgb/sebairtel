@@ -4,8 +4,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Loader2, Link, Newspaper, Zap, CheckCircle, AlertTriangle, Info, ListChecks, MessageSquareQuote, ShieldCheck, TrendingUp, UserCheck } from 'lucide-react';
+import { Loader2, Newspaper, Zap, CheckCircle, AlertTriangle, Info, ListChecks, MessageSquareQuote, ShieldCheck, TrendingUp, UserCheck, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeNewsArticle, NewsAnalysisOutput } from '@/ai/flows/news-flow';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -16,52 +15,39 @@ import { Textarea } from '../ui/textarea';
 
 interface AnalyzedArticle extends NewsAnalysisOutput {
     id: string;
-    url: string;
+    sourceText: string;
 }
 
 const NewsView = () => {
-    const [url, setUrl] = useState('');
+    const [articleText, setArticleText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [analyzedArticles, setAnalyzedArticles] = useState<AnalyzedArticle[]>([]);
     const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!url.trim()) {
-            toast({ variant: 'destructive', title: 'الرابط فارغ', description: 'الرجاء إدخال رابط مقال لتحليله.' });
+        if (!articleText.trim()) {
+            toast({ variant: 'destructive', title: 'حقل النص فارغ', description: 'الرجاء لصق نص مقال لتحليله.' });
             return;
         }
 
         setIsLoading(true);
         try {
-            // This is a placeholder for fetching article content.
-            // In a real application, you'd fetch the URL content on the server-side via a proxy 
-            // to avoid CORS issues, then extract the main text content.
-            // For this demo, we'll use a placeholder text.
-             const placeholderText = `
-                This is a placeholder for the actual article content from the URL: ${url}. 
-                In a real-world scenario, a backend service would fetch the URL, extract the main body of the article, and pass it to the AI.
-                For demonstration purposes, let's assume the article is about the incredible advancements in AI-powered communication platforms.
-                These platforms are revolutionizing how people interact, offering features like real-time translation, smart replies, and even call summarization.
-                The business implications are huge, with companies leveraging this technology to improve customer service and internal collaboration.
-                While there are some privacy concerns to address, the overall sentiment is overwhelmingly positive, pointing towards a future of more connected and efficient communication.
-            `;
-
-            const response = await analyzeNewsArticle({ articleText: placeholderText });
+            const response = await analyzeNewsArticle({ articleText });
             const newArticle: AnalyzedArticle = {
                 ...response,
                 id: new Date().toISOString(),
-                url: url,
+                sourceText: articleText,
             };
             setAnalyzedArticles(prev => [newArticle, ...prev]);
-            setUrl('');
+            setArticleText('');
 
         } catch (error) {
             console.error('Article analysis failed:', error);
             toast({
                 variant: 'destructive',
                 title: 'فشل تحليل المقال',
-                description: 'لم نتمكن من تحليل الرابط. يرجى التأكد أنه رابط لمقال إخباري والمحاولة مرة أخرى.',
+                description: 'لم نتمكن من تحليل النص. يرجى المحاولة مرة أخرى بنص مختلف.',
             });
         } finally {
             setIsLoading(false);
@@ -95,25 +81,20 @@ const NewsView = () => {
             <div className="text-center">
                 <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">موجز الأخبار الذكي</h1>
                 <p className="mt-4 text-xl text-muted-foreground">
-                    حوّل أي مقال إلى ملخص سهل وسريع. الصق رابط المقال أدناه ودع الذكاء الاصطناعي يقوم بالباقي.
+                    حوّل أي مقال إلى ملخص سهل وسريع. الصق نص المقال أدناه ودع الذكاء الاصطناعي يقوم بالباقي.
                 </p>
             </div>
 
             <Card className="shadow-lg">
                  <CardContent className="p-4">
-                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2">
-                         <div className="relative w-full">
-                            <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                                type="url"
-                                placeholder="https://example.com/news-article"
-                                className="w-full bg-muted pl-10 h-12"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                dir="ltr"
-                            />
-                        </div>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto h-12">
+                    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-2">
+                         <Textarea
+                            placeholder="الصق نص المقال هنا لتحليله..."
+                            className="w-full bg-muted min-h-[150px] text-base"
+                            value={articleText}
+                            onChange={(e) => setArticleText(e.target.value)}
+                        />
+                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto h-12 mt-2">
                             {isLoading ? (
                                 <>
                                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
@@ -122,7 +103,7 @@ const NewsView = () => {
                             ) : (
                                  <>
                                     <Zap className="ml-2" />
-                                    تحليل الرابط
+                                    تحليل النص
                                 </>
                             )}
                         </Button>
@@ -142,9 +123,7 @@ const NewsView = () => {
                                 <SentimentBadge sentiment={article.sentiment} />
                             </div>
                             <CardDescription>
-                                <a href={article.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate block" dir="ltr">
-                                    {article.url}
-                                </a>
+                                مقال تم تحليله بناءً على النص الذي أدخلته.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -170,7 +149,7 @@ const NewsView = () => {
                     <Newspaper className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <AlertTitle className="font-bold">ابدأ رحلتك الإخبارية</AlertTitle>
                     <AlertDescription>
-                        ستظهر المقالات التي تم تحليلها هنا. جرب لصق رابط في الحقل أعلاه!
+                        ستظهر المقالات التي تم تحليلها هنا. جرب لصق نص مقال في الحقل أعلاه!
                     </AlertDescription>
                 </Alert>
              )}
@@ -234,5 +213,3 @@ const NewsView = () => {
 };
 
 export default NewsView;
-
-    
