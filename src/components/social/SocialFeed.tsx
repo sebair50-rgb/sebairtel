@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Video, ShoppingCart, Users, Briefcase, Newspaper } from 'lucide-react';
 import CreatePostCard from './CreatePostCard';
 import LiveFeed from './LiveFeed';
+import UsersView from '../users/UsersView';
 
 const SocialFeed = () => {
-    const { posts } = useAppContext();
+    const { posts, setActiveTab } = useAppContext();
 
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
@@ -53,8 +55,10 @@ const SocialFeed = () => {
                          <TabsContent value="live" className="mt-6">
                             <LiveFeed />
                         </TabsContent>
-                        <TabsContent value="friends">
-                            <ComingSoonContent title="الأصدقاء" icon={Users} />
+                        <TabsContent value="friends" className="mt-6">
+                            <div className="max-w-2xl mx-auto">
+                                <UsersView setActiveTab={setActiveTab} />
+                            </div>
                         </TabsContent>
                         <TabsContent value="market">
                             <ComingSoonContent title="السوق" icon={ShoppingCart} />
