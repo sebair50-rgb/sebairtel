@@ -158,9 +158,8 @@ const LiveStreamPage = () => {
     const handleExitActions = () => {
         if (document.fullscreenElement) {
             document.exitFullscreen();
-        } else {
-            router.back();
         }
+        router.back();
     };
 
     const handleToggleFullScreen = () => {
@@ -303,7 +302,7 @@ const LiveStreamPage = () => {
                                 {isVideoOff ? <VideoOff size={28} /> : <Video size={28} />}
                             </Button>
                         )}
-                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleExitActions}>
+                        <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={() => router.back()}>
                             <PhoneOff size={28} />
                         </Button>
                     </motion.div>
