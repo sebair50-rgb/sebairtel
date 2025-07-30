@@ -52,9 +52,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // On initial load, force light theme.
     document.documentElement.className = 'light';
-    localStorage.setItem('theme', 'light');
   }, []);
 
   useEffect(() => {
@@ -76,7 +74,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     });
     
-    // Fetch all users
+    // Fetch all users except the current one
     const usersQuery = query(collection(db, 'users'), where('id', '!=', authUser.uid));
     const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
@@ -98,7 +96,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Fetch chats for the current user
-    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
+    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid), orderBy('lastMessageTimestamp', 'desc'));
     const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         const chatsData = snapshot.docs.map(doc => {
              const data = doc.data();
@@ -161,21 +159,32 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const createChat = async (friend: User): Promise<string | null> => {
       if (!currentUser) return null;
 
-      const existingChat = chats.find(c => c.users.includes(friend.id));
+      // Check if a chat already exists between the two users
+      const existingChatQuery = query(
+          collection(db, 'chats'),
+          where('users', 'array-contains', currentUser.id)
+      );
+      const querySnapshot = await getDocs(existingChatQuery);
+      const existingChat = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as Chat))
+          .find(chat => chat.users.includes(friend.id));
+      
       if (existingChat) {
           return existingChat.id;
       }
-
+      
+      // If no chat exists, create a new one
       const newChatRef = doc(collection(db, 'chats'));
-      const newChatData: Partial<Chat> = {
+      const newChatData = {
           id: newChatRef.id,
           users: [currentUser.id, friend.id],
           userInfo: {
               [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
               [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
           },
-          lastMessageTimestamp: serverTimestamp() as any,
-          lastMessageText: 'Say hi!',
+          lastMessageTimestamp: serverTimestamp(),
+          lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
+          unreadCount: 0,
       };
 
       await setDoc(newChatRef, newChatData);
