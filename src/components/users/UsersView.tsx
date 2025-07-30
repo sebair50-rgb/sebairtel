@@ -24,19 +24,21 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const [activeList, setActiveList] = useState<'suggestions' | 'friends'>('suggestions');
 
     const handleAddFriend = async (user: UserType) => {
-        const chatId = await createChat(user);
-        if (chatId) {
+        const chat = await createChat(user);
+        if (chat) {
             toast({
                 title: "تمت الإضافة بنجاح!",
                 description: `لقد بدأت محادثة مع ${user.name}.`,
             });
+            // Switch to friends tab after adding one
+            setActiveList('friends');
         }
     };
     
     const handleMessageFriend = async (user: UserType) => {
-        const chatId = await createChat(user);
-        if (chatId) {
-            setSelectedChatId(chatId);
+        const chat = await createChat(user);
+        if (chat) {
+            setSelectedChatId(chat.id);
             setActiveTab('contact'); 
         }
     };
@@ -55,36 +57,31 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
 
     const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' }) => (
          <div 
-            className="flex items-center justify-between gap-2 py-3 cursor-pointer"
+            className="flex items-center justify-between gap-4 py-3 cursor-pointer"
             onClick={action === 'message' ? () => handleMessageFriend(user) : undefined}
         >
-            <Avatar className="h-16 w-16 border">
+            <Avatar className="h-12 w-12 border">
                 <AvatarFallback>{user.avatar}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 text-right">
-                <p className="font-bold text-lg">{user.name}</p>
-                 {action === 'add' ? (
-                    <div className="flex gap-2 mt-1">
-                        <Button className="flex-1 bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}>
-                            <UserPlus size={16} className="ml-1" />
-                            إضافة صديق
-                        </Button>
-                        <Button variant="secondary" className="flex-1" size="sm" onClick={(e) => e.stopPropagation()}>إزالة</Button>
-                    </div>
-                ) : (
-                    <div className="flex gap-2 mt-1">
-                         <Button className="flex-1" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
-                            <MessageSquare size={16} className="ml-1" />
-                            مراسلة
-                        </Button>
-                    </div>
-                )}
+            <div className="flex-1 text-right overflow-hidden">
+                <p className="font-bold text-lg truncate">{user.name}</p>
             </div>
+            {action === 'add' ? (
+                <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}>
+                    <UserPlus size={16} className="ml-1" />
+                    إضافة
+                </Button>
+            ) : (
+                <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
+                    <MessageSquare size={16} className="ml-1" />
+                    مراسلة
+                </Button>
+            )}
         </div>
     );
 
     return (
-        <div className="h-full w-full flex flex-col">
+        <div className="w-full flex flex-col h-full bg-white">
             <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">الأصدقاء</h1>
@@ -104,7 +101,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
                                 placeholder="البحث عن أصدقاء..."
-                                className="w-full rounded-full bg-slate-200 h-12 pr-12 text-base"
+                                className="w-full rounded-full bg-slate-100 h-12 pr-12 text-base border-slate-200 focus:border-primary"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -132,7 +129,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
 
             <ScrollArea className="flex-1">
                 <div className="p-4">
-                    <h2 className="text-xl font-bold mb-2">{title}</h2>
+                    <h2 className="text-lg font-semibold text-muted-foreground mb-2">{title}</h2>
                     {listToShow.length > 0 ? (
                         <div className="divide-y">
                             {listToShow.map(user => (
