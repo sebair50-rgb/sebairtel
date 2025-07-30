@@ -10,7 +10,8 @@ import {
   signOut,
   updateProfile,
   sendEmailVerification,
-  type User as FirebaseUser
+  type User as FirebaseUser,
+  verifyBeforeUpdateEmail,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
@@ -23,6 +24,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
+  updateUserEmail: (newEmail: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: user.email!,
             avatar: `https://placehold.co/128x128/E6E6FA/333333.png?text=${name.charAt(0)}`,
             dob: '',
+            bio: '',
         };
         await setDoc(userDocRef, newUser);
         
@@ -93,6 +96,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }
 
+  const updateUserEmail = async (newEmail: string) => {
+      if(auth.currentUser) {
+          await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+          // Firebase handles sending the verification email.
+          // The email will only be updated in Firebase Auth after the user clicks the link.
+          // You might want to update the email in your Firestore 'users' collection after re-authentication.
+      } else {
+           throw new Error("No user is currently signed in.");
+      }
+  }
+
   const value = {
     authUser,
     loading,
@@ -100,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signup,
     logout,
     resendVerificationEmail,
+    updateUserEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -513,8 +513,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             updateData.name = data.name;
         }
 
-        if (data.dob && data.dob !== currentUser?.dob) {
+        if (data.dob !== undefined && data.dob !== currentUser?.dob) {
             updateData.dob = data.dob;
+        }
+        
+        if (data.bio !== undefined && data.bio !== (currentUser?.bio || '')) {
+            updateData.bio = data.bio;
         }
 
         if (data.avatar && data.avatar !== currentUser?.avatar) {

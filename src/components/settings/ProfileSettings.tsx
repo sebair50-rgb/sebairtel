@@ -15,6 +15,7 @@ import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Textarea } from '../ui/textarea';
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
@@ -23,6 +24,7 @@ const ProfileSettings = () => {
     
     const [name, setName] = useState(currentUser?.name || '');
     const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
+    const [bio, setBio] = useState(currentUser?.bio || '');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -31,6 +33,7 @@ const ProfileSettings = () => {
         if (currentUser) {
             setName(currentUser.name || '');
             setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
+            setBio(currentUser.bio || '');
             setAvatarPreview(null);
             setAvatarFile(null);
         }
@@ -68,8 +71,12 @@ const ProfileSettings = () => {
         }
         
         const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
-        if (formattedDob && formattedDob !== currentUser.dob) {
+        if (formattedDob !== currentUser.dob) {
             updatePayload.dob = formattedDob;
+        }
+        
+        if (bio.trim() !== (currentUser.bio || '')) {
+            updatePayload.bio = bio.trim();
         }
 
         if (avatarPreview && avatarFile) {
@@ -138,8 +145,9 @@ const ProfileSettings = () => {
     
     const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
     const hasChanges =
-      (name.trim() !== currentUser.name && name.trim() !== "") ||
-      (formattedDob !== currentUser.dob) ||
+      (name.trim() !== (currentUser.name || '') && name.trim() !== "") ||
+      (formattedDob !== (currentUser.dob || undefined)) ||
+      (bio.trim() !== (currentUser.bio || '')) ||
       !!avatarFile;
 
 
@@ -166,7 +174,7 @@ const ProfileSettings = () => {
                         <Button 
                           size="icon" 
                           className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" 
-                          onClick={() => fileInputRef.current?.click()}>
+                          onClick={() => toast({description: "ميزة رفع الصور معطلة مؤقتاً."})}>
                             <Camera className="w-4 h-4"/>
                             <span className="sr-only">تغيير الصورة</span>
                         </Button>
@@ -181,6 +189,10 @@ const ProfileSettings = () => {
                     <div className="space-y-2">
                         <Label htmlFor="name">الاسم الكامل</Label>
                         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="bio">نبذة عني</Label>
+                        <Textarea id="bio" placeholder="اكتب شيئًا عن نفسك..." value={bio} onChange={(e) => setBio(e.target.value)} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني</Label>
