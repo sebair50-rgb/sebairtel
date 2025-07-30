@@ -12,10 +12,10 @@ import { useAppContext } from '@/store/AppContext';
 
 interface CallsViewProps {
     defaultTab?: string;
+    setActiveTab: (tab: string) => void;
 }
 
-const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats' }) => {
-    const { setActiveTab } = useAppContext();
+const CallsView: React.FC<CallsViewProps> = ({ defaultTab = 'chats', setActiveTab }) => {
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />

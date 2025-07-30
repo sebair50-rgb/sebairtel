@@ -34,9 +34,9 @@ const AppShell = () => {
       case 'apps':
         return <AppsView />;
       case 'contact':
-        return <CallsView defaultTab="chats" />;
+        return <CallsView defaultTab="chats" setActiveTab={setActiveTab} />;
       default:
-        return <CallsView defaultTab="chats" />;
+        return <CallsView defaultTab="chats" setActiveTab={setActiveTab} />;
     }
   };
 
