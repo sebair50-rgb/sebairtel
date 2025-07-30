@@ -72,20 +72,6 @@ export interface Post {
   comments: Comment[];
 }
 
-export interface Notification {
-  id: string;
-  type: 'like' | 'comment' | 'request' | 'missed_call';
-  user: string; // Name of the user who triggered the notification
-  userId: string; // ID of the user who triggered the notification
-  message: string;
-  time: string; // Formatted time string
-  timestamp: Timestamp;
-  isRead: boolean;
-  referenceId: string; // e.g., postId, chatId, callId
-  referenceType: 'post' | 'chat' | 'call';
-}
-
-
 export interface Call {
     id: string;
     user: string;

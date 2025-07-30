@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { User, Post, Notification, Call, Chat, Message, CallState } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -15,9 +15,6 @@ interface AppContextType {
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
-  notifications: Notification[];
-  createNotification: (targetUserId: string, notificationData: Omit<Notification, 'id' | 'timestamp' | 'time' | 'isRead' | 'userId'>) => Promise<void>;
-  markNotificationsAsRead: () => Promise<void>;
   calls: Call[];
   settings: { notifications: boolean; privacy: boolean };
   setSettings: React.Dispatch<React.SetStateAction<{ notifications: boolean; privacy: boolean; }>>;
@@ -50,7 +47,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState('contact');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -77,7 +73,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setFriends([]);
       setSuggestedUsers([]);
       setCalls([]);
-      setNotifications([]);
       return;
     };
 
@@ -148,25 +143,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setCalls(callsData);
     });
 
-    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'));
-    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-      const notificationsData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-              id: doc.id,
-              ...data,
-          } as Notification;
-      });
-      setNotifications(notificationsData);
-    });
-    
     return () => {
       unsubscribeUser();
       unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
       unsubscribeCalls();
-      unsubscribeNotifications();
     };
   }, [authUser, authLoading]);
 
@@ -246,15 +228,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     await setDoc(newChatRef, newChatData);
 
-    await createNotification(friend.id, {
-        type: 'request',
-        user: currentUser.name,
-        message: `بدأ ${currentUser.name} محادثة معك.`,
-        referenceId: newChatRef.id,
-        referenceType: 'chat',
-    });
-
-
     // This is crucial for the UI to update immediately
     const createdChatForState: Chat = {
         ...newChatData,
@@ -309,35 +282,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        await updateDoc(msgRef, updatedMessage);
   }
 
-  // --- Notification Management ---
-  const createNotification = async (targetUserId: string, notificationData: Omit<Notification, 'id' | 'timestamp' | 'time' | 'isRead' | 'userId'>) => {
-      if (!currentUser) return;
-      
-      const notificationWithTimestamp: Omit<Notification, 'id' | 'time'> = {
-          ...notificationData,
-          userId: currentUser.id,
-          isRead: false,
-          timestamp: serverTimestamp() as any,
-      };
-
-      await addDoc(collection(db, `users/${targetUserId}/notifications`), notificationWithTimestamp);
-  };
-
-  const markNotificationsAsRead = async () => {
-    if (!currentUser || notifications.length === 0) return;
-
-    const unreadNotifications = notifications.filter(n => !n.isRead);
-    if (unreadNotifications.length === 0) return;
-
-    const batch = writeBatch(db);
-    unreadNotifications.forEach(notification => {
-        const notificationRef = doc(db, `users/${currentUser.id}/notifications`, notification.id);
-        batch.update(notificationRef, { isRead: true });
-    });
-
-    await batch.commit();
-  };
-
   // --- Call Management ---
   const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
     if(!currentUser) return;
@@ -349,18 +293,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         timestamp: serverTimestamp() as any,
         duration: duration || '0:00'
     };
-    const newCallRef = await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
-
-    if (type === 'missed') {
-        await createNotification(currentUser.id, {
-            type: 'missed_call',
-            user: user.name,
-            message: `لديك مكالمة فائتة من ${user.name}.`,
-            referenceId: newCallRef.id,
-            referenceType: 'call'
-        });
-    }
-
+    await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
 
     // Add to the other user's call log
     // For a missed call, only the current user gets the log.
@@ -421,9 +354,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     posts,
     addPost,
     updatePost,
-    notifications,
-    createNotification,
-    markNotificationsAsRead,
     calls,
     settings,
     setSettings,
