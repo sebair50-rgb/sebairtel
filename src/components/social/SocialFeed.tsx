@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart, MessageSquare } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart, MessageSquare, Globe } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -30,7 +31,7 @@ const SocialFeed = () => {
     };
 
     const socialTabs = [
-        { value: 'news', label: 'الأخبار', icon: Newspaper },
+        { value: 'news', label: 'الأخبار', icon: Globe },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
         { value: 'live', label: 'البث المباشر', icon: Video },
