@@ -51,6 +51,8 @@ interface AppContextType {
   setSelectedChatId: (id: string | null) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  initialContactTab: 'chats' | 'friends';
+  setInitialContactTab: (tab: 'chats' | 'friends') => void;
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
   deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
@@ -109,6 +111,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState('social');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends'>('chats');
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof window !== 'undefined') {
         try {
@@ -752,6 +755,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setSelectedChatId,
     activeTab,
     setActiveTab,
+    initialContactTab,
+    setInitialContactTab,
     addMessage,
     deleteMessage,
     updateMessage,

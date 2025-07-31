@@ -1,20 +1,25 @@
-
 "use client";
 
-import React from 'react';
-import { Phone, Users, MessageSquare, UserCog } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Phone, Users, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CallsList from './CallsList';
 import ChatInterface from '../chat/ChatInterface';
 import UsersView from '../users/UsersView';
 import { useAppContext } from '@/store/AppContext';
+import { MessageSquare } from 'lucide-react';
 
 interface CallsViewProps {
   setActiveTab: (tab: string) => void;
 }
 
 const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
-    const { selectedChatId } = useAppContext();
+    const { selectedChatId, initialContactTab, setInitialContactTab } = useAppContext();
+    const [activeSubTab, setActiveSubTab] = React.useState(initialContactTab);
+
+    useEffect(() => {
+        setActiveSubTab(initialContactTab);
+    }, [initialContactTab]);
 
     const ComingSoonContent = ({ title, icon: Icon }: { title: string, icon: React.ElementType }) => (
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
@@ -25,9 +30,14 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
     );
 
     // If a chat is selected, show the chat interface directly.
-    // This ensures that clicking "message" from the friends list works reliably.
     if (selectedChatId) {
         return <ChatInterface />;
+    }
+    
+    const handleTabChange = (value: string) => {
+        const tab = value as 'chats' | 'friends';
+        setActiveSubTab(tab);
+        setInitialContactTab(tab);
     }
 
     return (
@@ -38,7 +48,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                     <h1 className="text-2xl font-bold">تواصل</h1>
                 </div>
             </header>
-             <Tabs defaultValue="chats" className="w-full flex flex-col flex-1">
+             <Tabs value={activeSubTab} onValueChange={handleTabChange} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-white">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
