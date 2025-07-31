@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart, MessageSquare } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -14,10 +13,21 @@ import MarketView from './MarketView';
 import StoreView from './StoreView';
 import NewsView from './NewsView';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 const SocialFeed = () => {
-    const { posts } = useAppContext();
+    const { posts, chats, currentUser, setActiveTab, setSelectedChatId } = useAppContext();
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
+
+    const totalUnreadCount = React.useMemo(() => {
+        if (!currentUser) return 0;
+        return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[currentUser.id] || 0), 0);
+    }, [chats, currentUser]);
+
+    const handleMessagesClick = () => {
+        setSelectedChatId(null);
+        setActiveTab('contact');
+    };
 
     const socialTabs = [
         { value: 'news', label: 'الأخبار', icon: Newspaper },
@@ -36,9 +46,17 @@ const SocialFeed = () => {
                             <Users className="w-8 h-8 text-primary" />
                             <h1 className="text-3xl font-bold">المجتمع</h1>
                         </div>
-                        <Button variant="ghost" size="icon">
-                            <ShoppingCart className="w-6 h-6 text-muted-foreground" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                             <Button variant="ghost" size="icon" onClick={handleMessagesClick} className="relative">
+                                <MessageSquare className="w-6 h-6 text-muted-foreground" />
+                                {totalUnreadCount > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{totalUnreadCount}</Badge>
+                                )}
+                            </Button>
+                             <Button variant="ghost" size="icon">
+                                <ShoppingCart className="w-6 h-6 text-muted-foreground" />
+                            </Button>
+                        </div>
                     </div>
                     <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
                        {socialTabs.map(tab => (
