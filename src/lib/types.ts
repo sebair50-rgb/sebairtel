@@ -53,6 +53,8 @@ export interface Chat {
 
 export interface Comment {
   user: string;
+  userId: string;
+  avatar: string;
   text: string;
   timestamp: Timestamp;
 }

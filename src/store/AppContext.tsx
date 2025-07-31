@@ -2,12 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification, Comment } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit
+  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
@@ -42,6 +42,7 @@ interface AppContextType {
   posts: Post[];
   addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
+  addComment: (postId: string, commentText: string) => Promise<void>;
   calls: Call[];
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
@@ -394,6 +395,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const postRef = doc(db, "posts", postId);
       await updateDoc(postRef, data);
   }
+
+  const addComment = async (postId: string, commentText: string) => {
+    if (!currentUser) return;
+
+    const newComment: Comment = {
+      text: commentText,
+      user: currentUser.name,
+      userId: currentUser.id,
+      avatar: currentUser.avatar,
+      timestamp: serverTimestamp() as any,
+    };
+
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, {
+      comments: arrayUnion(newComment)
+    });
+  };
 
   const createChat = async (friend: User): Promise<Chat | null> => {
     if (!currentUser) return null;
@@ -787,6 +805,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     posts,
     addPost,
     updatePost,
+    addComment,
     calls,
     settings,
     setSettings,
