@@ -7,7 +7,7 @@ import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion
+  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, Timestamp
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
@@ -404,7 +404,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       user: currentUser.name,
       userId: currentUser.id,
       avatar: currentUser.avatar,
-      timestamp: serverTimestamp() as any,
+      timestamp: Timestamp.now(), // Use client-side timestamp
     };
 
     const postRef = doc(db, "posts", postId);
