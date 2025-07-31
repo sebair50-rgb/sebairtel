@@ -9,13 +9,17 @@ import { Card } from '@/components/ui/card';
 import { Heart, UserPlus, PhoneMissed, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/lib/types';
+import { Checkbox } from '../ui/checkbox';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface NotificationItemProps {
     notification: Notification;
     onClick: () => void;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onClick }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onClick, isSelectionMode, isSelected }) => {
     
     const timeAgo = formatDistanceToNow(notification.timestamp.toDate(), { addSuffix: true, locale: ar });
 
@@ -49,12 +53,25 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
     return (
         <Card 
             className={cn(
-                "p-4 flex items-start gap-4 transition-colors hover:bg-muted/50",
+                "p-4 flex items-center gap-4 transition-colors duration-300",
                 !notification.isRead && "bg-primary/5 border-primary/20",
-                notification.link && "cursor-pointer"
+                isSelectionMode ? "cursor-pointer" : (notification.link ? "cursor-pointer hover:bg-muted/50" : "cursor-default"),
+                isSelected && "bg-blue-100 dark:bg-blue-900/30 border-blue-500"
             )}
             onClick={onClick}
         >
+            <AnimatePresence>
+            {isSelectionMode && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.5, width: 0 }}
+                    animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                    exit={{ opacity: 0, scale: 0.5, width: 0 }}
+                    className="overflow-hidden"
+                >
+                    <Checkbox checked={isSelected} className="mr-2" />
+                 </motion.div>
+            )}
+            </AnimatePresence>
             <div className="relative">
                 <Avatar className="h-12 w-12">
                     <AvatarImage src={notification.fromUser.avatar} alt={notification.fromUser.name} />
@@ -71,7 +88,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
                 <p className="text-sm" dangerouslySetInnerHTML={{ __html: notification.message }} />
                 <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
             </div>
-             {!notification.isRead && (
+             {!notification.isRead && !isSelectionMode && (
                 <div className="w-2.5 h-2.5 bg-primary rounded-full self-center" />
             )}
         </Card>

@@ -1,19 +1,27 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '@/store/AppContext';
-import { Bell } from 'lucide-react';
+import { Bell, Trash, CheckCircle, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import NotificationItem from './NotificationItem';
 import type { Notification } from '@/lib/types';
+import { Button } from '../ui/button';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const NotificationsView = () => {
-    const { notifications, setActiveTab, setSelectedChatId, setInitialContactTab } = useAppContext();
+    const { notifications, setActiveTab, setSelectedChatId, setInitialContactTab, deleteNotifications } = useAppContext();
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const handleNotificationClick = (notification: Notification) => {
-        // Handle friend request notification
+        if (isSelectionMode) {
+            handleSelect(notification.id);
+            return;
+        }
+
         if (notification.type === 'friend_request') {
             setInitialContactTab('friends');
             setActiveTab('contact');
@@ -31,18 +39,79 @@ const NotificationsView = () => {
                 setInitialContactTab('friends');
                 setActiveTab('contact');
             }
-            // Can be extended for other link types like /posts/postId123
         }
+    }
+    
+    const handleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAll = () => {
+        if (selectedIds.size === notifications.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(notifications.map(n => n.id)));
+        }
+    };
+    
+    const handleDeleteSelected = async () => {
+        await deleteNotifications(Array.from(selectedIds));
+        setSelectedIds(new Set());
+        setIsSelectionMode(false);
+    };
+    
+    const toggleSelectionMode = () => {
+        setIsSelectionMode(!isSelectionMode);
+        setSelectedIds(new Set());
     }
 
     return (
         <div className="w-full h-full flex flex-col">
             <div className="p-4 md:p-6 pb-4 border-b bg-background z-10">
-                <div className="flex items-center gap-2">
-                    <Bell className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">الإشعارات</h1>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <Bell className="w-8 h-8 text-primary" />
+                        <h1 className="text-3xl font-bold">الإشعارات</h1>
+                    </div>
+                    {notifications.length > 0 && (
+                        <Button variant="outline" onClick={toggleSelectionMode}>
+                           {isSelectionMode ? 'إلغاء' : 'تحديد'}
+                        </Button>
+                    )}
                 </div>
             </div>
+            
+            <AnimatePresence>
+            {isSelectionMode && (
+                <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-2 md:p-4 bg-background border-b shadow-sm overflow-hidden"
+                >
+                    <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                            <Button variant="ghost" onClick={handleSelectAll}>
+                                {selectedIds.size === notifications.length ? <XCircle /> : <CheckCircle />}
+                                {selectedIds.size === notifications.length ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                            </Button>
+                        </div>
+                        <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedIds.size === 0}>
+                            <Trash className="ml-2" />
+                            حذف ({selectedIds.size})
+                        </Button>
+                    </div>
+                </motion.div>
+            )}
+            </AnimatePresence>
             
             <ScrollArea className="flex-1 bg-slate-100">
                  <div className="p-4 md:p-6 space-y-4">
@@ -52,6 +121,8 @@ const NotificationsView = () => {
                                 key={notification.id} 
                                 notification={notification} 
                                 onClick={() => handleNotificationClick(notification)}
+                                isSelectionMode={isSelectionMode}
+                                isSelected={selectedIds.has(notification.id)}
                             />
                         ))
                     ) : (

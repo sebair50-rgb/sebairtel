@@ -72,6 +72,7 @@ interface AppContextType {
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
   createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
+  deleteNotifications: (notificationIds: string[]) => Promise<void>;
   readChatAloud: () => Promise<void>;
   isReadingAloud: boolean;
   smartReplies: string[];
@@ -563,6 +564,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     await batch.commit();
   };
+  
+    const deleteNotifications = async (notificationIds: string[]) => {
+        if (!currentUser || notificationIds.length === 0) return;
+        const batch = writeBatch(db);
+        notificationIds.forEach(id => {
+            const notificationRef = doc(db, `users/${currentUser.id}/notifications`, id);
+            batch.delete(notificationRef);
+        });
+        await batch.commit();
+    };
+
 
   const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
     if(!currentUser) return;
@@ -805,6 +817,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     unreadNotificationCount,
     markNotificationsAsRead,
     createNotification,
+    deleteNotifications,
     readChatAloud,
     isReadingAloud,
     smartReplies,
