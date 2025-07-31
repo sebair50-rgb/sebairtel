@@ -2,18 +2,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AppWindow, BrainCircuit, Languages, ArrowLeft } from 'lucide-react';
+import { AppWindow, Languages, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const apps = [
-    {
-        icon: BrainCircuit,
-        title: "مساعد المعرفة",
-        description: "حلل النصوص، لخص المقالات، واحصل على رؤى عميقة من أي محتوى مكتوب.",
-        actionText: "ابدأ التحليل",
-        tag: "تحليل نصوص"
-    },
     {
         icon: Languages,
         title: "المترجم الفوري",
