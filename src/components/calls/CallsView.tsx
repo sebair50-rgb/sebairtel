@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Phone, Users, MessageSquare } from 'lucide-react';
+import { Phone, Users, MessageSquare, UserCog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CallsList from './CallsList';
 import ChatInterface from '../chat/ChatInterface';
@@ -54,7 +54,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                             مكالماتي
                         </TabsTrigger>
                         <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <Users className="ml-1 sm:ml-2" />
+                            <UserCog className="ml-1 sm:ml-2" />
                             مجموعاتي
                         </TabsTrigger>
                     </TabsList>
@@ -69,7 +69,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                     <CallsList />
                 </TabsContent>
                  <TabsContent value="groups" className="flex-1 bg-white">
-                    <ComingSoonContent title="المجموعات" icon={Users} />
+                    <ComingSoonContent title="المجموعات" icon={UserCog} />
                 </TabsContent>
             </Tabs>
         </div>
