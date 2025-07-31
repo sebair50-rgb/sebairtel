@@ -16,7 +16,7 @@ import NewsView from './NewsView';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
-    const [activeSocialTab, setActiveSocialTab] = useState('news');
+    const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
         { value: 'news', label: 'الأخبار', icon: Newspaper },
