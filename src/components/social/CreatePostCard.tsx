@@ -69,7 +69,7 @@ const CreatePostCard = () => {
             className="hidden"
           />
           <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
-            <ImageIcon className="text-accent" />
+            <ImageIcon className="text-primary" />
           </Button>
           <Button onClick={handlePost} disabled={!content.trim() && !media}>
             <Send className="ml-2" />
