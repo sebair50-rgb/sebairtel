@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
-import { Users, Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell } from 'lucide-react';
+import { Settings, Brain, AppWindow, MessageSquare, LogOut, Phone, Bell, Globe } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -41,7 +41,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   const navItems = useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
     { name: 'contact', icon: Phone, label: 'تواصل' },
-    { name: 'social', icon: Users, label: 'المجتمع' },
+    { name: 'social', icon: Globe, label: 'المجتمع' },
     { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount },
     { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
     { name: 'settings', icon: Settings, label: 'الإعدادات' },
