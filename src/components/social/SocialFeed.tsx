@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -11,6 +11,7 @@ import { useAppContext } from '@/store/AppContext';
 import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
+import NewsView from './NewsView';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
@@ -19,6 +20,7 @@ const SocialFeed = () => {
     const socialTabs = [
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
+        { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'live', label: 'البث المباشر', icon: Video },
         { value: 'feed', label: 'المنشورات العامة', icon: LayoutGrid },
     ].reverse();
@@ -27,7 +29,7 @@ const SocialFeed = () => {
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
                 <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
-                    <TabsList className="grid w-full grid-cols-4 h-auto p-1.5">
+                    <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
                        {socialTabs.map(tab => (
                             <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                                 <tab.icon className="ml-1 sm:ml-2" />
@@ -49,6 +51,9 @@ const SocialFeed = () => {
                         </TabsContent>
                         <TabsContent value="live" className="mt-0">
                             <LiveFeed />
+                        </TabsContent>
+                         <TabsContent value="news" className="mt-0">
+                            <NewsView />
                         </TabsContent>
                         <TabsContent value="business" className="mt-0">
                             <MarketView />
