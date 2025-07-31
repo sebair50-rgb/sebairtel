@@ -94,7 +94,7 @@ export interface CallState {
 
 export interface Notification {
     id: string;
-    type: 'like' | 'comment' | 'new_friend' | 'missed_call' | 'new_message';
+    type: 'like' | 'comment' | 'new_friend' | 'missed_call' | 'new_message' | 'friend_request';
     message: string;
     fromUser: {
         id: string;

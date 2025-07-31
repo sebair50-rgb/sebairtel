@@ -59,6 +59,8 @@ interface AppContextType {
   users: User[];
   friends: User[];
   suggestedUsers: User[];
+  setSuggestedUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  sendFriendRequest: (friend: User) => Promise<void>;
   createChat: (friend: User) => Promise<Chat | null>;
   unfriendUser: (friendId: string) => Promise<void>;
   callState: CallState;
@@ -111,7 +113,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState('social');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends'>('chats');
+  const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends'>('friends');
   const [settings, setSettings] = useState<AppSettings>(() => {
     if (typeof window !== 'undefined') {
         try {
@@ -513,6 +515,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
       if (!settings.notifications.all) return;
+      
+      const targetUserDocRef = doc(db, 'users', userId);
+      const targetUserDoc = await getDoc(targetUserDocRef);
+      if (!targetUserDoc.exists()) {
+          console.error(`User with ID ${userId} does not exist. Cannot create notification.`);
+          return;
+      }
+      const targetUserSettings = (targetUserDoc.data() as any)?.settings;
+
+      // Optional: Check target user's notification settings before sending.
+      // This requires settings to be stored in Firestore per user.
+      // For now, we assume we can always send.
+
       const userNotificationsRef = collection(db, `users/${userId}/notifications`);
       await addDoc(userNotificationsRef, {
           ...notification,
@@ -520,6 +535,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           isRead: false,
       });
   };
+
+  const sendFriendRequest = async (friend: User) => {
+    if (!currentUser) return;
+    // Create a notification for the other user
+    await createNotification(friend.id, {
+        type: 'friend_request',
+        message: `أرسل لك <strong>${currentUser.name}</strong> طلب صداقة.`,
+        fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
+        link: `/users` // or a dedicated friend requests page
+    });
+
+    // Update the state of the suggested user to show "Request Sent"
+    setSuggestedUsers(prev => prev.map(u => u.id === friend.id ? {...u, requestSent: true} : u));
+  }
   
   const markNotificationsAsRead = async () => {
     if (!currentUser || unreadNotificationCount === 0) return;
@@ -763,6 +792,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     users,
     friends,
     suggestedUsers,
+    setSuggestedUsers,
+    sendFriendRequest,
     createChat,
     unfriendUser,
     callState,

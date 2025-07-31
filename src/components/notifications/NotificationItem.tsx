@@ -24,6 +24,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
             case 'like':
                 return <Heart className="w-5 h-5 text-white" />;
             case 'new_friend':
+            case 'friend_request':
                 return <UserPlus className="w-5 h-5 text-white" />;
             case 'missed_call':
                 return <PhoneMissed className="w-5 h-5 text-white" />;
@@ -38,6 +39,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
         switch (notification.type) {
             case 'like': return 'bg-red-500';
             case 'new_friend': return 'bg-blue-500';
+            case 'friend_request': return 'bg-blue-500';
             case 'missed_call': return 'bg-yellow-500';
             case 'new_message': return 'bg-green-500';
             default: return 'bg-gray-500';

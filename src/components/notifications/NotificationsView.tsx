@@ -10,15 +10,25 @@ import NotificationItem from './NotificationItem';
 import type { Notification } from '@/lib/types';
 
 const NotificationsView = () => {
-    const { notifications, setActiveTab, setSelectedChatId } = useAppContext();
+    const { notifications, setActiveTab, setSelectedChatId, setInitialContactTab } = useAppContext();
 
     const handleNotificationClick = (notification: Notification) => {
+        // Handle friend request notification
+        if (notification.type === 'friend_request') {
+            setInitialContactTab('friends');
+            setActiveTab('contact');
+            return;
+        }
+
         if (notification.link) {
-            // Example link: /chats/chatId123
             const parts = notification.link.split('/');
             if (parts[1] === 'chats' && parts[2]) {
                 const chatId = parts[2];
                 setSelectedChatId(chatId);
+                setActiveTab('contact');
+            }
+             if (parts[1] === 'users') {
+                setInitialContactTab('friends');
                 setActiveTab('contact');
             }
             // Can be extended for other link types like /posts/postId123

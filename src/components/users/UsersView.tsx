@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Input } from '@/components/ui/input';
-import { Search, UserPlus, MessageSquare } from 'lucide-react';
+import { Search, UserPlus, MessageSquare, Check } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -18,7 +18,7 @@ interface UsersViewProps {
 }
 
 const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
-    const { friends, suggestedUsers, createChat, setSelectedChatId } = useAppContext();
+    const { friends, suggestedUsers, createChat, setSelectedChatId, sendFriendRequest } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
@@ -26,13 +26,19 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const router = useRouter();
 
     const handleAddFriend = async (user: UserType) => {
-        const chat = await createChat(user);
-        if (chat) {
+        try {
+            await sendFriendRequest(user);
             toast({
-                title: "تمت الإضافة بنجاح!",
-                description: `لقد بدأت محادثة مع ${user.name}.`,
+                title: "تم إرسال الطلب!",
+                description: `تم إرسال طلب صداقة إلى ${user.name}.`,
             });
-            setActiveList('friends');
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: "حدث خطأ",
+                description: "لم نتمكن من إرسال طلب الصداقة. يرجى المحاولة مرة أخرى.",
+            });
         }
     };
     
@@ -75,9 +81,14 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                 </div>
             </div>
             {action === 'add' ? (
-                <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}>
-                    <UserPlus size={16} className="ml-1" />
-                    إضافة
+                 <Button 
+                    className="bg-primary hover:bg-primary/90" 
+                    size="sm" 
+                    onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}
+                    disabled={user.requestSent}
+                >
+                    {user.requestSent ? <Check size={16} className="ml-1" /> : <UserPlus size={16} className="ml-1" />}
+                    {user.requestSent ? 'تم الإرسال' : 'إضافة'}
                 </Button>
             ) : (
                 <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
