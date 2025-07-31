@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart, MessageSquare, Globe, Notebook } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Home, ShoppingCart, MessageSquare, Globe, Notebook } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -43,7 +43,7 @@ const SocialFeed = () => {
                 <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
                      <div className="flex items-center justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3">
-                            <Users className="w-8 h-8 text-primary" />
+                            <Home className="w-8 h-8 text-primary" />
                             <h1 className="text-3xl font-bold">المجتمع</h1>
                         </div>
                         <div className="flex items-center gap-2">
