@@ -32,7 +32,7 @@ export async function analyzeText(input: KnowledgeAnalysisInput): Promise<Knowle
 
 const knowledgeAnalysisPrompt = ai.definePrompt({
   name: 'knowledgeAnalysisPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'googleai/gemini-pro',
   input: { schema: KnowledgeAnalysisInputSchema },
   output: { schema: KnowledgeAnalysisOutputSchema },
   prompt: `You are an expert knowledge assistant. Your task is to analyze any provided text or content from a URL, understand it deeply, and provide a structured, insightful response. The input can be an article, a question, a statement, a business idea, or any other piece of information.

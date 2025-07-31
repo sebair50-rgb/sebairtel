@@ -21,7 +21,7 @@ export default {
     './src/components/social/PostCard.tsx',
     './src/components/social/SocialFeed.tsx',
     './src/components/social/StoreView.tsx',
-    './src/components/social/NewsView.tsx',
+    './src/components/social/KnowledgeView.tsx',
     './src/components/ui/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/users/**/*.{js,ts,jsx,tsx,mdx}',
   ],
