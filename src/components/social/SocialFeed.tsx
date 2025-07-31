@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -15,15 +16,15 @@ import NewsView from './NewsView';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
-    const [activeSocialTab, setActiveSocialTab] = useState('feed');
+    const [activeSocialTab, setActiveSocialTab] = useState('news');
 
     const socialTabs = [
+        { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'business', label: 'الأعمال', icon: Briefcase },
         { value: 'market', label: 'السوق', icon: Store },
-        { value: 'news', label: 'الأخبار', icon: Newspaper },
         { value: 'live', label: 'البث المباشر', icon: Video },
         { value: 'feed', label: 'المنشورات العامة', icon: LayoutGrid },
-    ].reverse();
+    ];
     
     return (
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
