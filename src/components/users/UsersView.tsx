@@ -22,7 +22,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
-    const [activeList, setActiveList] = useState<'suggestions' | 'friends'>('suggestions');
+    const [activeList, setActiveList] = useState<'suggestions' | 'friends'>('friends');
     const router = useRouter();
 
     const handleAddFriend = async (user: UserType) => {
