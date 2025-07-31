@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -105,7 +106,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [calls, setCalls] = useState<Call[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [activeTab, setActiveTab] = useState('contact');
+  const [activeTab, setActiveTab] = useState('social');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [settings, setSettings] = useState<AppSettings>(() => {
