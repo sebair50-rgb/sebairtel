@@ -1,64 +1,149 @@
+
 "use client";
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AppWindow, Languages, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Landmark, FileDigit, ShoppingCart, Car, Mail, Globe, Terminal, AppWindow } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
-const apps = [
+const appCategories = [
     {
-        icon: Languages,
-        title: "المترجم الفوري",
-        description: "ترجم النصوص بسهولة بين لغات متعددة بدقة عالية وسياق طبيعي.",
-        actionText: "ابدأ الترجمة",
-        tag: "لغات"
+        title: "المعاملات المالية",
+        apps: [
+            {
+                icon: Landmark,
+                title: "الخدمات البنكية",
+                description: "إدارة حساباتك",
+                color: "bg-blue-100 dark:bg-blue-900/50",
+                textColor: "text-blue-600 dark:text-blue-300",
+                action: () => {}
+            },
+            {
+                icon: FileDigit,
+                title: "الفواتير",
+                description: "دفع فواتيرك بسهولة",
+                color: "bg-green-100 dark:bg-green-900/50",
+                textColor: "text-green-600 dark:text-green-300",
+                action: () => {}
+            }
+        ]
+    },
+    {
+        title: "الخدمات اليومية",
+        apps: [
+             {
+                icon: ShoppingCart,
+                title: "الطلبات",
+                description: "توصيل طعام وبقالة",
+                color: "bg-orange-100 dark:bg-orange-900/50",
+                textColor: "text-orange-600 dark:text-orange-300",
+                action: () => {}
+            },
+            {
+                icon: Car,
+                title: "المواصلات",
+                description: "اطلب سيارة أجرة",
+                color: "bg-slate-200 dark:bg-slate-700",
+                textColor: "text-slate-700 dark:text-slate-300",
+                action: () => {}
+            },
+            {
+                icon: Mail,
+                title: "البريد",
+                description: "خدمات بريدية سريعة",
+                color: "bg-red-100 dark:bg-red-900/50",
+                textColor: "text-red-600 dark:text-red-300",
+                action: () => {}
+            },
+        ]
+    },
+     {
+        title: "تطبيقات SebairTel",
+        apps: [
+            {
+                icon: Globe,
+                title: "المترجم",
+                description: "ترجمة فورية",
+                color: "bg-teal-100 dark:bg-teal-900/50",
+                textColor: "text-teal-600 dark:text-teal-300",
+                action: () => {}
+            },
+            {
+                icon: Terminal,
+                title: "محرر الكود",
+                description: "أداة للمطورين",
+                color: "bg-purple-100 dark:bg-purple-900/50",
+                textColor: "text-purple-600 dark:text-purple-300",
+                action: () => {}
+            }
+        ]
     }
 ];
 
-const AppsView = () => {
+const AppCard = ({ icon: Icon, title, description, color, textColor, action }: { 
+    icon: React.ElementType,
+    title: string,
+    description: string,
+    color: string,
+    textColor: string,
+    action: () => void,
+}) => {
     const { toast } = useToast();
 
-    const handleActionClick = (title: string) => {
+    const handleActionClick = () => {
         toast({
             title: `قريبا: ${title}`,
             description: "نحن نعمل بجد لإطلاق هذا التطبيق. ترقبوا التحديثات!",
         });
+        action();
     };
 
     return (
-        <div className="w-full h-full flex flex-col">
+        <motion.div
+             whileHover={{ scale: 1.05 }}
+             whileTap={{ scale: 0.95 }}
+        >
+            <Card 
+                className="h-full w-full cursor-pointer overflow-hidden text-center transition-shadow hover:shadow-lg"
+                onClick={handleActionClick}
+            >
+                <CardContent className="p-6 flex flex-col items-center justify-center gap-3">
+                    <div className={cn("p-4 rounded-xl", color)}>
+                        <Icon className={cn("w-8 h-8", textColor)} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg">{title}</h3>
+                        <p className="text-sm text-muted-foreground">{description}</p>
+                    </div>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
+};
+
+const AppsView = () => {
+    return (
+        <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-gray-950">
             <div className="p-4 md:p-6 pb-4 border-b bg-background z-10 sticky top-0">
                 <div className="flex items-center gap-3 mb-2">
                     <AppWindow className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">مركز التطبيقات</h1>
+                    <h1 className="text-3xl font-bold">التطبيقات</h1>
                 </div>
-                <p className="text-muted-foreground">
-                    استكشف وادمج تطبيقات مختلفة لتعزيز إنتاجيتك وتوسيع إمكانياتك.
-                </p>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {apps.map((app, index) => (
-                        <Card key={index} className="flex flex-col text-center items-center p-6 hover:shadow-xl transition-shadow duration-300">
-                            <CardHeader className="p-0">
-                                <div className="bg-primary/10 p-4 rounded-full mx-auto">
-                                    <app.icon className="w-10 h-10 text-primary" />
-                                </div>
-                                <CardTitle className="mt-4 text-2xl">{app.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-1 p-0 mt-2">
-                                <CardDescription>{app.description}</CardDescription>
-                            </CardContent>
-                            <Button 
-                                className="mt-6 w-full"
-                                onClick={() => handleActionClick(app.title)}
-                            >
-                                {app.actionText}
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                            </Button>
-                        </Card>
+                <div className="max-w-4xl mx-auto space-y-10">
+                     {appCategories.map((category, index) => (
+                        <section key={index}>
+                            <h2 className="text-xl font-bold mb-4">{category.title}</h2>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {category.apps.map((app, appIndex) => (
+                                    <AppCard key={appIndex} {...app} />
+                                ))}
+                            </div>
+                        </section>
                     ))}
                 </div>
             </div>
