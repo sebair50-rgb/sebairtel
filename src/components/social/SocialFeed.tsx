@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -30,6 +29,10 @@ const SocialFeed = () => {
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
                 <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
+                     <div className="flex items-center gap-3 mb-4">
+                        <Users className="w-8 h-8 text-primary" />
+                        <h1 className="text-3xl font-bold">المجتمع</h1>
+                    </div>
                     <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
                        {socialTabs.map(tab => (
                             <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
