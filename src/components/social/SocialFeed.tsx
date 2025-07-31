@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, Trash } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Users, ShoppingCart } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -37,7 +37,7 @@ const SocialFeed = () => {
                             <h1 className="text-3xl font-bold">المجتمع</h1>
                         </div>
                         <Button variant="ghost" size="icon">
-                            <Trash className="w-6 h-6 text-muted-foreground" />
+                            <ShoppingCart className="w-6 h-6 text-muted-foreground" />
                         </Button>
                     </div>
                     <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
