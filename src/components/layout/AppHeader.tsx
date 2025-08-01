@@ -39,7 +39,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ title, icon: Icon }) => {
     };
 
     return (
-        <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
+        <header className="p-4 md:px-6 md:py-4 border-b bg-amber-100 dark:bg-stone-900 z-10 sticky top-0">
              <div className="flex items-center justify-between gap-3">
                 <div dir="ltr" className="flex items-center gap-3">
                     <h1 className="text-3xl font-bold">{title}</h1>

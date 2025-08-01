@@ -51,7 +51,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   return (
     <>
       {/* Desktop Sidebar */}
-      <nav className="hidden md:flex flex-col items-center gap-4 p-2 bg-card border-r w-16">
+      <nav className="hidden md:flex flex-col items-center gap-4 p-2 bg-amber-100 dark:bg-stone-900 border-r w-16">
         <div className="my-2">
             <Logo />
         </div>
@@ -99,7 +99,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
 
       {/* Mobile Bottom Nav */}
       {showMobileNav && (
-        <nav className="fixed bottom-0 left-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
+        <nav className="fixed bottom-0 left-0 w-full bg-amber-100 dark:bg-stone-900 border-t flex justify-around items-center p-1 md:hidden z-50">
           {visibleNavItems.map((item) => (
             <button
               key={item.name}

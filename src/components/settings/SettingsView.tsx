@@ -69,7 +69,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
             <div className="flex-1 overflow-hidden md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6">
                 
                 {/* Desktop Sidebar */}
-                <aside className="hidden md:flex flex-col gap-2 bg-background p-4 rounded-xl border">
+                <aside className="hidden md:flex flex-col gap-2 bg-amber-100 dark:bg-stone-900 p-4 rounded-xl border">
                     <nav className="flex flex-col gap-1">
                         {settingsSections.map(section => (
                             <Button
@@ -97,7 +97,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                      {isMobile && (
                         <div className="p-2">
                              <div className="relative">
-                                 <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
+                                 <ScrollArea className="w-full whitespace-nowrap rounded-lg border bg-amber-100 dark:bg-stone-900">
                                     <div className="flex w-max space-x-2 p-2">
                                         {settingsSections.map(section => (
                                              <Button
