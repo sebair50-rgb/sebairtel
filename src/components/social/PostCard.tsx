@@ -130,7 +130,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <p className="whitespace-pre-wrap">{post.content}</p>
         {post.media && (
           <div className="mt-4 rounded-lg overflow-hidden border">
-             <Image src={post.media.src} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
+             {post.media.type === 'image' ? (
+                <Image src={post.media.src} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
+             ) : (
+                <video src={post.media.src} controls className="w-full h-auto bg-black" />
+             )}
           </div>
         )}
       </CardContent>

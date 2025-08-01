@@ -25,11 +25,17 @@ const CreatePostCard = () => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file) {
+      const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : null);
+      if (!fileType) {
+        // Optionally, show a toast message for invalid file type
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         const fileDataUrl = event.target?.result as string;
-        setMedia({ type: 'image', src: fileDataUrl });
+        setMedia({ type: fileType, src: fileDataUrl });
       };
       reader.readAsDataURL(file);
     }
@@ -53,8 +59,12 @@ const CreatePostCard = () => {
           />
         </div>
         {media && (
-            <div className="ml-16 relative w-32 h-32">
-                <Image src={media.src} alt="Preview" layout="fill" className="rounded-lg object-cover"/>
+            <div className="ml-16 relative w-full max-w-sm">
+                {media.type === 'image' ? (
+                     <Image src={media.src} alt="Preview" width={400} height={400} className="rounded-lg object-cover w-full h-auto"/>
+                ) : (
+                    <video src={media.src} controls className="rounded-lg w-full" />
+                )}
                  <button onClick={() => setMedia(null)} className="absolute -top-2 -right-2 bg-background rounded-full p-0.5 border">
                     <X size={16} />
                 </button>
@@ -63,7 +73,7 @@ const CreatePostCard = () => {
         <div className="flex justify-between items-center ml-16">
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             ref={fileInputRef}
             onChange={handleFileSelect}
             className="hidden"
