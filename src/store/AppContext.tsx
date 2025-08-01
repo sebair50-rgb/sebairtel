@@ -394,12 +394,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       mediaSrc: postData.mediaSrc || null,
     };
 
+    if (dataToSave.mediaSrc && dataToSave.mediaSrc.length > 1048487) {
+        throw new Error("File size exceeds 1MB limit.");
+    }
+
     await addDoc(collection(db, 'posts'), dataToSave);
   };
   
   const updatePost = async (postId: string, data: Partial<Post>) => {
       const postRef = doc(db, "posts", postId);
-      await updateDoc(postRef, data);
+      const updateData: {[key: string]: any} = data;
+      // Handle cases where mediaSrc could be null to remove it.
+      if (data.mediaSrc === null) {
+          updateData.mediaSrc = null;
+          updateData.mediaType = null;
+      }
+      await updateDoc(postRef, updateData);
   }
 
   const deletePost = async (postId: string) => {
@@ -866,3 +876,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    

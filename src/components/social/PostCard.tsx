@@ -6,7 +6,7 @@ import type { Post, Comment, Reaction } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag, Smile } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag, Smile, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -104,6 +104,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
+  const [editedMedia, setEditedMedia] = useState<{ type?: 'image' | 'video'; src?: string } | null>({
+    type: post.mediaType,
+    src: post.mediaSrc
+  });
   const router = useRouter();
 
   if (!currentUser) return null;
@@ -170,21 +174,25 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   
   const handleEdit = () => {
     setEditedContent(post.content);
+    setEditedMedia({ type: post.mediaType, src: post.mediaSrc });
     setIsEditing(true);
   };
   
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditedContent(post.content);
   };
 
   const handleUpdatePost = async () => {
-    if (editedContent.trim() === '') {
-        toast({ variant: 'destructive', description: 'لا يمكن أن يكون المنشور فارغًا.' });
+    if (editedContent.trim() === '' && !editedMedia?.src) {
+        toast({ variant: 'destructive', description: 'لا يمكن أن يكون المنشور فارغًا تمامًا.' });
         return;
     }
     try {
-        await updatePost(post.id, { content: editedContent });
+        await updatePost(post.id, { 
+            content: editedContent,
+            mediaType: editedMedia?.src ? editedMedia.type : null,
+            mediaSrc: editedMedia?.src || null,
+        });
         setIsEditing(false);
         toast({ description: 'تم تحديث المنشور بنجاح.' });
     } catch (error) {
@@ -272,29 +280,43 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {isEditing ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <Textarea
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
                     className="min-h-[100px]"
+                    placeholder="تعديل المنشور..."
                 />
+                {editedMedia?.src && (
+                    <div className="relative w-full max-w-sm">
+                        {editedMedia.type === 'image' ? (
+                            <Image src={editedMedia.src} alt="Preview" width={400} height={400} className="rounded-lg object-cover w-full h-auto"/>
+                        ) : (
+                            <video src={editedMedia.src} controls className="rounded-lg w-full" />
+                        )}
+                        <button onClick={() => setEditedMedia(null)} className="absolute -top-2 -right-2 bg-background rounded-full p-0.5 border shadow-md hover:bg-destructive hover:text-white transition-colors">
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
                 <div className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={handleCancelEdit}>إلغاء</Button>
                     <Button onClick={handleUpdatePost}>حفظ</Button>
                 </div>
             </div>
         ) : (
+           <>
             <p className="whitespace-pre-wrap">{post.content}</p>
-        )}
-
-        {post.mediaSrc && !isEditing && (
-          <div className="mt-4 rounded-lg overflow-hidden border">
-             {post.mediaType === 'image' ? (
-                <Image src={post.mediaSrc} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
-             ) : (
-                <video src={post.mediaSrc} controls className="w-full h-auto bg-black" />
-             )}
-          </div>
+            {post.mediaSrc && (
+              <div className="mt-4 rounded-lg overflow-hidden border">
+                 {post.mediaType === 'image' ? (
+                    <Image src={post.mediaSrc} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
+                 ) : (
+                    <video src={post.mediaSrc} controls className="w-full h-auto bg-black" />
+                 )}
+              </div>
+            )}
+           </>
         )}
       </CardContent>
 
@@ -388,3 +410,5 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 };
 
 export default PostCard;
+
+    
