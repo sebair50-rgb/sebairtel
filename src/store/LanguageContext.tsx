@@ -2,7 +2,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 
 type Language = 'en' | 'ar';
 type Direction = 'ltr' | 'rtl';
@@ -17,10 +16,15 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider = ({ children, initialLanguage = 'system' }: { children: ReactNode, initialLanguage?: 'en' | 'ar' | 'system' }) => {
+export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>('en');
   const [translations, setTranslations] = useState<Translations>({});
   const [direction, setDirection] = useState<Direction>('ltr');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const setLanguage = useCallback((lang: 'en' | 'ar' | 'system') => {
     let effectiveLang: Language = 'en'; // Default
@@ -36,8 +40,6 @@ export const LanguageProvider = ({ children, initialLanguage = 'system' }: { chi
     setLanguageState(effectiveLang);
     const newDirection = effectiveLang === 'ar' ? 'rtl' : 'ltr';
     setDirection(newDirection);
-    document.documentElement.lang = effectiveLang;
-    document.documentElement.dir = newDirection;
 
     import(`@/locales/${effectiveLang}.json`)
         .then(module => setTranslations(module.default))
@@ -45,11 +47,16 @@ export const LanguageProvider = ({ children, initialLanguage = 'system' }: { chi
   }, []);
   
   useEffect(() => {
-    setLanguage(initialLanguage);
-  }, [initialLanguage, setLanguage]);
-  
+    if (isMounted) {
+      document.documentElement.lang = language;
+      document.documentElement.dir = direction;
+    }
+  }, [language, direction, isMounted]);
 
   const t = (key: string, options?: { [key: string]: string | number }): string => {
+    if (!isMounted) {
+      return ''; // Return empty string or a placeholder during server render/hydration
+    }
     const keys = key.split('.');
     let result = keys.reduce((acc, currentKey) => {
         if (acc && typeof acc === 'object' && acc[currentKey] !== undefined) {
@@ -59,8 +66,14 @@ export const LanguageProvider = ({ children, initialLanguage = 'system' }: { chi
     }, translations);
     
     if (result === undefined) {
-        console.warn(`Translation not found for key: ${key}`);
-        return key;
+        // Fallback to English translation if key not found in current language
+        import(`@/locales/en.json`).then(module => {
+            let enResult = keys.reduce((acc, currentKey) => (acc && acc[currentKey]) ? acc[currentKey] : undefined, module.default);
+             if (enResult === undefined) {
+                console.warn(`Translation not found for key: ${key}`);
+             }
+        });
+        return key; // return key as fallback
     }
 
     if (typeof result === 'string' && options) {
