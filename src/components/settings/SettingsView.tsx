@@ -93,7 +93,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 <main className="flex-1 overflow-y-auto">
                      {isMobile && (
                         <div className="p-2">
-                             <ScrollArea className="w-full whitespace-nowrap">
+                             <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
                                 <div className="flex w-max space-x-2 p-2">
                                     {settingsSections.map(section => (
                                          <Button
