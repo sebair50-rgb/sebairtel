@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,16 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 const CoHostVideo = ({ user, onRemove, isMyStream }: { user: User, onRemove: (user: User) => void, isMyStream: boolean }) => (
@@ -189,6 +199,7 @@ const LiveStreamPage = () => {
     const [coHosts, setCoHosts] = useState<User[]>([]);
     const [joinRequests, setJoinRequests] = useState<User[]>([]);
     const [hasRequestedToJoin, setHasRequestedToJoin] = useState(false);
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
 
     const isMyStream = id === 'me';
     
@@ -304,10 +315,26 @@ const LiveStreamPage = () => {
     }
 
     const handleExitActions = () => {
+        if (isMyStream) {
+            setShowSaveDialog(true);
+        } else {
+            forceExit();
+        }
+    };
+    
+    const forceExit = () => {
         if (document.fullscreenElement) {
             document.exitFullscreen();
         }
         router.back();
+    };
+
+    const handleSaveStream = () => {
+        toast({
+            title: "Stream Saved",
+            description: "Your live stream has been saved to your profile.",
+        });
+        forceExit();
     };
 
     const handleToggleFullScreen = () => {
@@ -368,6 +395,27 @@ const LiveStreamPage = () => {
 
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row-reverse items-center justify-center text-white">
+             {showSaveDialog && (
+                <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>End Live Stream?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Would you like to save and publish this live stream to your profile?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={forceExit}>
+                                Exit Without Saving
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleSaveStream}>
+                                <Save className="mr-2 h-4 w-4" />
+                                Save and Exit
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
                 <Button 
                     variant="ghost" 
