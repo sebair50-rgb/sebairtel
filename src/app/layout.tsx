@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AppContextProvider } from '@/store/AppContext';
 import { AuthProvider } from '@/store/AuthContext';
+import { LanguageProvider } from '@/store/LanguageContext';
 
 export const metadata: Metadata = {
   title: 'SebairTel AI Communicator',
@@ -31,10 +32,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
+          <LanguageProvider>
             <AppContextProvider>
                 {children}
                 <Toaster />
             </AppContextProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>
