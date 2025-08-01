@@ -44,6 +44,9 @@ interface AppContextType {
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
+  editingPost: Post | null;
+  startEditPost: (post: Post) => void;
+  cancelEditPost: () => void;
   calls: Call[];
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
@@ -150,6 +153,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
+  
+  // State for post editing
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+
+  const startEditPost = (post: Post) => {
+    setEditingPost(post);
+  };
+  const cancelEditPost = () => {
+    setEditingPost(null);
+  };
 
 
   useEffect(() => {
@@ -403,12 +416,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   
   const updatePost = async (postId: string, data: Partial<Post>) => {
       const postRef = doc(db, "posts", postId);
-      const updateData: {[key: string]: any} = data;
+      const updateData: {[key: string]: any} = {};
+
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.reactions !== undefined) updateData.reactions = data.reactions;
+      
       // Handle cases where mediaSrc could be null to remove it.
-      if (data.mediaSrc === null) {
-          updateData.mediaSrc = null;
-          updateData.mediaType = null;
+      if (data.mediaSrc === undefined) { // Check for undefined to distinguish from null
+          // Do not update media if it's not provided
+      } else {
+        updateData.mediaSrc = data.mediaSrc;
+        updateData.mediaType = data.mediaType;
       }
+      
       await updateDoc(postRef, updateData);
   }
 
@@ -828,6 +848,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     updatePost,
     deletePost,
     addComment,
+    editingPost,
+    startEditPost,
+    cancelEditPost,
     calls,
     settings,
     setSettings,
@@ -876,5 +899,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    

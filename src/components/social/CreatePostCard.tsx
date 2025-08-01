@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,21 +12,53 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
 const CreatePostCard = () => {
-  const { addPost, currentUser } = useAppContext();
+  const { addPost, updatePost, currentUser, editingPost, cancelEditPost } = useAppContext();
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<{ type: 'image' | 'video'; src: string } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handlePost = () => {
+  const isEditing = !!editingPost;
+
+  useEffect(() => {
+    if (editingPost) {
+        setContent(editingPost.content);
+        if (editingPost.mediaSrc && editingPost.mediaType) {
+            setMedia({ type: editingPost.mediaType, src: editingPost.mediaSrc });
+        } else {
+            setMedia(null);
+        }
+        // Scroll to the top to make the editing card visible
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    } else {
+        // Reset form when not editing
+        setContent('');
+        setMedia(null);
+    }
+  }, [editingPost]);
+
+
+  const handlePost = async () => {
     if (!content.trim() && !media) return;
-    addPost({ 
-        content, 
-        mediaType: media?.type,
-        mediaSrc: media?.src 
-    });
-    setContent('');
-    setMedia(null);
+
+    if (isEditing && editingPost) {
+        await updatePost(editingPost.id, { 
+            content, 
+            mediaType: media?.type,
+            mediaSrc: media?.src 
+        });
+        toast({ description: "تم تحديث المنشور بنجاح." });
+    } else {
+        await addPost({ 
+            content, 
+            mediaType: media?.type,
+            mediaSrc: media?.src 
+        });
+    }
+    
+    cancelEditPost(); // Resets the form fields via useEffect
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,15 +94,18 @@ const CreatePostCard = () => {
   if (!currentUser) return null;
 
   return (
-    <Card>
+    <Card ref={cardRef} className={isEditing ? 'ring-2 ring-primary border-primary' : ''}>
       <CardContent className="p-4 space-y-4">
+        {isEditing && (
+            <div className="text-sm font-semibold text-primary">تعديل المنشور...</div>
+        )}
         <div className="flex items-start gap-4">
           <Avatar>
             <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
-            placeholder="بماذا تفكر يا صديقي؟"
+            placeholder={isEditing ? 'تعديل منشورك...' : "بماذا تفكر يا صديقي؟"}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0"
@@ -99,10 +134,15 @@ const CreatePostCard = () => {
           <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
             <ImageIcon className="text-primary" />
           </Button>
-          <Button onClick={handlePost} disabled={!content.trim() && !media}>
-            <Send className="ml-2" />
-            نشر
-          </Button>
+          <div className="flex gap-2">
+            {isEditing && (
+                 <Button variant="outline" onClick={cancelEditPost}>إلغاء</Button>
+            )}
+            <Button onClick={handlePost} disabled={!content.trim() && !media}>
+                <Send className="ml-2" />
+                {isEditing ? 'تحديث' : 'نشر'}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

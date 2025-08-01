@@ -6,7 +6,7 @@ import type { Post, Comment, Reaction } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag, Smile, X } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag, Smile } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import {
@@ -99,15 +98,9 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
-  const { updatePost, currentUser, createNotification, deletePost } = useAppContext();
+  const { updatePost, currentUser, createNotification, deletePost, startEditPost } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(post.content);
-  const [editedMedia, setEditedMedia] = useState<{ type?: 'image' | 'video'; src?: string } | null>({
-    type: post.mediaType,
-    src: post.mediaSrc
-  });
   const router = useRouter();
 
   if (!currentUser) return null;
@@ -173,33 +166,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
   
   const handleEdit = () => {
-    setEditedContent(post.content);
-    setEditedMedia({ type: post.mediaType, src: post.mediaSrc });
-    setIsEditing(true);
+    startEditPost(post);
   };
   
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  const handleUpdatePost = async () => {
-    if (editedContent.trim() === '' && !editedMedia?.src) {
-        toast({ variant: 'destructive', description: 'لا يمكن أن يكون المنشور فارغًا تمامًا.' });
-        return;
-    }
-    try {
-        await updatePost(post.id, { 
-            content: editedContent,
-            mediaType: editedMedia?.src ? editedMedia.type : null,
-            mediaSrc: editedMedia?.src || null,
-        });
-        setIsEditing(false);
-        toast({ description: 'تم تحديث المنشور بنجاح.' });
-    } catch (error) {
-        toast({ variant: 'destructive', title: 'خطأ', description: 'فشل تحديث المنشور.' });
-    }
-  };
-
   const handleDelete = async () => {
     try {
         await deletePost(post.id);
@@ -279,115 +248,82 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </DropdownMenu>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        {isEditing ? (
-            <div className="space-y-4">
-                <Textarea
-                    value={editedContent}
-                    onChange={(e) => setEditedContent(e.target.value)}
-                    className="min-h-[100px]"
-                    placeholder="تعديل المنشور..."
-                />
-                {editedMedia?.src && (
-                    <div className="relative w-full max-w-sm">
-                        {editedMedia.type === 'image' ? (
-                            <Image src={editedMedia.src} alt="Preview" width={400} height={400} className="rounded-lg object-cover w-full h-auto"/>
-                        ) : (
-                            <video src={editedMedia.src} controls className="rounded-lg w-full" />
-                        )}
-                        <button onClick={() => setEditedMedia(null)} className="absolute -top-2 -right-2 bg-background rounded-full p-0.5 border shadow-md hover:bg-destructive hover:text-white transition-colors">
-                            <X size={16} />
-                        </button>
-                    </div>
-                )}
-                <div className="flex justify-end gap-2">
-                    <Button variant="ghost" onClick={handleCancelEdit}>إلغاء</Button>
-                    <Button onClick={handleUpdatePost}>حفظ</Button>
-                </div>
-            </div>
-        ) : (
-           <>
-            <p className="whitespace-pre-wrap">{post.content}</p>
-            {post.mediaSrc && (
-              <div className="mt-4 rounded-lg overflow-hidden border">
-                 {post.mediaType === 'image' ? (
-                    <Image src={post.mediaSrc} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
-                 ) : (
-                    <video src={post.mediaSrc} controls className="w-full h-auto bg-black" />
-                 )}
-              </div>
-            )}
-           </>
+        <p className="whitespace-pre-wrap">{post.content}</p>
+        {post.mediaSrc && (
+          <div className="mt-4 rounded-lg overflow-hidden border">
+             {post.mediaType === 'image' ? (
+                <Image src={post.mediaSrc} alt="Post media" width={600} height={400} className="w-full h-auto object-cover" />
+             ) : (
+                <video src={post.mediaSrc} controls className="w-full h-auto bg-black" />
+             )}
+          </div>
         )}
       </CardContent>
 
-      {!isEditing && getReactionSummary()}
+      {getReactionSummary()}
+      
+      <CardFooter className="p-4 pt-0 flex justify-between items-center text-muted-foreground border-t mt-2">
+          <div className="flex items-center gap-1">
+          <Popover>
+              <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className={cn("flex items-center gap-2", myReaction && 'text-primary font-bold')}>
+                      {myReaction ? <span className="text-lg">{myReaction.emoji}</span> : <Smile size={18} />}
+                      <span className="text-sm">{myReaction ? 'تفاعلت' : 'تفاعل'}</span>
+                  </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-auto bg-transparent border-none shadow-none">
+                  <ReactionPicker onSelect={handleReaction} />
+              </PopoverContent>
+          </Popover>
 
-      {!isEditing && (
-        <>
-            <CardFooter className="p-4 pt-0 flex justify-between items-center text-muted-foreground border-t mt-2">
-                <div className="flex items-center gap-1">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className={cn("flex items-center gap-2", myReaction && 'text-primary font-bold')}>
-                            {myReaction ? <span className="text-lg">{myReaction.emoji}</span> : <Smile size={18} />}
-                            <span className="text-sm">{myReaction ? 'تفاعلت' : 'تفاعل'}</span>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-auto bg-transparent border-none shadow-none">
-                        <ReactionPicker onSelect={handleReaction} />
-                    </PopoverContent>
-                </Popover>
+          <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <MessageCircle size={18} />
+              <span className="text-sm">تعليق</span>
+          </Button>
+          
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
+              <Share2 size={18} />
+              <span className="text-sm">مشاركة</span>
+          </Button>
 
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                    <MessageCircle size={18} />
-                    <span className="text-sm">تعليق</span>
-                </Button>
-                
-                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
-                    <Share2 size={18} />
-                    <span className="text-sm">مشاركة</span>
-                </Button>
-
-                </div>
-                <Button variant="ghost" size="icon" onClick={handleSave}>
-                <Bookmark size={18} className={cn(isSaved && 'fill-primary text-primary')} />
-                </Button>
-            </CardFooter>
-            <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1" className="border-t">
-                <AccordionContent className="p-4">
-                    <div className="space-y-4">
-                        {post.comments.length > 0 ? (
-                            post.comments.map((comment, index) => (
-                                <div key={index} className="flex items-start gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={comment.avatar} alt={comment.user} />
-                                        <AvatarFallback>{comment.user.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="bg-muted p-3 rounded-lg w-full">
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-bold text-sm">{comment.user}</p>
-                                            <p className="text-xs text-muted-foreground">{formatCommentTime(comment.timestamp)}</p>
-                                        </div>
-                                        <p className="text-sm">{comment.text}</p>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center">لا توجد تعليقات بعد. كن أول من يعلق!</p>
-                        )}
-                    </div>
-                    <CommentInput postId={post.id} />
-                </AccordionContent>
-                {post.comments.length > 0 && (
-                    <AccordionTrigger className="p-4 pt-0 text-sm font-semibold text-muted-foreground hover:no-underline">
-                        {`عرض كل التعليقات (${post.comments.length})`}
-                    </AccordionTrigger>
-                )}
-                </AccordionItem>
-            </Accordion>
-        </>
-      )}
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleSave}>
+          <Bookmark size={18} className={cn(isSaved && 'fill-primary text-primary')} />
+          </Button>
+      </CardFooter>
+      <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1" className="border-t">
+          <AccordionContent className="p-4">
+              <div className="space-y-4">
+                  {post.comments.length > 0 ? (
+                      post.comments.map((comment, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                              <Avatar className="h-8 w-8">
+                                  <AvatarImage src={comment.avatar} alt={comment.user} />
+                                  <AvatarFallback>{comment.user.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="bg-muted p-3 rounded-lg w-full">
+                                  <div className="flex items-center justify-between">
+                                      <p className="font-bold text-sm">{comment.user}</p>
+                                      <p className="text-xs text-muted-foreground">{formatCommentTime(comment.timestamp)}</p>
+                                  </div>
+                                  <p className="text-sm">{comment.text}</p>
+                              </div>
+                          </div>
+                      ))
+                  ) : (
+                      <p className="text-sm text-muted-foreground text-center">لا توجد تعليقات بعد. كن أول من يعلق!</p>
+                  )}
+              </div>
+              <CommentInput postId={post.id} />
+          </AccordionContent>
+          {post.comments.length > 0 && (
+              <AccordionTrigger className="p-4 pt-0 text-sm font-semibold text-muted-foreground hover:no-underline">
+                  {`عرض كل التعليقات (${post.comments.length})`}
+              </AccordionTrigger>
+          )}
+          </AccordionItem>
+      </Accordion>
     </Card>
      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
@@ -410,5 +346,3 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 };
 
 export default PostCard;
-
-    
