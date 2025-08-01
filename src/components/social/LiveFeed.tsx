@@ -5,19 +5,17 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Video, PlusCircle } from 'lucide-react';
 import LiveStreamCard, { type LiveStream } from './LiveStreamCard';
-import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
 import PastStreamCard, { type PastStream } from './PastStreamCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const LiveFeed = () => {
-    const { toast } = useToast();
     const { users } = useAppContext();
     const router = useRouter();
 
     const handleGoLive = () => {
-        // Navigate to a dedicated page for the user to start their own stream
         router.push('/live/me');
     };
 
@@ -54,35 +52,47 @@ const LiveFeed = () => {
                     </Button>
                 </div>
             </Card>
-            
-            {streams.length > 0 && (
-                <section>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {streams.map(stream => (
-                            <LiveStreamCard key={stream.id} stream={stream} />
-                        ))}
-                    </div>
-                </section>
-            )}
 
-            {pastStreams.length > 0 && (
-                <section>
-                    <h2 className="text-2xl font-bold mb-4">Past Streams</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {pastStreams.map(stream => (
-                            <PastStreamCard key={stream.id} stream={stream} />
-                        ))}
-                    </div>
-                </section>
-            )}
-
-             {streams.length === 0 && pastStreams.length === 0 && (
-                <div className="text-center text-muted-foreground pt-16">
-                    <Video size={48} className="mx-auto mb-4" />
-                    <p className="font-semibold">No live streams at the moment</p>
-                    <p className="text-sm">Be the first to start a live stream and share your thoughts!</p>
-                </div>
-            )}
+            <Tabs defaultValue="now" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="now">Happening Now</TabsTrigger>
+                    <TabsTrigger value="past">Past Streams</TabsTrigger>
+                </TabsList>
+                <TabsContent value="now" className="mt-6">
+                     {streams.length > 0 ? (
+                        <section>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {streams.map(stream => (
+                                    <LiveStreamCard key={stream.id} stream={stream} />
+                                ))}
+                            </div>
+                        </section>
+                     ) : (
+                        <div className="text-center text-muted-foreground pt-16">
+                            <Video size={48} className="mx-auto mb-4" />
+                            <p className="font-semibold">No live streams at the moment</p>
+                            <p className="text-sm">Be the first to start a live stream and share your thoughts!</p>
+                        </div>
+                     )}
+                </TabsContent>
+                <TabsContent value="past" className="mt-6">
+                    {pastStreams.length > 0 ? (
+                        <section>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {pastStreams.map(stream => (
+                                    <PastStreamCard key={stream.id} stream={stream} />
+                                ))}
+                            </div>
+                        </section>
+                    ) : (
+                        <div className="text-center text-muted-foreground pt-16">
+                            <Video size={48} className="mx-auto mb-4" />
+                            <p className="font-semibold">No past streams available</p>
+                            <p className="text-sm">Saved streams from previous live sessions will appear here.</p>
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };
