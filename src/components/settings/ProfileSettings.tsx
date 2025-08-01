@@ -220,7 +220,8 @@ const ProfileSettings = () => {
       JSON.stringify(links) !== JSON.stringify(currentUser.links || []) ||
       JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || []) ||
       JSON.stringify(education) !== JSON.stringify(currentUser.education || []) ||
-      !!avatarFile || !!cvFile;
+      !!avatarFile || 
+      !!cvFile;
 
 
     return (
@@ -335,3 +336,5 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
+
+    
