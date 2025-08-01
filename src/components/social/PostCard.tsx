@@ -85,6 +85,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     navigator.clipboard.writeText(`Check out this post by ${post.user}!`);
     toast({ description: "Share link copied!" });
   }
+
+  const handleReport = () => {
+    toast({
+      title: "Report received",
+      description: "Thank you, we will review the post.",
+    });
+  };
   
   const handleNavigateToProfile = () => {
       if(post.userId) {
