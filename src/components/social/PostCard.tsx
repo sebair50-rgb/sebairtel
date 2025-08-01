@@ -2,11 +2,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { Post, Comment } from '@/lib/types';
+import type { Post, Comment, Reaction } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag, Smile } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+
+const ReactionPicker = ({ onSelect }: { onSelect: (emoji: string) => void }) => {
+    const reactions = ['❤️', '👍', '😂', '😯', '😢', '😠'];
+    return (
+        <div className="flex gap-1 bg-card p-2 rounded-full shadow-lg border">
+            {reactions.map(emoji => (
+                <button
+                    key={emoji}
+                    onClick={() => onSelect(emoji)}
+                    className="text-2xl p-1 rounded-full hover:bg-muted transition-transform hover:scale-125"
+                >
+                    {emoji}
+                </button>
+            ))}
+        </div>
+    )
+};
 
 
 interface CommentInputProps {
@@ -80,35 +98,44 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
-  const { updatePost, currentUser, createNotification, addComment, deletePost } = useAppContext();
+  const { updatePost, currentUser, createNotification, deletePost } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const router = useRouter();
 
   if (!currentUser) return null;
 
-  const isLiked = post.likedBy?.includes(currentUser.id) || false;
+  const myReaction = post.reactions?.find(r => r.userId === currentUser.id);
   const isOwnPost = post.userId === currentUser.id;
 
-  const handleLike = () => {
-      let newLikedBy = post.likedBy || [];
-      const wasLiked = isLiked;
+  const handleReaction = (emoji: string) => {
+    let newReactions = post.reactions ? [...post.reactions] : [];
+    const existingReactionIndex = newReactions.findIndex(r => r.userId === currentUser.id);
 
-      if (wasLiked) {
-          newLikedBy = newLikedBy.filter(id => id !== currentUser.id);
-      } else {
-          newLikedBy.push(currentUser.id);
-          if (post.userId !== currentUser.id) {
-            createNotification(post.userId, {
-                type: 'like',
-                message: `أعجب <strong>${currentUser.name}</strong> بمنشورك.`,
+    if (existingReactionIndex > -1) {
+        // If the same emoji is clicked again, remove the reaction
+        if (newReactions[existingReactionIndex].emoji === emoji) {
+            newReactions.splice(existingReactionIndex, 1);
+        } else {
+            // If a different emoji is clicked, update the reaction
+            newReactions[existingReactionIndex].emoji = emoji;
+        }
+    } else {
+        // Add new reaction
+        newReactions.push({ userId: currentUser.id, emoji });
+        if (!isOwnPost) {
+             createNotification(post.userId, {
+                type: 'reaction',
+                message: `تفاعل <strong>${currentUser.name}</strong> مع منشورك بـ ${emoji}`,
                 fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
                 link: `/post/${post.id}`
             })
-          }
-      }
-      updatePost(post.id, { likedBy: newLikedBy });
-  }
+        }
+    }
+
+    updatePost(post.id, { reactions: newReactions });
+  };
+
 
   const handleSave = () => {
     setIsSaved(!isSaved);
@@ -153,6 +180,30 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         toast({ variant: 'destructive', title: "خطأ", description: "فشل حذف المنشور." });
     }
   };
+  
+  const getReactionSummary = () => {
+    const reactionCounts: {[key: string]: number} = {};
+    if (!post.reactions) return null;
+    post.reactions.forEach(r => {
+        reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
+    });
+
+    const sortedReactions = Object.entries(reactionCounts).sort(([,a],[,b]) => b-a);
+    const total = post.reactions.length;
+
+    if (total === 0) return null;
+
+    return (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground p-2">
+            <div className="flex items-center -space-x-2">
+                 {sortedReactions.slice(0, 3).map(([emoji]) => (
+                    <span key={emoji} className="text-sm border-2 border-background rounded-full bg-card p-0.5">{emoji}</span>
+                 ))}
+            </div>
+            <span>{total}</span>
+        </div>
+    );
+  }
 
   return (
     <>
@@ -211,19 +262,31 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center text-muted-foreground">
+
+      {getReactionSummary()}
+
+      <CardFooter className="p-4 pt-0 flex justify-between items-center text-muted-foreground border-t mt-2">
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleLike}>
-            <Heart size={18} className={cn(isLiked && 'fill-red-500 text-red-500')} />
-            <span className="text-sm">{post.likedBy?.length || 0}</span>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+                 <Button variant="ghost" size="sm" className={cn("flex items-center gap-2", myReaction && 'text-primary font-bold')}>
+                    {myReaction ? <span className="text-lg">{myReaction.emoji}</span> : <Smile size={18} />}
+                    <span className="text-sm">{myReaction ? 'تفاعلت' : 'تفاعل'}</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-auto bg-transparent border-none shadow-none">
+                 <ReactionPicker onSelect={handleReaction} />
+            </PopoverContent>
+          </Popover>
+
           <Button variant="ghost" size="sm" className="flex items-center gap-2">
             <MessageCircle size={18} />
-            <span className="text-sm">{post.comments.length}</span>
+            <span className="text-sm">تعليق</span>
           </Button>
           
-          <Button variant="ghost" size="icon" className="flex items-center gap-2" onClick={handleShare}>
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
               <Share2 size={18} />
+               <span className="text-sm">مشاركة</span>
           </Button>
 
         </div>
@@ -257,9 +320,11 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </div>
              <CommentInput postId={post.id} />
           </AccordionContent>
-          <AccordionTrigger className="p-4 pt-0 text-sm font-semibold text-muted-foreground hover:no-underline">
-              {post.comments.length > 0 ? `عرض كل التعليقات (${post.comments.length})` : 'أضف تعليقًا'}
-          </AccordionTrigger>
+          {post.comments.length > 0 && (
+            <AccordionTrigger className="p-4 pt-0 text-sm font-semibold text-muted-foreground hover:no-underline">
+                {`عرض كل التعليقات (${post.comments.length})`}
+            </AccordionTrigger>
+          )}
         </AccordionItem>
       </Accordion>
     </Card>

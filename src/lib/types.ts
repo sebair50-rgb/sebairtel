@@ -60,6 +60,11 @@ export interface Comment {
   timestamp: Timestamp;
 }
 
+export interface Reaction {
+    userId: string;
+    emoji: string;
+}
+
 export interface Post {
   id: string; // Firestore document ID
   user: string;
@@ -70,7 +75,7 @@ export interface Post {
   mediaSrc?: string;
   time: string;
   timestamp: Timestamp;
-  likedBy?: string[];
+  reactions: Reaction[];
   isSaved?: boolean; // This will be client-side state
   comments: Comment[];
 }
@@ -95,7 +100,7 @@ export interface CallState {
 
 export interface Notification {
     id: string;
-    type: 'like' | 'comment' | 'new_friend' | 'missed_call' | 'new_message' | 'friend_request';
+    type: 'like' | 'comment' | 'new_friend' | 'missed_call' | 'new_message' | 'friend_request' | 'reaction';
     message: string;
     fromUser: {
         id: string;

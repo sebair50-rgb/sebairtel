@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification, Comment } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification, Comment, Reaction } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -387,7 +387,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       user: currentUser.name,
       userId: currentUser.id,
       avatar: currentUser.avatar,
-      likedBy: [],
+      reactions: [],
       comments: [],
       timestamp: serverTimestamp(),
       mediaType: postData.mediaType || null,
