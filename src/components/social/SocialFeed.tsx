@@ -28,7 +28,7 @@ const SocialFeed = () => {
     ];
     
     return (
-        <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
+        <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
                 <div className="bg-background border-b sticky top-0 z-10">
                     <AppHeader title="Community" icon={Home} />
@@ -45,15 +45,17 @@ const SocialFeed = () => {
                 </div>
             
                 <div className="flex-1 overflow-y-auto">
-                    <div className="p-4 md:p-6">
-                        <TabsContent value="feed" className="mt-0">
-                            <div className="max-w-2xl mx-auto space-y-6">
-                                <CreatePostCard />
-                                {posts.map(post => (
-                                    <PostCard key={post.id} post={post} />
-                                ))}
+                    <TabsContent value="feed" className="mt-0">
+                        <div className="max-w-2xl mx-auto">
+                            <CreatePostCard />
+                            <div className="divide-y">
+                            {posts.map(post => (
+                                <PostCard key={post.id} post={post} />
+                            ))}
                             </div>
-                        </TabsContent>
+                        </div>
+                    </TabsContent>
+                    <div className="p-4 md:p-6">
                         <TabsContent value="live" className="mt-0">
                             <LiveFeed />
                         </TabsContent>
