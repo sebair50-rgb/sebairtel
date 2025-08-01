@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification, UserLink } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification, UserLink, WorkExperience, Education } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -856,7 +856,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File, cv?: File }) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
-        
+
         const updateData: { [key: string]: any } = { ...data };
         const storage = getStorage();
 
@@ -867,22 +867,42 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (files?.cv) {
-             if (currentUser?.cvFileName) {
+            // Delete old CV if it exists
+            if (currentUser?.cvFileName) {
                 const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
                 try {
                     await deleteObject(oldCvRef);
                 } catch (error: any) {
+                    // It's okay if the object doesn't exist, ignore that error.
                     if (error.code !== 'storage/object-not-found') {
                         console.error("Could not delete old CV:", error);
+                        // Optional: Decide if you want to stop the update process here.
+                        // For now, we'll continue.
                     }
                 }
             }
+            // Upload new CV
             const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
             const snapshot = await uploadBytes(cvRef, files.cv);
             updateData.cvUrl = await getDownloadURL(snapshot.ref);
             updateData.cvFileName = files.cv.name;
+        } else if (data.cvFileName === '') {
+             // Handle CV removal
+             if (currentUser?.cvFileName) {
+                const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
+                 try {
+                    await deleteObject(oldCvRef);
+                } catch (error: any) {
+                     if (error.code !== 'storage/object-not-found') {
+                        console.error("Could not delete old CV:", error);
+                    }
+                }
+            }
+            updateData.cvUrl = '';
+            updateData.cvFileName = '';
         }
-        
+
+        // Update Firebase Auth profile if name or avatar changed
         if (data.name && data.name !== auth.currentUser.displayName) {
             await updateProfile(auth.currentUser, { displayName: data.name });
         }
@@ -890,6 +910,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await updateProfile(auth.currentUser, { photoURL: updateData.avatar });
         }
         
+        // Update Firestore document if there are changes
         if (Object.keys(updateData).length > 0) {
             const userDocRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userDocRef, updateData);

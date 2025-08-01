@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, FileUp, Link as LinkIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, FileUp, Link as LinkIcon, PlusCircle, Trash2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -50,6 +50,7 @@ const ProfileSettings = () => {
         workExperience: [],
         education: [],
         cvFileName: '',
+        avatar: '',
     });
     
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -88,14 +89,22 @@ const ProfileSettings = () => {
             setCvFile(null);
         }
     }, [currentUser]);
-
+    
     const hasChanges = useMemo(() => {
         if (!currentUser) return false;
-        
-        const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
-        const newInputsHaveText = newLink.title || newLink.url || newWork.title || newWork.company || newEdu.school || newEdu.degree;
 
-        return mainFormChanged || !!avatarFile || !!cvFile || !!newInputsHaveText;
+        // Check for changes in simple fields and arrays
+        const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
+        
+        // Check if there are new, un-added entries in the temp input fields
+        const newInputsHaveText = newLink.title.trim() !== '' || newLink.url.trim() !== '' ||
+                                 newWork.title.trim() !== '' || newWork.company.trim() !== '' ||
+                                 newEdu.school.trim() !== '' || newEdu.degree.trim() !== '';
+
+        // Check for new file uploads
+        const filesChanged = !!avatarFile || !!cvFile;
+
+        return mainFormChanged || newInputsHaveText || filesChanged;
     }, [formState, initialState, avatarFile, cvFile, currentUser, newLink, newWork, newEdu]);
 
 
@@ -127,6 +136,12 @@ const ProfileSettings = () => {
         }
     };
     
+    const handleRemoveCv = () => {
+        setCvFile(null);
+        handleFieldChange('cvFileName', '');
+        if(cvFileInputRef.current) cvFileInputRef.current.value = "";
+    }
+
     const handleAddLink = () => {
         if (newLink.title.trim() && newLink.url.trim()) {
             const links = formState.links ? [...formState.links] : [];
@@ -181,67 +196,47 @@ const ProfileSettings = () => {
             return;
         }
 
-        const updatePayload: Partial<User> = {};
+        // Start with a clean payload
+        let updatePayload: Partial<User> = {};
+        
+        // Add any pending items from temp inputs into the formState before comparison
+        let finalFormState = { ...formState };
 
-        // Compare each field and add to payload only if it has changed
-        Object.keys(formState).forEach(key => {
-            const formValue = (formState as any)[key];
-            const initialValue = (initialState as any)[key];
+        if (newLink.title.trim() && newLink.url.trim()) {
+            finalFormState.links = [...(finalFormState.links || []), newLink];
+            setNewLink({ title: '', url: '' });
+        }
+        if (newWork.title.trim() && newWork.company.trim()) {
+            finalFormState.workExperience = [...(finalFormState.workExperience || []), newWork];
+            setNewWork({ title: '', company: '' });
+        }
+        if (newEdu.school.trim() && newEdu.degree.trim()) {
+            finalFormState.education = [...(finalFormState.education || []), newEdu];
+            setNewEdu({ school: '', degree: '' });
+        }
+
+        // Compare the final state with the initial state
+        (Object.keys(finalFormState) as Array<keyof typeof finalFormState>).forEach(key => {
+            const formValue = finalFormState[key];
+            const initialValue = initialState[key];
 
             if (JSON.stringify(formValue) !== JSON.stringify(initialValue)) {
                 (updatePayload as any)[key] = formValue;
             }
         });
-        
-        if (formState.dob && initialState.dob) {
-            const formDate = new Date(formState.dob).getTime();
-            const initialDate = new Date(initialState.dob).getTime();
-            if(formDate !== initialDate) {
-                 updatePayload.dob = formState.dob;
-            }
-        } else if (formState.dob) {
-            updatePayload.dob = formState.dob;
-        }
-
 
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
         if (cvFile) filesToUpload.cv = cvFile;
         
         if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
-             const newInputsHaveText = newLink.title || newLink.url || newWork.title || newWork.company || newEdu.school || newEdu.degree;
-             if (!newInputsHaveText) {
-                toast({ description: "No changes to save." });
-                return;
-             }
+             toast({ description: "No changes to save." });
+             return;
         }
-
-        // Add any pending items before saving
-        let finalPayload = { ...updatePayload };
-        let updatedLinks = finalPayload.links || formState.links || [];
-        if (newLink.title && newLink.url) {
-            updatedLinks = [...updatedLinks, newLink];
-            setNewLink({title: '', url: ''});
-        }
-        finalPayload.links = updatedLinks;
-        
-        let updatedWork = finalPayload.workExperience || formState.workExperience || [];
-        if (newWork.title && newWork.company) {
-            updatedWork = [...updatedWork, newWork];
-            setNewWork({title: '', company: ''});
-        }
-        finalPayload.workExperience = updatedWork;
-
-        let updatedEdu = finalPayload.education || formState.education || [];
-        if (newEdu.school && newEdu.degree) {
-            updatedEdu = [...updatedEdu, newEdu];
-            setNewEdu({school: '', degree: ''});
-        }
-        finalPayload.education = updatedEdu;
 
         startTransition(async () => {
             try {
-                await updateUserProfile(finalPayload, filesToUpload);
+                await updateUserProfile(updatePayload, filesToUpload);
                 toast({ title: "Success!", description: "Your profile information has been updated successfully." });
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
@@ -299,10 +294,17 @@ const ProfileSettings = () => {
                 <div className="space-y-6">
                     <DetailSection title="CV & Portfolio" icon={Briefcase}>
                         <div className="space-y-4">
-                            <Button variant="outline" className="w-full justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
-                                <FileUp className="mr-2 h-4 w-4" />
-                                {cvFile ? cvFile.name : (formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV')}
-                            </Button>
+                             <div className="flex items-center gap-2">
+                                <Button variant="outline" className="flex-1 justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
+                                    <FileUp className="mr-2 h-4 w-4" />
+                                    {formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV'}
+                                </Button>
+                                {formState.cvFileName && (
+                                    <Button variant="ghost" size="icon" onClick={handleRemoveCv}>
+                                        <XCircle className="w-5 h-5 text-destructive" />
+                                    </Button>
+                                )}
+                            </div>
                             
                             <div className="space-y-2">
                                 <Label>External Links (Portfolio, LinkedIn, etc.)</Label>
