@@ -9,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Send, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 const CreatePostCard = () => {
   const { addPost, currentUser } = useAppContext();
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<{ type: 'image' | 'video'; src: string } | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handlePost = () => {
     if (!content.trim() && !media) return;
@@ -30,9 +32,21 @@ const CreatePostCard = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 1048576) { // 1MB limit
+        toast({
+            variant: "destructive",
+            title: "حجم الملف كبير جدًا",
+            description: "الرجاء اختيار ملف حجمه أقل من 1 ميجابايت.",
+        });
+        return;
+      }
       const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : null);
       if (!fileType) {
-        // Optionally, show a toast message for invalid file type
+        toast({
+            variant: "destructive",
+            title: "نوع الملف غير مدعوم",
+            description: "الرجاء اختيار صورة أو ملف فيديو.",
+        });
         return;
       }
       

@@ -86,13 +86,7 @@ const ProfileSettings = () => {
         }
         
         if (avatarPreview && avatarFile) {
-             toast({
-                variant: "destructive",
-                title: "خطأ في رفع الصورة",
-                description: "ميزة رفع الصور معطلة مؤقتاً.",
-            });
-            setAvatarPreview(null);
-            setAvatarFile(null);
+            updatePayload.avatar = avatarPreview;
         }
 
         if (Object.keys(updatePayload).length === 0) {
@@ -181,7 +175,7 @@ const ProfileSettings = () => {
                         <Button 
                           size="icon" 
                           className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" 
-                          onClick={() => toast({description: "ميزة رفع الصور معطلة مؤقتاً."})}>
+                          onClick={() => fileInputRef.current?.click()}>
                             <Camera className="w-4 h-4"/>
                             <span className="sr-only">تغيير الصورة</span>
                         </Button>
