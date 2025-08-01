@@ -66,7 +66,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black/90">
             <AppHeader title="Settings" icon={SettingsIcon} />
 
-            <div className="flex-1 overflow-hidden md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6">
+            <div className="flex-1 md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6 overflow-hidden">
                 
                 {/* Desktop Sidebar */}
                 <aside className="hidden md:flex flex-col gap-2 bg-amber-100 dark:bg-stone-900 p-4 rounded-xl border">
@@ -93,7 +93,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 </aside>
 
                  {/* Mobile Navigation & Content Area */}
-                <main className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex flex-col h-full overflow-hidden">
                      {isMobile && (
                         <div className="p-2">
                              <div className="relative">
@@ -117,7 +117,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                              </div>
                         </div>
                     )}
-                    <ScrollArea className="flex-1">
+                    <ScrollArea className="h-full">
                         <div className="p-4 md:p-0">
                             {renderSection()}
                         </div>
@@ -130,7 +130,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                             </div>
                         )}
                     </ScrollArea>
-                </main>
+                </div>
             </div>
         </div>
     );
