@@ -39,30 +39,30 @@ const AppHeader: React.FC<AppHeaderProps> = ({ title, icon: Icon }) => {
     };
 
     return (
-        <header className="p-4 md:px-6 md:py-4 border-b bg-amber-100 dark:bg-stone-900 z-10 sticky top-0">
+        <header className="p-4 md:px-6 md:py-4 border-b bg-primary text-primary-foreground z-10 sticky top-0">
              <div className="flex items-center justify-between gap-3">
                 <div dir="ltr" className="flex items-center gap-3">
                     <h1 className="text-3xl font-bold">{title}</h1>
-                    <Icon className="w-8 h-8 text-primary" />
+                    <Icon className="w-8 h-8" />
                 </div>
                 <div className="flex items-center gap-2">
-                     <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
-                        <Bell className="w-6 h-6 text-muted-foreground" />
+                     <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative hover:bg-primary/80">
+                        <Bell className="w-6 h-6" />
                         {unreadNotificationCount > 0 && (
-                            <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadNotificationCount}</Badge>
+                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadNotificationCount}</Badge>
                         )}
                     </Button>
-                     <Button variant="ghost" size="icon" onClick={handleFriendsClick} className="relative">
-                        <Users className="w-6 h-6 text-muted-foreground" />
+                     <Button variant="ghost" size="icon" onClick={handleFriendsClick} className="relative hover:bg-primary/80">
+                        <Users className="w-6 h-6" />
                     </Button>
-                     <Button variant="ghost" size="icon" onClick={handleMessagesClick} className="relative">
-                        <MessageSquare className="w-6 h-6 text-muted-foreground" />
+                     <Button variant="ghost" size="icon" onClick={handleMessagesClick} className="relative hover:bg-primary/80">
+                        <MessageSquare className="w-6 h-6" />
                         {totalUnreadCount > 0 && (
-                            <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{totalUnreadCount}</Badge>
+                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{totalUnreadCount}</Badge>
                         )}
                     </Button>
-                     <Button variant="ghost" size="icon">
-                        <ShoppingCart className="w-6 h-6 text-muted-foreground" />
+                     <Button variant="ghost" size="icon" className="hover:bg-primary/80">
+                        <ShoppingCart className="w-6 h-6" />
                     </Button>
                 </div>
             </div>
