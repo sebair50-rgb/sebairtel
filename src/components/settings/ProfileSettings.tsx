@@ -17,6 +17,7 @@ import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
+import type { User } from '@/lib/types';
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
