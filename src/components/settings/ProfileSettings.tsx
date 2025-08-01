@@ -56,6 +56,11 @@ const ProfileSettings = () => {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [cvFile, setCvFile] = useState<File | null>(null);
 
+    // State for temporary inputs
+    const [newLink, setNewLink] = useState({ title: '', url: '' });
+    const [newWork, setNewWork] = useState({ title: '', company: '' });
+    const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
+
     const [isPending, startTransition] = useTransition();
 
      useEffect(() => {
@@ -85,10 +90,12 @@ const ProfileSettings = () => {
 
     const hasChanges = useMemo(() => {
         if (!currentUser) return false;
-        if (avatarFile || cvFile) return true;
-        // Deep comparison for arrays/objects
-        return JSON.stringify(formState) !== JSON.stringify(initialState);
-    }, [formState, initialState, avatarFile, cvFile, currentUser]);
+        
+        const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
+        const newInputsHaveText = newLink.title || newLink.url || newWork.title || newWork.company || newEdu.school || newEdu.degree;
+
+        return mainFormChanged || !!avatarFile || !!cvFile || !!newInputsHaveText;
+    }, [formState, initialState, avatarFile, cvFile, currentUser, newLink, newWork, newEdu]);
 
 
     const handleFieldChange = (field: keyof User, value: any) => {
@@ -121,13 +128,10 @@ const ProfileSettings = () => {
     
     const handleAddLink = () => {
         const { links = [] } = formState;
-        const newLinkTitle = (document.getElementById('new-link-title') as HTMLInputElement)?.value;
-        const newLinkUrl = (document.getElementById('new-link-url') as HTMLInputElement)?.value;
-
-        if (newLinkTitle?.trim() && newLinkUrl?.trim()) {
-            handleFieldChange('links', [...links, { title: newLinkTitle, url: newLinkUrl }]);
-            (document.getElementById('new-link-title') as HTMLInputElement).value = '';
-            (document.getElementById('new-link-url') as HTMLInputElement).value = '';
+        
+        if (newLink.title.trim() && newLink.url.trim()) {
+            handleFieldChange('links', [...links, { title: newLink.title, url: newLink.url }]);
+            setNewLink({ title: '', url: '' });
         } else {
             toast({ variant: 'destructive', title: "Invalid Link", description: 'Please provide both a title and a URL.' });
         }
@@ -140,13 +144,9 @@ const ProfileSettings = () => {
     
     const handleAddWork = () => {
         const { workExperience = [] } = formState;
-        const newWorkTitle = (document.getElementById('new-work-title') as HTMLInputElement)?.value;
-        const newWorkCompany = (document.getElementById('new-work-company') as HTMLInputElement)?.value;
-
-        if (newWorkTitle?.trim() && newWorkCompany?.trim()) {
-            handleFieldChange('workExperience', [...workExperience, { title: newWorkTitle, company: newWorkCompany }]);
-            (document.getElementById('new-work-title') as HTMLInputElement).value = '';
-            (document.getElementById('new-work-company') as HTMLInputElement).value = '';
+        if (newWork.title.trim() && newWork.company.trim()) {
+            handleFieldChange('workExperience', [...workExperience, { title: newWork.title, company: newWork.company }]);
+            setNewWork({ title: '', company: '' });
         } else {
             toast({ variant: 'destructive', title: "Invalid Work Entry", description: 'Please provide both a title and a company.' });
         }
@@ -159,13 +159,9 @@ const ProfileSettings = () => {
 
     const handleAddEdu = () => {
         const { education = [] } = formState;
-        const newEduSchool = (document.getElementById('new-edu-school') as HTMLInputElement)?.value;
-        const newEduDegree = (document.getElementById('new-edu-degree') as HTMLInputElement)?.value;
-
-        if (newEduSchool?.trim() && newEduDegree?.trim()) {
-            handleFieldChange('education', [...education, { school: newEduSchool, degree: newEduDegree }]);
-            (document.getElementById('new-edu-school') as HTMLInputElement).value = '';
-            (document.getElementById('new-edu-degree') as HTMLInputElement).value = '';
+        if (newEdu.school.trim() && newEdu.degree.trim()) {
+            handleFieldChange('education', [...education, { school: newEdu.school, degree: newEdu.degree }]);
+            setNewEdu({ school: '', degree: '' });
         } else {
             toast({ variant: 'destructive', title: "Invalid Education Entry", description: 'Please provide both a school and a degree.' });
         }
@@ -303,8 +299,8 @@ const ProfileSettings = () => {
                                     </div>
                                 ))}
                                 <div className="flex items-center gap-2">
-                                    <Input id="new-link-title" placeholder="Link Title (e.g., Portfolio)" />
-                                    <Input id="new-link-url" placeholder="https://..." />
+                                    <Input value={newLink.title} onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))} placeholder="Link Title (e.g., Portfolio)" />
+                                    <Input value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} placeholder="https://..." />
                                     <Button variant="ghost" size="icon" onClick={handleAddLink}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                                 </div>
                             </div>
@@ -320,8 +316,8 @@ const ProfileSettings = () => {
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
-                                <Input id="new-work-title" placeholder="Job Title" />
-                                <Input id="new-work-company" placeholder="Company Name" />
+                                <Input value={newWork.title} onChange={(e) => setNewWork(prev => ({ ...prev, title: e.target.value }))} placeholder="Job Title" />
+                                <Input value={newWork.company} onChange={(e) => setNewWork(prev => ({ ...prev, company: e.target.value }))} placeholder="Company Name" />
                                 <Button variant="ghost" size="icon" onClick={handleAddWork}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
@@ -336,8 +332,8 @@ const ProfileSettings = () => {
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
-                                <Input id="new-edu-school" placeholder="School/University" />
-                                <Input id="new-edu-degree" placeholder="Degree/Certificate" />
+                                <Input value={newEdu.school} onChange={(e) => setNewEdu(prev => ({ ...prev, school: e.target.value }))} placeholder="School/University" />
+                                <Input value={newEdu.degree} onChange={(e) => setNewEdu(prev => ({ ...prev, degree: e.target.value }))} placeholder="Degree/Certificate" />
                                 <Button variant="ghost" size="icon" onClick={handleAddEdu}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
@@ -361,3 +357,5 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
+
+    
