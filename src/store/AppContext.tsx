@@ -12,7 +12,6 @@ import {
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
-import { enUS } from 'date-fns/locale';
 import { useTranslation } from './LanguageContext';
 
 type Visibility = 'everyone' | 'friends' | 'nobody';
@@ -164,6 +163,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+        const savedSettings = localStorage.getItem('app-settings');
+        if (savedSettings) {
+             setSettings(prev => ({...prev, ...JSON.parse(savedSettings)}));
+        }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
         localStorage.setItem('app-settings', JSON.stringify(settings));
         
         // Handle theme
@@ -175,11 +183,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         } else {
             root.classList.add(settings.theme);
         }
-        
-        // Handle language
-        setLanguage(settings.language);
     }
-  }, [settings, setLanguage]);
+  }, [settings]);
+
+  useEffect(() => {
+      // Sync language context when app settings change
+      if (settings.language) {
+          setLanguage(settings.language);
+      }
+  }, [settings.language, setLanguage]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
@@ -851,17 +863,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             updateData.name = data.name;
         }
         
-        if (data.phone !== undefined && data.phone !== currentUser?.phone) {
-            updateData.phone = data.phone;
-        }
-
-        if (data.dob !== undefined && data.dob !== currentUser?.dob) {
-            updateData.dob = data.dob;
-        }
-        
-        if (data.bio !== undefined && data.bio !== (currentUser?.bio || '')) {
-            updateData.bio = data.bio;
-        }
+        if (data.phone !== undefined && data.phone !== currentUser?.phone) updateData.phone = data.phone;
+        if (data.dob !== undefined && data.dob !== currentUser?.dob) updateData.dob = data.dob;
+        if (data.bio !== undefined && data.bio !== (currentUser?.bio || '')) updateData.bio = data.bio;
+        if (data.city !== undefined && data.city !== (currentUser?.city || '')) updateData.city = data.city;
+        if (data.from !== undefined && data.from !== (currentUser?.from || '')) updateData.from = data.from;
         
         if (data.avatar && data.avatar !== currentUser?.avatar) {
              if (data.avatar.length > 1048487) {
@@ -935,3 +941,5 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+    

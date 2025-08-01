@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -16,6 +16,28 @@ import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
+import { Separator } from '../ui/separator';
+
+const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
+    <div className="space-y-4">
+        <div className="flex items-center gap-2">
+            <Icon className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-semibold text-lg">{title}</h3>
+        </div>
+        {children}
+        <Separator className="mt-6" />
+    </div>
+);
+
+const AddButton = ({ label }: { label: string }) => {
+    const { toast } = useToast();
+    return (
+        <Button variant="outline" className="w-full justify-start p-3 bg-muted/50" onClick={() => toast({ description: 'This feature will be activated soon.' })}>
+            {label}
+        </Button>
+    )
+};
+
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
@@ -26,6 +48,8 @@ const ProfileSettings = () => {
     const [phone, setPhone] = useState(currentUser?.phone || '');
     const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
     const [bio, setBio] = useState(currentUser?.bio || '');
+    const [city, setCity] = useState(currentUser?.city || '');
+    const [from, setFrom] = useState(currentUser?.from || '');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -36,6 +60,8 @@ const ProfileSettings = () => {
             setPhone(currentUser.phone || '');
             setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
             setBio(currentUser.bio || '');
+            setCity(currentUser.city || '');
+            setFrom(currentUser.from || '');
             setAvatarPreview(null);
             setAvatarFile(null);
         }
@@ -68,22 +94,13 @@ const ProfileSettings = () => {
         
         const updatePayload: Partial<Omit<User, 'id'>> = {};
 
-        if (name.trim() && name.trim() !== currentUser.name) {
-            updatePayload.name = name.trim();
-        }
-        
-        if (phone.trim() !== (currentUser.phone || '')) {
-            updatePayload.phone = phone.trim();
-        }
-
+        if (name.trim() && name.trim() !== currentUser.name) updatePayload.name = name.trim();
+        if (phone.trim() !== (currentUser.phone || '')) updatePayload.phone = phone.trim();
         const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
-        if (formattedDob !== currentUser.dob) {
-            updatePayload.dob = formattedDob;
-        }
-        
-        if (bio.trim() !== (currentUser.bio || '')) {
-            updatePayload.bio = bio.trim();
-        }
+        if (formattedDob !== currentUser.dob) updatePayload.dob = formattedDob;
+        if (bio.trim() !== (currentUser.bio || '')) updatePayload.bio = bio.trim();
+        if (city.trim() !== (currentUser.city || '')) updatePayload.city = city.trim();
+        if (from.trim() !== (currentUser.from || '')) updatePayload.from = from.trim();
         
         if (avatarPreview && avatarFile) {
             updatePayload.avatar = avatarPreview;
@@ -149,6 +166,8 @@ const ProfileSettings = () => {
       (phone.trim() !== (currentUser.phone || '')) ||
       (formattedDob !== (currentUser.dob || undefined)) ||
       (bio.trim() !== (currentUser.bio || '')) ||
+      (city.trim() !== (currentUser.city || '')) ||
+      (from.trim() !== (currentUser.from || '')) ||
       !!avatarFile;
 
 
@@ -233,8 +252,36 @@ const ProfileSettings = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-end">
-                    <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges}>
+                <Separator />
+                
+                <div className="space-y-6">
+                    <DetailSection title="Work" icon={Briefcase}>
+                        <AddButton label="Add work information" />
+                    </DetailSection>
+
+                    <DetailSection title="Education Level" icon={GraduationCap}>
+                        <div className="space-y-2">
+                            <AddButton label="Add high school" />
+                            <AddButton label="Add college" />
+                        </div>
+                    </DetailSection>
+                    
+                    <DetailSection title="Current City" icon={Home}>
+                        <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g., Dubai" />
+                    </DetailSection>
+
+                    <DetailSection title="Hometown" icon={MapPin}>
+                        <Input id="from" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="e.g., Riyadh" />
+                    </DetailSection>
+
+                     <DetailSection title="Relationship" icon={Heart}>
+                        <AddButton label="Add relationship status" />
+                    </DetailSection>
+                </div>
+
+
+                <div className="flex justify-end mt-8">
+                    <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges} className="w-full md:w-auto">
                         {isPending && <Loader2 className="mr-2 animate-spin" />}
                         {isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -245,3 +292,5 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
+
+    
