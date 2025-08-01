@@ -18,7 +18,11 @@ const CreatePostCard = () => {
 
   const handlePost = () => {
     if (!content.trim() && !media) return;
-    addPost({ content, media });
+    addPost({ 
+        content, 
+        mediaType: media?.type,
+        mediaSrc: media?.src 
+    });
     setContent('');
     setMedia(null);
   };

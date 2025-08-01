@@ -40,7 +40,7 @@ interface AppContextType {
   currentUser: User | null;
   updateUserProfile: (data: Partial<Omit<User, 'id'>>) => Promise<void>;
   posts: Post[];
-  addPost: (post: Pick<Post, 'content' | 'media'>) => Promise<void>;
+  addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
   calls: Call[];
@@ -378,17 +378,25 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addPost = async (postData: Pick<Post, 'content' | 'media'>) => {
+  const addPost = async (postData: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => {
     if (!currentUser) return;
-    await addDoc(collection(db, 'posts'), {
-        ...postData,
-        user: currentUser.name,
-        userId: currentUser.id,
-        avatar: currentUser.avatar,
-        likedBy: [],
-        comments: [],
-        timestamp: serverTimestamp(),
-    });
+    
+    const dataToSave: any = {
+      content: postData.content,
+      user: currentUser.name,
+      userId: currentUser.id,
+      avatar: currentUser.avatar,
+      likedBy: [],
+      comments: [],
+      timestamp: serverTimestamp(),
+    };
+
+    if (postData.mediaType && postData.mediaSrc) {
+      dataToSave.mediaType = postData.mediaType;
+      dataToSave.mediaSrc = postData.mediaSrc;
+    }
+
+    await addDoc(collection(db, 'posts'), dataToSave);
   };
   
   const updatePost = async (postId: string, data: Partial<Post>) => {

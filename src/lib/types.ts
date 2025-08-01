@@ -65,10 +65,8 @@ export interface Post {
   userId: string;
   avatar: string; // photoURL
   content: string;
-  media?: {
-    type: 'image' | 'video';
-    src: string;
-  } | null;
+  mediaType?: 'image' | 'video';
+  mediaSrc?: string;
   time: string;
   timestamp: Timestamp;
   likedBy?: string[];
