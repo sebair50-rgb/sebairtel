@@ -47,7 +47,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
              <AppHeader title="Contact" icon={Phone} />
              <Tabs value={activeSubTab} onValueChange={handleTabChange} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-background border-b">
-                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
+                    <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-amber-100 dark:bg-stone-900 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <MessageSquare className="mr-1 sm:mr-2" />
                             My Chats

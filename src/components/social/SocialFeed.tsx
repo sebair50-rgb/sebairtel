@@ -33,7 +33,7 @@ const SocialFeed = () => {
                 <div className="bg-background border-b sticky top-0 z-10">
                     <AppHeader title="Community" icon={Home} />
                     <div className="px-4 md:px-6 pb-2">
-                        <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
+                        <TabsList className="grid w-full grid-cols-5 h-auto p-1.5 bg-amber-100 dark:bg-stone-900">
                         {socialTabs.map(tab => (
                                 <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                                     <tab.icon className="mr-1 sm:mr-2" />
