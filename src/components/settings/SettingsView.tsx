@@ -93,22 +93,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 <main className="flex-1 overflow-y-auto">
                      {isMobile && (
                         <div className="p-2">
-                             <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
-                                <div className="flex w-max space-x-2 p-2">
-                                    {settingsSections.map(section => (
-                                         <Button
-                                            key={section.id}
-                                            variant={activeSection === section.id ? 'secondary' : 'ghost'}
-                                            onClick={() => setActiveSection(section.id)}
-                                            className="justify-start gap-2 px-4 py-2 text-sm h-auto rounded-full"
-                                        >
-                                            <section.icon className="w-4 h-4" />
-                                            {section.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                                <ScrollBar orientation="horizontal" />
-                            </ScrollArea>
+                             <div className="relative">
+                                 <ScrollArea className="w-full whitespace-nowrap rounded-lg border">
+                                    <div className="flex w-max space-x-2 p-2">
+                                        {settingsSections.map(section => (
+                                             <Button
+                                                key={section.id}
+                                                variant={activeSection === section.id ? 'secondary' : 'ghost'}
+                                                onClick={() => setActiveSection(section.id)}
+                                                className="justify-start gap-2 px-4 py-2 text-sm h-auto rounded-full"
+                                            >
+                                                <section.icon className="w-4 h-4" />
+                                                {section.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                                 <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-slate-50 dark:from-black/90"></div>
+                             </div>
                         </div>
                     )}
                     <div className="p-4 md:p-0">
