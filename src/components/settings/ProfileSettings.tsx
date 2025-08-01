@@ -17,7 +17,7 @@ import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
-import type { User } from '@/lib/types';
+import type { User, WorkExperience, Education } from '@/lib/types';
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
@@ -54,12 +54,21 @@ const ProfileSettings = () => {
     const [bio, setBio] = useState(currentUser?.bio || '');
     const [city, setCity] = useState(currentUser?.city || '');
     const [from, setFrom] = useState(currentUser?.from || '');
+    const [relationshipStatus, setRelationshipStatus] = useState(currentUser?.relationshipStatus || '');
     
+    // Complex state
+    const [workExperience, setWorkExperience] = useState<WorkExperience[]>(currentUser?.workExperience || []);
+    const [education, setEducation] = useState<Education[]>(currentUser?.education || []);
+    const [links, setLinks] = useState(currentUser?.links || []);
+    
+    // Temporary state for new entries
+    const [newWork, setNewWork] = useState({ title: '', company: '' });
+    const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
+    const [newLink, setNewLink] = useState({ title: '', url: '' });
+
     // CV and Links state
     const [cvFile, setCvFile] = useState<File | null>(null);
     const [cvFileName, setCvFileName] = useState(currentUser?.cvFileName || '');
-    const [links, setLinks] = useState(currentUser?.links || []);
-    const [newLink, setNewLink] = useState({ title: '', url: '' });
 
     // Avatar state
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -77,6 +86,10 @@ const ProfileSettings = () => {
             setFrom(currentUser.from || '');
             setCvFileName(currentUser.cvFileName || '');
             setLinks(currentUser.links || []);
+            setWorkExperience(currentUser.workExperience || []);
+            setEducation(currentUser.education || []);
+            setRelationshipStatus(currentUser.relationshipStatus || '');
+
             setAvatarPreview(null);
             setAvatarFile(null);
             setCvFile(null);
@@ -121,6 +134,32 @@ const ProfileSettings = () => {
         setLinks(links.filter((_, i) => i !== index));
     };
 
+    const handleAddWork = () => {
+        if (newWork.title.trim() && newWork.company.trim()) {
+            setWorkExperience([...workExperience, newWork]);
+            setNewWork({ title: '', company: '' });
+        } else {
+            toast({ variant: 'destructive', title: "Invalid Work Entry", description: 'Please provide both a title and a company.' });
+        }
+    };
+
+    const handleRemoveWork = (index: number) => {
+        setWorkExperience(workExperience.filter((_, i) => i !== index));
+    };
+
+    const handleAddEdu = () => {
+        if (newEdu.school.trim() && newEdu.degree.trim()) {
+            setEducation([...education, newEdu]);
+            setNewEdu({ school: '', degree: '' });
+        } else {
+            toast({ variant: 'destructive', title: "Invalid Education Entry", description: 'Please provide both a school and a degree.' });
+        }
+    };
+
+    const handleRemoveEdu = (index: number) => {
+        setEducation(education.filter((_, i) => i !== index));
+    };
+
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
@@ -133,7 +172,10 @@ const ProfileSettings = () => {
         if (bio.trim() !== (currentUser.bio || '')) updatePayload.bio = bio.trim();
         if (city.trim() !== (currentUser.city || '')) updatePayload.city = city.trim();
         if (from.trim() !== (currentUser.from || '')) updatePayload.from = from.trim();
+        if (relationshipStatus.trim() !== (currentUser.relationshipStatus || '')) updatePayload.relationshipStatus = relationshipStatus.trim();
         if (JSON.stringify(links) !== JSON.stringify(currentUser.links || [])) updatePayload.links = links;
+        if (JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || [])) updatePayload.workExperience = workExperience;
+        if (JSON.stringify(education) !== JSON.stringify(currentUser.education || [])) updatePayload.education = education;
         
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
@@ -184,7 +226,10 @@ const ProfileSettings = () => {
       (bio.trim() !== (currentUser.bio || '')) ||
       (city.trim() !== (currentUser.city || '')) ||
       (from.trim() !== (currentUser.from || '')) ||
+      (relationshipStatus.trim() !== (currentUser.relationshipStatus || '')) ||
       JSON.stringify(links) !== JSON.stringify(currentUser.links || []) ||
+      JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || []) ||
+      JSON.stringify(education) !== JSON.stringify(currentUser.education || []) ||
       !!avatarFile || !!cvFile;
 
 
@@ -250,11 +295,41 @@ const ProfileSettings = () => {
                         </div>
                     </DetailSection>
 
-                    <DetailSection title="Work Experience" icon={Briefcase}><AddButton label="Add work information" /></DetailSection>
-                    <DetailSection title="Education" icon={GraduationCap}><AddButton label="Add education" /></DetailSection>
+                    <DetailSection title="Work Experience" icon={Briefcase}>
+                         <div className="space-y-2">
+                            {workExperience.map((work, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
+                                    <p className="flex-1 text-sm"><span className="font-semibold">{work.title}</span> at {work.company}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveWork(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                </div>
+                            ))}
+                            <div className="flex items-center gap-2">
+                                <Input placeholder="Job Title" value={newWork.title} onChange={e => setNewWork({...newWork, title: e.target.value})} />
+                                <Input placeholder="Company Name" value={newWork.company} onChange={e => setNewWork({...newWork, company: e.target.value})} />
+                                <Button variant="ghost" size="icon" onClick={handleAddWork}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                            </div>
+                        </div>
+                    </DetailSection>
+                    
+                    <DetailSection title="Education" icon={GraduationCap}>
+                        <div className="space-y-2">
+                            {education.map((edu, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
+                                    <p className="flex-1 text-sm"><span className="font-semibold">{edu.degree}</span> from {edu.school}</p>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveEdu(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                </div>
+                            ))}
+                            <div className="flex items-center gap-2">
+                                <Input placeholder="School/University" value={newEdu.school} onChange={e => setNewEdu({...newEdu, school: e.target.value})} />
+                                <Input placeholder="Degree/Certificate" value={newEdu.degree} onChange={e => setNewEdu({...newEdu, degree: e.target.value})} />
+                                <Button variant="ghost" size="icon" onClick={handleAddEdu}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                            </div>
+                        </div>
+                    </DetailSection>
+                    
                     <DetailSection title="Current City" icon={Home}><Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
                     <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
-                    <DetailSection title="Relationship" icon={Heart}><AddButton label="Add relationship status" /></DetailSection>
+                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={relationshipStatus} onChange={(e) => setRelationshipStatus(e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
                 </div>
 
 

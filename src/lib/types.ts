@@ -1,6 +1,16 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export interface WorkExperience {
+  title: string;
+  company: string;
+}
+
+export interface Education {
+  school: string;
+  degree: string;
+}
+
 export interface User {
   id: string; // Changed to string for Firestore UID
   name: string;
@@ -20,6 +30,9 @@ export interface User {
   cvUrl?: string;
   cvFileName?: string;
   links?: { title: string; url: string }[];
+  workExperience?: WorkExperience[];
+  education?: Education[];
+  relationshipStatus?: string;
 }
 
 export interface Message {
