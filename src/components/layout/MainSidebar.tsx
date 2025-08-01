@@ -24,27 +24,23 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const { currentUser, selectedChatId, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead, settings } = useAppContext();
+  const { currentUser, selectedChatId, setSelectedChatId, settings } = useAppContext();
   const isMobile = useIsMobile();
 
   const handleTabClick = useCallback((tab: string) => {
     if (tab === 'contact') {
       setSelectedChatId(null);
     }
-    if (tab === 'notifications' && unreadNotificationCount > 0) {
-      markNotificationsAsRead();
-    }
     setActiveTab(tab);
-  }, [setActiveTab, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead]);
+  }, [setActiveTab, setSelectedChatId]);
 
   const allNavItems = useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي', isVisible: settings.interface.showAiTab },
     { name: 'contact', icon: Phone, label: 'تواصل', isVisible: settings.interface.showContactTab },
     { name: 'social', icon: Home, label: 'المجتمع', isVisible: settings.interface.showSocialTab },
-    { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount, isVisible: true }, // Always visible
     { name: 'apps', icon: AppWindow, label: 'التطبيقات', isVisible: settings.interface.showAppsTab },
     { name: 'settings', icon: Settings, label: 'الإعدادات', isVisible: true }, // Always visible
-  ], [unreadNotificationCount, settings.interface]);
+  ], [settings.interface]);
   
   const visibleNavItems = allNavItems.filter(item => item.isVisible);
   

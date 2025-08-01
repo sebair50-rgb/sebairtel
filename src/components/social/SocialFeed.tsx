@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Home, ShoppingCart, MessageSquare, Globe, Notebook, Users } from 'lucide-react';
+import { LayoutGrid, Video, Briefcase, Store, Newspaper, Home, ShoppingCart, MessageSquare, Globe, Notebook, Users, Bell } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -16,7 +16,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
 const SocialFeed = () => {
-    const { posts, chats, currentUser, setActiveTab, setSelectedChatId, setInitialContactTab } = useAppContext();
+    const { posts, chats, currentUser, setActiveTab, setSelectedChatId, setInitialContactTab, unreadNotificationCount, markNotificationsAsRead } = useAppContext();
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const totalUnreadCount = React.useMemo(() => {
@@ -33,6 +33,13 @@ const SocialFeed = () => {
     const handleFriendsClick = () => {
         setInitialContactTab('friends');
         setActiveTab('contact');
+    };
+    
+    const handleNotificationsClick = () => {
+        if (unreadNotificationCount > 0) {
+            markNotificationsAsRead();
+        }
+        setActiveTab('notifications');
     };
 
     const socialTabs = [
@@ -53,6 +60,12 @@ const SocialFeed = () => {
                             <h1 className="text-3xl font-bold">المجتمع</h1>
                         </div>
                         <div className="flex items-center gap-2">
+                             <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
+                                <Bell className="w-6 h-6 text-muted-foreground" />
+                                {unreadNotificationCount > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadNotificationCount}</Badge>
+                                )}
+                            </Button>
                              <Button variant="ghost" size="icon" onClick={handleFriendsClick} className="relative">
                                 <Users className="w-6 h-6 text-muted-foreground" />
                                 {/* Placeholder for friend request notifications */}
