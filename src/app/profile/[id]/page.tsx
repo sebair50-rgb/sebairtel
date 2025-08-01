@@ -7,7 +7,7 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info } from 'lucide-react';
+import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info, FileText, Mail, Phone, GraduationCap, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -19,9 +19,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PostCard from '@/components/social/PostCard';
+import { Separator } from '@/components/ui/separator';
 
 
 const UserProfilePage = () => {
@@ -158,7 +167,7 @@ const UserProfilePage = () => {
                     
                     {!isOwnProfile && (
                         <div className="mt-4 px-4 flex items-center justify-center gap-2">
-                            <Button className="flex-1 max-w-xs bg-blue-600 hover:bg-blue-700" onClick={handleAddFriend}>
+                             <Button className="flex-1 max-w-xs" onClick={handleAddFriend}>
                                 <UserPlus size={20} className="mr-2" />
                                 إضافة صديق
                             </Button>
@@ -166,6 +175,77 @@ const UserProfilePage = () => {
                                 <MessageSquare size={20} className="mr-2" />
                                 مراسلة
                             </Button>
+                            
+                             <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="flex-1 max-w-xs">
+                                        <FileText size={20} className="mr-2" />
+                                        CV
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-2xl">Curriculum Vitae</DialogTitle>
+                                        <DialogDescription>
+                                           Professional summary for {profileUser.name}.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <ScrollArea className="flex-1 -mx-6">
+                                    <div className="px-6 space-y-6 py-4">
+                                        <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+                                            <Avatar className="w-24 h-24 text-4xl">
+                                                <AvatarImage src={profileUser.avatar} />
+                                                <AvatarFallback>{profileUser.name?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <h2 className="text-3xl font-bold">{profileUser.name}</h2>
+                                                <div className="flex items-center gap-4 mt-2 text-muted-foreground justify-center sm:justify-start">
+                                                    {profileUser.email && <div className="flex items-center gap-1"><Mail size={14} /> {profileUser.email}</div>}
+                                                    {profileUser.phone && <div className="flex items-center gap-1"><Phone size={14} /> {profileUser.phone}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <Separator />
+
+                                        <div>
+                                            <h3 className="text-xl font-semibold mb-2">Summary</h3>
+                                            <p className="text-muted-foreground">{profileUser.bio || "No summary provided."}</p>
+                                        </div>
+                                        
+                                        <Separator />
+
+                                        <div>
+                                            <h3 className="text-xl font-semibold mb-4">Work Experience</h3>
+                                            <div className="space-y-4">
+                                                <div className="flex gap-4">
+                                                    <Briefcase className="mt-1" />
+                                                    <div>
+                                                        <h4 className="font-bold">Lead Developer at Tech Solutions Inc.</h4>
+                                                        <p className="text-sm text-muted-foreground">2020 - Present</p>
+                                                        <p className="mt-1">Leading a team to develop cutting-edge web applications using React and Next.js.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <Separator />
+
+                                        <div>
+                                            <h3 className="text-xl font-semibold mb-4">Education</h3>
+                                             <div className="flex gap-4">
+                                                <GraduationCap className="mt-1" />
+                                                <div>
+                                                    <h4 className="font-bold">B.Sc. in Computer Science</h4>
+                                                    <p className="text-sm text-muted-foreground">University of Technology - 2016-2020</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </ScrollArea>
+                                </DialogContent>
+                            </Dialog>
+
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="secondary" size="icon">
