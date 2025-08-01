@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
 import useIsMobile from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -14,6 +14,7 @@ import { ScrollArea, ScrollBar } from '../ui/scroll-area';
 import PrivacySettings from './PrivacySettings';
 import SoundSettings from './SoundSettings';
 import InterfaceSettings from './InterfaceSettings';
+import AppHeader from '../layout/AppHeader';
 
 interface SettingsViewProps {
     onLogout: () => void;
@@ -60,9 +61,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black/90">
-            <header className="p-4 md:p-6 border-b bg-background z-10 sticky top-0">
-                <h1 className="text-2xl md:text-3xl font-bold">الإعدادات</h1>
-            </header>
+            <AppHeader title="الإعدادات" icon={SettingsIcon} />
 
             <div className="flex-1 overflow-hidden md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6">
                 

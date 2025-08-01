@@ -34,19 +34,6 @@ export default {
       },
     },
     extend: {
-      typography: (theme: any) => ({
-        DEFAULT: {
-          css: {
-            color: theme('colors.gray.700'),
-            a: {
-              color: theme('colors.primary.DEFAULT'),
-              '&:hover': {
-                color: theme('colors.primary.DEFAULT'),
-              },
-            },
-          },
-        },
-      }),
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
@@ -113,5 +100,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
+  plugins: [require('tailwindcss-animate')],
 } satisfies Config;

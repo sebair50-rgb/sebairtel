@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -8,6 +9,7 @@ import ChatInterface from '../chat/ChatInterface';
 import UsersView from '../users/UsersView';
 import { useAppContext } from '@/store/AppContext';
 import { MessageSquare } from 'lucide-react';
+import AppHeader from '../layout/AppHeader';
 
 interface CallsViewProps {
   setActiveTab: (tab: string) => void;
@@ -42,14 +44,9 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-100">
-             <header className="bg-white p-4 flex items-center justify-between border-b">
-                <div className="flex items-center gap-2">
-                    <Phone className="w-8 h-8 text-primary" />
-                    <h1 className="text-2xl font-bold">تواصل</h1>
-                </div>
-            </header>
+             <AppHeader title="تواصل" icon={Phone} />
              <Tabs value={activeSubTab} onValueChange={handleTabChange} className="w-full flex flex-col flex-1">
-                <div className="px-4 md:px-6 pt-4 bg-white">
+                <div className="px-4 md:px-6 pt-4 bg-background border-b">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <MessageSquare className="ml-1 sm:ml-2" />

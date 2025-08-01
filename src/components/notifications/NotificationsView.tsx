@@ -10,6 +10,7 @@ import NotificationItem from './NotificationItem';
 import type { Notification } from '@/lib/types';
 import { Button } from '../ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
+import AppHeader from '../layout/AppHeader';
 
 const NotificationsView = () => {
     const { notifications, setActiveTab, setSelectedChatId, setInitialContactTab, deleteNotifications } = useAppContext();
@@ -75,12 +76,9 @@ const NotificationsView = () => {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="p-4 md:p-6 pb-4 border-b bg-background z-10">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <Bell className="w-8 h-8 text-primary" />
-                        <h1 className="text-3xl font-bold">الإشعارات</h1>
-                    </div>
+            <div className="border-b bg-background z-10">
+                <AppHeader title="الإشعارات" icon={Bell} />
+                <div className="flex items-center justify-end px-4 md:px-6 pb-2">
                     {notifications.length > 0 && (
                         <Button variant="outline" onClick={toggleSelectionMode}>
                            {isSelectionMode ? 'إلغاء' : 'تحديد'}

@@ -7,6 +7,7 @@ import { Landmark, FileDigit, ShoppingCart, Car, Mail, Globe, Terminal, AppWindo
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import AppHeader from '../layout/AppHeader';
 
 const appCategories = [
     {
@@ -126,12 +127,7 @@ const AppCard = ({ icon: Icon, title, description, color, textColor, action }: {
 const AppsView = () => {
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-gray-950">
-            <div className="p-4 md:p-6 pb-4 border-b bg-background z-10 sticky top-0">
-                <div className="flex items-center gap-3 mb-2">
-                    <AppWindow className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">التطبيقات</h1>
-                </div>
-            </div>
+            <AppHeader title="التطبيقات" icon={AppWindow} />
             
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto space-y-10">

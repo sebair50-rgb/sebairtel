@@ -8,6 +8,7 @@ import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Loader2 } from 'lucid
 import CodeAnalyzer from './CodeAnalyzer';
 import ImageGenerator from './ImageGenerator';
 import StickerGenerator from './StickerGenerator';
+import AppHeader from '../layout/AppHeader';
 
 type AITool = 'code' | 'image' | 'sticker';
 
@@ -54,16 +55,11 @@ const AIView = () => {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="p-4 md:p-6 pb-0">
-                <div className="flex items-center gap-2 mb-2">
-                    <BrainCircuit className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">مركز الإبداع بالذكاء الاصطناعي</h1>
-                </div>
-                 <p className="text-muted-foreground">
+            <AppHeader title="مركز الإبداع" icon={BrainCircuit} />
+             <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                 <p className="text-muted-foreground max-w-4xl mx-auto mb-8">
                     استخدم قوة الذكاء الاصطناعي للإبداع والتحليل. اختر إحدى الأدوات أدناه للبدء.
                 </p>
-            </div>
-             <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     {tools.map(tool => (
                         <AIToolCard

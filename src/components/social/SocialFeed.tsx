@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LayoutGrid, Video, Briefcase, Store, Newspaper, Home, ShoppingCart, MessageSquare, Globe, Notebook, Users, Bell } from 'lucide-react';
+import { Video, Briefcase, Store, Globe, Notebook, Home } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
@@ -12,35 +13,11 @@ import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
 import NewsView from './NewsView';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
+import AppHeader from '../layout/AppHeader';
 
 const SocialFeed = () => {
-    const { posts, chats, currentUser, setActiveTab, setSelectedChatId, setInitialContactTab, unreadNotificationCount, markNotificationsAsRead } = useAppContext();
+    const { posts } = useAppContext();
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
-
-    const totalUnreadCount = React.useMemo(() => {
-        if (!currentUser) return 0;
-        return chats.reduce((acc, chat) => acc + (chat.unreadCount?.[currentUser.id] || 0), 0);
-    }, [chats, currentUser]);
-
-    const handleMessagesClick = () => {
-        setInitialContactTab('chats');
-        setSelectedChatId(null);
-        setActiveTab('contact');
-    };
-    
-    const handleFriendsClick = () => {
-        setInitialContactTab('friends');
-        setActiveTab('contact');
-    };
-    
-    const handleNotificationsClick = () => {
-        if (unreadNotificationCount > 0) {
-            markNotificationsAsRead();
-        }
-        setActiveTab('notifications');
-    };
 
     const socialTabs = [
         { value: 'news', label: 'الأخبار', icon: Globe },
@@ -53,44 +30,19 @@ const SocialFeed = () => {
     return (
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
-                <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
-                     <div className="flex items-center justify-between gap-3 mb-4">
-                        <div className="flex items-center gap-3">
-                            <Home className="w-8 h-8 text-primary" />
-                            <h1 className="text-3xl font-bold">المجتمع</h1>
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
-                                <Bell className="w-6 h-6 text-muted-foreground" />
-                                {unreadNotificationCount > 0 && (
-                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadNotificationCount}</Badge>
-                                )}
-                            </Button>
-                             <Button variant="ghost" size="icon" onClick={handleFriendsClick} className="relative">
-                                <Users className="w-6 h-6 text-muted-foreground" />
-                                {/* Placeholder for friend request notifications */}
-                                {/* <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">2</Badge> */}
-                            </Button>
-                             <Button variant="ghost" size="icon" onClick={handleMessagesClick} className="relative">
-                                <MessageSquare className="w-6 h-6 text-muted-foreground" />
-                                {totalUnreadCount > 0 && (
-                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{totalUnreadCount}</Badge>
-                                )}
-                            </Button>
-                             <Button variant="ghost" size="icon">
-                                <ShoppingCart className="w-6 h-6 text-muted-foreground" />
-                            </Button>
-                        </div>
+                <div className="bg-background border-b sticky top-0 z-10">
+                    <AppHeader title="المجتمع" icon={Home} />
+                    <div className="px-4 md:px-6 pb-2">
+                        <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
+                        {socialTabs.map(tab => (
+                                <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                                    <tab.icon className="ml-1 sm:ml-2" />
+                                    {tab.label}
+                                </TabsTrigger>
+                        ))}
+                        </TabsList>
                     </div>
-                    <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
-                       {socialTabs.map(tab => (
-                            <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                                <tab.icon className="ml-1 sm:ml-2" />
-                                {tab.label}
-                            </TabsTrigger>
-                       ))}
-                    </TabsList>
-                </header>
+                </div>
             
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-4 md:p-6">
