@@ -14,6 +14,7 @@ export interface User {
   friends?: string[];
   isOnline?: boolean;
   lastSeen?: Timestamp;
+  settings?: any; // To store user-specific settings
 }
 
 export interface Message {

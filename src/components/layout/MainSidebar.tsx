@@ -25,7 +25,7 @@ interface MainSidebarProps {
 }
 
 const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLogout }) => {
-  const { currentUser, selectedChatId, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead } = useAppContext();
+  const { currentUser, selectedChatId, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead, settings } = useAppContext();
   const isMobile = useIsMobile();
 
   const handleTabClick = useCallback((tab: string) => {
@@ -38,14 +38,16 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
     setActiveTab(tab);
   }, [setActiveTab, setSelectedChatId, unreadNotificationCount, markNotificationsAsRead]);
 
-  const navItems = useMemo(() => [
-    { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي' },
-    { name: 'contact', icon: Phone, label: 'تواصل' },
-    { name: 'social', icon: Home, label: 'المجتمع' },
-    { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount },
-    { name: 'apps', icon: AppWindow, label: 'التطبيقات' },
-    { name: 'settings', icon: Settings, label: 'الإعدادات' },
-  ], [unreadNotificationCount]);
+  const allNavItems = useMemo(() => [
+    { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي', isVisible: settings.interface.showAiTab },
+    { name: 'contact', icon: Phone, label: 'تواصل', isVisible: true }, // Always visible
+    { name: 'social', icon: Home, label: 'المجتمع', isVisible: settings.interface.showSocialTab },
+    { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount, isVisible: true }, // Always visible
+    { name: 'apps', icon: AppWindow, label: 'التطبيقات', isVisible: settings.interface.showAppsTab },
+    { name: 'settings', icon: Settings, label: 'الإعدادات', isVisible: true }, // Always visible
+  ], [unreadNotificationCount, settings.interface]);
+  
+  const visibleNavItems = allNavItems.filter(item => item.isVisible);
   
   const showMobileNav = isMobile && selectedChatId === null;
 
@@ -59,7 +61,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
         </div>
         <TooltipProvider>
             <div className='flex flex-col items-center gap-4 flex-1'>
-                {navItems.map((item) => (
+                {visibleNavItems.map((item) => (
                     <Tooltip key={item.name}>
                         <TooltipTrigger asChild>
                              <Button
@@ -105,7 +107,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
       {/* Mobile Bottom Nav */}
       {showMobileNav && (
         <nav className="fixed bottom-0 right-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <button
               key={item.name}
               onClick={() => handleTabClick(item.name)}

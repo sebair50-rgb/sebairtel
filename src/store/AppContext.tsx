@@ -34,6 +34,11 @@ interface AppSettings {
         notificationTone: string;
         callRingtone: string;
     };
+    interface: {
+        showSocialTab: boolean;
+        showAiTab: boolean;
+        showAppsTab: boolean;
+    };
 }
 
 interface AppContextType {
@@ -87,7 +92,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const defaultSettings: AppSettings = {
+export const defaultSettings: AppSettings = {
     theme: 'system',
     notifications: {
         all: true,
@@ -104,6 +109,11 @@ const defaultSettings: AppSettings = {
         messageTone: 'default',
         notificationTone: 'default',
         callRingtone: 'default',
+    },
+    interface: {
+        showSocialTab: true,
+        showAiTab: true,
+        showAppsTab: true,
     },
 };
 
@@ -126,13 +136,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const savedSettings = localStorage.getItem('app-settings');
             if (savedSettings) {
                 const parsedSettings = JSON.parse(savedSettings);
-                // Merge with defaults to ensure all keys are present, including nested ones
                 return { 
                     ...defaultSettings, 
                     ...parsedSettings,
                     notifications: { ...defaultSettings.notifications, ...parsedSettings.notifications },
                     privacy: { ...defaultSettings.privacy, ...parsedSettings.privacy },
                     sounds: { ...defaultSettings.sounds, ...parsedSettings.sounds },
+                    interface: { ...defaultSettings.interface, ...parsedSettings.interface },
                 };
             }
         } catch (error) {
@@ -248,7 +258,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
         if(doc.exists()) {
-            setCurrentUser({ id: doc.id, ...doc.data() } as User);
+            const userData = doc.data() as User;
+            setCurrentUser({ id: doc.id, ...userData });
+            // Load user-specific settings from Firestore
+            if (userData.settings) {
+                 setSettings(prevSettings => ({
+                    ...defaultSettings,
+                    ...userData.settings,
+                    notifications: { ...defaultSettings.notifications, ...userData.settings.notifications },
+                    privacy: { ...defaultSettings.privacy, ...userData.settings.privacy },
+                    sounds: { ...defaultSettings.sounds, ...userData.settings.sounds },
+                    interface: { ...defaultSettings.interface, ...userData.settings.interface },
+                }));
+            }
         }
     });
     
@@ -347,6 +369,31 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       unsubscribeNotifications();
     };
   }, [authUser, authLoading]);
+
+  // Persist settings to Firestore whenever they change
+  useEffect(() => {
+    const saveSettings = async () => {
+        if (!authUser || authLoading) return;
+        // Avoid saving default settings on initial load before user settings are fetched
+        if (currentUser && !currentUser.settings && JSON.stringify(settings) === JSON.stringify(defaultSettings)) {
+             return;
+        }
+        
+        const userDocRef = doc(db, 'users', authUser.uid);
+        await updateDoc(userDocRef, { settings: settings });
+    };
+    
+    // Debounce saving settings
+    const handler = setTimeout(() => {
+        saveSettings();
+    }, 1000);
+
+    return () => {
+        clearTimeout(handler);
+    };
+
+  }, [settings, authUser, authLoading, currentUser]);
+
 
   useEffect(() => {
       if (!currentUser || users.length === 0) return;
@@ -574,26 +621,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-      if (!settings.notifications.all) return;
-      
-      const targetUserDocRef = doc(db, 'users', userId);
-      const targetUserDoc = await getDoc(targetUserDocRef);
-      if (!targetUserDoc.exists()) {
-          console.error(`User with ID ${userId} does not exist. Cannot create notification.`);
-          return;
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const userSettings = userData.settings as AppSettings | undefined;
+
+          // Only send notification if the user has them enabled
+          if (userSettings?.notifications?.all) {
+              const userNotificationsRef = collection(db, `users/${userId}/notifications`);
+              await addDoc(userNotificationsRef, {
+                  ...notification,
+                  timestamp: serverTimestamp(),
+                  isRead: false,
+              });
+          }
       }
-      const targetUserSettings = (targetUserDoc.data() as any)?.settings;
-
-      // Optional: Check target user's notification settings before sending.
-      // This requires settings to be stored in Firestore per user.
-      // For now, we assume we can always send.
-
-      const userNotificationsRef = collection(db, `users/${userId}/notifications`);
-      await addDoc(userNotificationsRef, {
-          ...notification,
-          timestamp: serverTimestamp(),
-          isRead: false,
-      });
   };
 
   const sendFriendRequest = async (friend: User) => {

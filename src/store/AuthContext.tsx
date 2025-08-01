@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import type { User } from '@/lib/types';
-import { useRouter } from 'next/navigation';
+import { defaultSettings } from './AppContext'; // Import defaultSettings
 
 interface AuthContextType {
   authUser: FirebaseUser | null;
@@ -61,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             phone: '',
             isOnline: true,
             lastSeen: serverTimestamp() as any,
+            settings: defaultSettings, // Set default settings on signup
         };
         await setDoc(userDocRef, newUser);
         
