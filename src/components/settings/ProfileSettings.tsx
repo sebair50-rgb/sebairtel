@@ -163,10 +163,12 @@ const ProfileSettings = () => {
         if (city.trim() !== (currentUser.city || '')) updatePayload.city = city.trim();
         if (from.trim() !== (currentUser.from || '')) updatePayload.from = from.trim();
         if (relationshipStatus.trim() !== (currentUser.relationshipStatus || '')) updatePayload.relationshipStatus = relationshipStatus.trim();
+        
+        // Correctly handle array updates
         if (JSON.stringify(links) !== JSON.stringify(currentUser.links || [])) updatePayload.links = links;
         if (JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || [])) updatePayload.workExperience = workExperience;
         if (JSON.stringify(education) !== JSON.stringify(currentUser.education || [])) updatePayload.education = education;
-        
+
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
         if (cvFile) {
@@ -336,5 +338,3 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
-
-    
