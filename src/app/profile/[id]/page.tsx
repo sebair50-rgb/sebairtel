@@ -7,7 +7,7 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info, FileText, Mail, Phone, GraduationCap, Briefcase } from 'lucide-react';
+import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info, FileText, Mail, Phone, GraduationCap, Briefcase, Download, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -110,6 +110,16 @@ const UserProfilePage = () => {
         }
     };
 
+    const handleDownloadCv = () => {
+        if (!profileUser?.cvUrl) return;
+        const a = document.createElement('a');
+        a.href = profileUser.cvUrl;
+        a.download = profileUser.cvFileName || 'cv.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
     if (isLoading) {
         return <ProfileSkeleton />;
     }
@@ -192,16 +202,26 @@ const UserProfilePage = () => {
                                     </DialogHeader>
                                     <ScrollArea className="flex-1 -mx-6">
                                     <div className="px-6 space-y-6 py-4">
-                                        <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-                                            <Avatar className="w-24 h-24 text-4xl">
+                                        <div className="flex flex-col sm:flex-row items-start gap-6">
+                                            <Avatar className="w-24 h-24 text-4xl flex-shrink-0">
                                                 <AvatarImage src={profileUser.avatar} />
                                                 <AvatarFallback>{profileUser.name?.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            <div>
-                                                <h2 className="text-3xl font-bold">{profileUser.name}</h2>
-                                                <div className="flex items-center gap-4 mt-2 text-muted-foreground justify-center sm:justify-start">
-                                                    {profileUser.email && <div className="flex items-center gap-1"><Mail size={14} /> {profileUser.email}</div>}
-                                                    {profileUser.phone && <div className="flex items-center gap-1"><Phone size={14} /> {profileUser.phone}</div>}
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h2 className="text-3xl font-bold">{profileUser.name}</h2>
+                                                        <div className="flex items-center gap-4 mt-2 text-muted-foreground flex-wrap">
+                                                            {profileUser.email && <div className="flex items-center gap-1"><Mail size={14} /> {profileUser.email}</div>}
+                                                            {profileUser.phone && <div className="flex items-center gap-1"><Phone size={14} /> {profileUser.phone}</div>}
+                                                        </div>
+                                                    </div>
+                                                    {profileUser.cvUrl && (
+                                                        <Button onClick={handleDownloadCv}>
+                                                            <Download size={16} className="mr-2" />
+                                                            Download CV
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -217,13 +237,11 @@ const UserProfilePage = () => {
 
                                         <div>
                                             <h3 className="text-xl font-semibold mb-4">Work Experience</h3>
-                                            <div className="space-y-4">
+                                            <div className="space-y-4 text-muted-foreground italic">
                                                 <div className="flex gap-4">
-                                                    <Briefcase className="mt-1" />
+                                                    <Briefcase className="mt-1 flex-shrink-0" />
                                                     <div>
-                                                        <h4 className="font-bold">Lead Developer at Tech Solutions Inc.</h4>
-                                                        <p className="text-sm text-muted-foreground">2020 - Present</p>
-                                                        <p className="mt-1">Leading a team to develop cutting-edge web applications using React and Next.js.</p>
+                                                        <p>No work experience added yet.</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -233,14 +251,28 @@ const UserProfilePage = () => {
 
                                         <div>
                                             <h3 className="text-xl font-semibold mb-4">Education</h3>
-                                             <div className="flex gap-4">
-                                                <GraduationCap className="mt-1" />
-                                                <div>
-                                                    <h4 className="font-bold">B.Sc. in Computer Science</h4>
-                                                    <p className="text-sm text-muted-foreground">University of Technology - 2016-2020</p>
-                                                </div>
+                                             <div className="flex gap-4 text-muted-foreground italic">
+                                                <GraduationCap className="mt-1 flex-shrink-0" />
+                                                <p>No education details added yet.</p>
                                             </div>
                                         </div>
+
+                                        {(profileUser.links && profileUser.links.length > 0) && (
+                                            <>
+                                                <Separator />
+                                                <div>
+                                                    <h3 className="text-xl font-semibold mb-4">Links</h3>
+                                                    <div className="space-y-2">
+                                                        {profileUser.links.map((link, index) => (
+                                                            <a href={link.url} key={index} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-500 hover:underline">
+                                                                <LinkIcon size={16} />
+                                                                <span>{link.title}</span>
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     </ScrollArea>
                                 </DialogContent>

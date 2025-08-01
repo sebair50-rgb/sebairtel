@@ -9,6 +9,7 @@ import {
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, Timestamp
 } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -46,7 +47,7 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<Omit<User, 'id'>>) => Promise<void>;
+  updateUserProfile: (data: Partial<Omit<User, 'id'>>, files?: { avatar?: File, cv?: File }) => Promise<void>;
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -853,27 +854,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setSmartReplies([]);
     }, []);
 
-    const updateUserProfile = async (data: Partial<Omit<User, 'id'>>) => {
+    const updateUserProfile = async (data: Partial<Omit<User, 'id'>>, files?: { avatar?: File, cv?: File }) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
+        
+        const updateData: { [key: string]: any } = { ...data };
+        const storage = getStorage();
 
-        const updateData: { [key: string]: any } = {};
+        if (files?.avatar) {
+            const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${files.avatar.name}`);
+            const snapshot = await uploadBytes(avatarRef, files.avatar);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            updateData.avatar = downloadURL;
+        }
+
+        if (files?.cv) {
+            const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
+            const snapshot = await uploadBytes(cvRef, files.cv);
+            updateData.cvUrl = await getDownloadURL(snapshot.ref);
+            // cvFileName is already in the `data` object
+        }
 
         if (data.name && data.name !== currentUser?.name) {
             await updateProfile(auth.currentUser, { displayName: data.name });
-            updateData.name = data.name;
-        }
-        
-        if (data.phone !== undefined && data.phone !== currentUser?.phone) updateData.phone = data.phone;
-        if (data.dob !== undefined && data.dob !== currentUser?.dob) updateData.dob = data.dob;
-        if (data.bio !== undefined && data.bio !== (currentUser?.bio || '')) updateData.bio = data.bio;
-        if (data.city !== undefined && data.city !== (currentUser?.city || '')) updateData.city = data.city;
-        if (data.from !== undefined && data.from !== (currentUser?.from || '')) updateData.from = data.from;
-        
-        if (data.avatar && data.avatar !== currentUser?.avatar) {
-             if (data.avatar.length > 1048487) {
-                throw new Error("File size is over 1MB.");
-            }
-            updateData.avatar = data.avatar;
         }
         
         if (Object.keys(updateData).length > 0) {
@@ -941,5 +943,3 @@ export const useAppContext = () => {
   }
   return context;
 };
-
-    
