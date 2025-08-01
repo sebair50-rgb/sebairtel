@@ -9,15 +9,22 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
 
 const LanguageSettings = () => {
-    const [selectedLanguage, setSelectedLanguage] = useState('en');
+    const [selectedLanguage, setSelectedLanguage] = useState('system');
     const { toast } = useToast();
 
     const handleSave = () => {
+        let languageName = 'Device Language';
+        if (selectedLanguage === 'en') {
+            languageName = 'English';
+        } else if (selectedLanguage === 'ar') {
+            languageName = 'Arabic';
+        }
+        
         // In a real app, you would save this to the user's settings and
         // use an i18n library to change the language.
         toast({
             title: "Settings Saved",
-            description: `Language has been set to ${selectedLanguage === 'en' ? 'English' : 'Arabic'}. (Demonstration only)`,
+            description: `Language has been set to ${languageName}. (Demonstration only)`,
         });
     };
 
@@ -33,6 +40,13 @@ const LanguageSettings = () => {
                     onValueChange={setSelectedLanguage}
                     className="space-y-4"
                 >
+                     <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                        <RadioGroupItem value="system" id="lang-system" />
+                        <Label htmlFor="lang-system" className="text-base font-medium w-full">
+                            Device Language
+                            <p className="text-sm font-normal text-muted-foreground">Automatically use your device's language.</p>
+                        </Label>
+                    </div>
                     <div className="flex items-center space-x-3 p-4 border rounded-lg">
                         <RadioGroupItem value="en" id="lang-en" />
                         <Label htmlFor="lang-en" className="text-base font-medium w-full">
