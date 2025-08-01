@@ -46,13 +46,11 @@ const SocialFeed = () => {
             
                 <div className="flex-1 overflow-y-auto">
                     <TabsContent value="feed" className="mt-0">
-                        <div className="max-w-2xl mx-auto">
+                        <div className="max-w-2xl mx-auto py-4 space-y-4">
                             <CreatePostCard />
-                            <div className="divide-y">
                             {posts.map(post => (
                                 <PostCard key={post.id} post={post} />
                             ))}
-                            </div>
                         </div>
                     </TabsContent>
                     <div className="p-4 md:p-6">

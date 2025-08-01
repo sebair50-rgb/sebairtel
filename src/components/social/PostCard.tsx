@@ -137,7 +137,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   return (
     <>
-    <Card className="overflow-hidden bg-card shadow-none border-b rounded-none">
+    <Card className="overflow-hidden bg-card shadow-sm border rounded-lg">
       <CardHeader className="flex flex-row-reverse items-center justify-between gap-4 p-4">
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleNavigateToProfile}>
              <div className="flex-1 text-right">
