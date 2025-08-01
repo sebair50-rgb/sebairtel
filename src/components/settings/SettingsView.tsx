@@ -93,7 +93,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 </aside>
 
                  {/* Mobile Navigation & Content Area */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 flex flex-col overflow-hidden">
                      {isMobile && (
                         <div className="p-2">
                              <div className="relative">
@@ -117,17 +117,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                              </div>
                         </div>
                     )}
-                    <div className="p-4 md:p-0">
-                        {renderSection()}
-                    </div>
-                     {isMobile && (
-                        <div className="mt-6 px-4 pb-4">
-                             <Button variant="destructive" className="w-full" onClick={onLogout}>
-                                <LogOut className="mr-2" />
-                                Sign Out
-                            </Button>
+                    <ScrollArea className="flex-1">
+                        <div className="p-4 md:p-0">
+                            {renderSection()}
                         </div>
-                    )}
+                         {isMobile && (
+                            <div className="mt-6 px-4 pb-4">
+                                 <Button variant="destructive" className="w-full" onClick={onLogout}>
+                                    <LogOut className="mr-2" />
+                                    Sign Out
+                                </Button>
+                            </div>
+                        )}
+                    </ScrollArea>
                 </main>
             </div>
         </div>
