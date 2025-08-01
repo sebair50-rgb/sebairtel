@@ -38,6 +38,7 @@ interface AppSettings {
         showSocialTab: boolean;
         showAiTab: boolean;
         showAppsTab: boolean;
+        showContactTab: boolean;
     };
 }
 
@@ -114,6 +115,7 @@ export const defaultSettings: AppSettings = {
         showSocialTab: true,
         showAiTab: true,
         showAppsTab: true,
+        showContactTab: true,
     },
 };
 

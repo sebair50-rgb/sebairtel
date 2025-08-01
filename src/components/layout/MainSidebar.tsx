@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
@@ -40,7 +39,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
 
   const allNavItems = useMemo(() => [
     { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي', isVisible: settings.interface.showAiTab },
-    { name: 'contact', icon: Phone, label: 'تواصل', isVisible: true }, // Always visible
+    { name: 'contact', icon: Phone, label: 'تواصل', isVisible: settings.interface.showContactTab },
     { name: 'social', icon: Home, label: 'المجتمع', isVisible: settings.interface.showSocialTab },
     { name: 'notifications', icon: Bell, label: 'الإشعارات', badgeCount: unreadNotificationCount, isVisible: true }, // Always visible
     { name: 'apps', icon: AppWindow, label: 'التطبيقات', isVisible: settings.interface.showAppsTab },

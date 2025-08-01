@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAppContext, defaultSettings } from '@/store/AppContext';
-import { Home, Brain, AppWindow, RotateCcw } from 'lucide-react';
+import { Home, Brain, AppWindow, RotateCcw, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
 
 const InterfaceSettings = () => {
@@ -44,6 +43,14 @@ const InterfaceSettings = () => {
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
+                <SettingToggle
+                    id="contactTab"
+                    label="إظهار تبويب تواصل"
+                    description="عرض المحادثات، الأصدقاء، والمكالمات."
+                    icon={Phone}
+                    checked={settings.interface.showContactTab}
+                    onCheckedChange={(checked) => handleToggle('showContactTab', checked)}
+                />
                 <SettingToggle
                     id="socialTab"
                     label="إظهار تبويب المجتمع"
