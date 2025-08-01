@@ -15,6 +15,7 @@ import PrivacySettings from './PrivacySettings';
 import SoundSettings from './SoundSettings';
 import InterfaceSettings from './InterfaceSettings';
 import AppHeader from '../layout/AppHeader';
+import LanguageSettings from './LanguageSettings';
 
 interface SettingsViewProps {
     onLogout: () => void;
@@ -54,6 +55,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                 return <SoundSettings />;
             case 'interface':
                 return <InterfaceSettings />;
+            case 'language':
+                return <LanguageSettings />;
             default:
                 return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">This feature will be activated soon.</p></div>;
         }
