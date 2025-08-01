@@ -77,13 +77,14 @@ const ProfileSettings = () => {
                 workExperience: currentUser.workExperience || [],
                 education: currentUser.education || [],
                 cvFileName: currentUser.cvFileName || '',
+                avatar: currentUser.avatar || '',
             };
             setInitialState(initialData);
             setFormState(initialData);
+            setAvatarPreview(currentUser.avatar || null);
 
             // Reset file states on user change
             setAvatarFile(null);
-            setAvatarPreview(null);
             setCvFile(null);
         }
     }, [currentUser]);
@@ -127,9 +128,8 @@ const ProfileSettings = () => {
     };
     
     const handleAddLink = () => {
-        const { links = [] } = formState;
-        
         if (newLink.title.trim() && newLink.url.trim()) {
+            const links = formState.links ? [...formState.links] : [];
             handleFieldChange('links', [...links, { title: newLink.title, url: newLink.url }]);
             setNewLink({ title: '', url: '' });
         } else {
@@ -143,8 +143,8 @@ const ProfileSettings = () => {
     };
     
     const handleAddWork = () => {
-        const { workExperience = [] } = formState;
         if (newWork.title.trim() && newWork.company.trim()) {
+            const workExperience = formState.workExperience ? [...formState.workExperience] : [];
             handleFieldChange('workExperience', [...workExperience, { title: newWork.title, company: newWork.company }]);
             setNewWork({ title: '', company: '' });
         } else {
@@ -158,8 +158,8 @@ const ProfileSettings = () => {
     };
 
     const handleAddEdu = () => {
-        const { education = [] } = formState;
         if (newEdu.school.trim() && newEdu.degree.trim()) {
+            const education = formState.education ? [...formState.education] : [];
             handleFieldChange('education', [...education, { school: newEdu.school, degree: newEdu.degree }]);
             setNewEdu({ school: '', degree: '' });
         } else {
@@ -209,24 +209,39 @@ const ProfileSettings = () => {
         if (cvFile) filesToUpload.cv = cvFile;
         
         if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
-            toast({ description: "No changes to save." });
-            return;
+             const newInputsHaveText = newLink.title || newLink.url || newWork.title || newWork.company || newEdu.school || newEdu.degree;
+             if (!newInputsHaveText) {
+                toast({ description: "No changes to save." });
+                return;
+             }
         }
 
+        // Add any pending items before saving
+        let finalPayload = { ...updatePayload };
+        let updatedLinks = finalPayload.links || formState.links || [];
+        if (newLink.title && newLink.url) {
+            updatedLinks = [...updatedLinks, newLink];
+            setNewLink({title: '', url: ''});
+        }
+        finalPayload.links = updatedLinks;
+        
+        let updatedWork = finalPayload.workExperience || formState.workExperience || [];
+        if (newWork.title && newWork.company) {
+            updatedWork = [...updatedWork, newWork];
+            setNewWork({title: '', company: ''});
+        }
+        finalPayload.workExperience = updatedWork;
+
+        let updatedEdu = finalPayload.education || formState.education || [];
+        if (newEdu.school && newEdu.degree) {
+            updatedEdu = [...updatedEdu, newEdu];
+            setNewEdu({school: '', degree: ''});
+        }
+        finalPayload.education = updatedEdu;
 
         startTransition(async () => {
             try {
-                await updateUserProfile(updatePayload, filesToUpload);
-                
-                const newInitialState = { ...initialState, ...updatePayload };
-                if (filesToUpload.cv) {
-                    newInitialState.cvFileName = filesToUpload.cv.name;
-                }
-                setInitialState(newInitialState);
-                
-                setAvatarFile(null);
-                setAvatarPreview(newInitialState.avatar || null);
-                setCvFile(null);
+                await updateUserProfile(finalPayload, filesToUpload);
                 toast({ title: "Success!", description: "Your profile information has been updated successfully." });
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
@@ -258,7 +273,7 @@ const ProfileSettings = () => {
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="w-24 h-24 text-4xl">
-                            <AvatarImage src={avatarPreview || currentUser?.avatar || undefined} alt={formState.name} />
+                            <AvatarImage src={avatarPreview || undefined} alt={formState.name} />
                             <AvatarFallback>{formState.name?.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
                         <Button size="icon" className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card" onClick={() => avatarFileInputRef.current?.click()}>
@@ -274,9 +289,9 @@ const ProfileSettings = () => {
                 <div className="space-y-4">
                     <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={formState.name} onChange={(e) => handleFieldChange('name', e.target.value)} /></div>
                     <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={formState.bio} onChange={(e) => handleFieldChange('bio', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" defaultValue={currentUser.email} disabled /></div>
+                    <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={currentUser.email || ''} disabled /></div>
                     <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={formState.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} placeholder="e.g., +1234567890" /></div>
-                    <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!formState.dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
+                    <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!formState.dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
                 </div>
 
                 <Separator />
@@ -357,5 +372,3 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
-
-    

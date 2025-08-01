@@ -9,7 +9,7 @@ import {
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, Timestamp
 } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -867,6 +867,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (files?.cv) {
+             if (currentUser?.cvFileName) {
+                const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
+                try {
+                    await deleteObject(oldCvRef);
+                } catch (error: any) {
+                    if (error.code !== 'storage/object-not-found') {
+                        console.error("Could not delete old CV:", error);
+                    }
+                }
+            }
             const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
             const snapshot = await uploadBytes(cvRef, files.cv);
             updateData.cvUrl = await getDownloadURL(snapshot.ref);
