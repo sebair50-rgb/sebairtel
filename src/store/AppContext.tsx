@@ -13,12 +13,14 @@ import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 import { enUS } from 'date-fns/locale';
+import { useTranslation } from './LanguageContext';
 
 type Visibility = 'everyone' | 'friends' | 'nobody';
 type FriendRequestSetting = 'everyone' | 'friends_of_friends';
 
-interface AppSettings {
+export interface AppSettings {
     theme: 'light' | 'dark' | 'system';
+    language: 'en' | 'ar' | 'system';
     notifications: {
         all: boolean;
         messages: boolean;
@@ -96,6 +98,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const defaultSettings: AppSettings = {
     theme: 'system',
+    language: 'system',
     notifications: {
         all: true,
         messages: true,
@@ -122,6 +125,7 @@ export const defaultSettings: AppSettings = {
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { authUser, loading: authLoading } = useAuth();
+  const { setLanguage } = useTranslation();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   const [posts, setPosts] = useState<Post[]>([]);
@@ -133,27 +137,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends'>('friends');
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    if (typeof window !== 'undefined') {
-        try {
-            const savedSettings = localStorage.getItem('app-settings');
-            if (savedSettings) {
-                const parsedSettings = JSON.parse(savedSettings);
-                return { 
-                    ...defaultSettings, 
-                    ...parsedSettings,
-                    notifications: { ...defaultSettings.notifications, ...parsedSettings.notifications },
-                    privacy: { ...defaultSettings.privacy, ...parsedSettings.privacy },
-                    sounds: { ...defaultSettings.sounds, ...parsedSettings.sounds },
-                    interface: { ...defaultSettings.interface, ...parsedSettings.interface },
-                };
-            }
-        } catch (error) {
-            console.error("Failed to parse settings from localStorage", error);
-        }
-    }
-    return defaultSettings;
-  });
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 
   const [users, setUsers] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
@@ -181,6 +165,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('app-settings', JSON.stringify(settings));
+        
+        // Handle theme
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
         if (settings.theme === 'system') {
@@ -189,8 +175,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         } else {
             root.classList.add(settings.theme);
         }
+        
+        // Handle language
+        setLanguage(settings.language);
     }
-  }, [settings]);
+  }, [settings, setLanguage]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
