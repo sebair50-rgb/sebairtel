@@ -11,6 +11,11 @@ export interface Education {
   degree: string;
 }
 
+export interface UserLink {
+  title: string;
+  url: string;
+}
+
 export interface User {
   id: string; // Changed to string for Firestore UID
   name: string;
@@ -29,7 +34,7 @@ export interface User {
   settings?: any; // To store user-specific settings
   cvUrl?: string;
   cvFileName?: string;
-  links?: { title: string; url: string }[];
+  links?: UserLink[];
   workExperience?: WorkExperience[];
   education?: Education[];
   relationshipStatus?: string;

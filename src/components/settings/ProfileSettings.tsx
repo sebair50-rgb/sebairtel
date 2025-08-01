@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useTransition, useRef, useEffect } from 'react';
+import React, { useState, useTransition, useRef, useEffect, useMemo } from 'react';
 import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
-import type { User, WorkExperience, Education } from '@/lib/types';
+import type { User, WorkExperience, Education, UserLink } from '@/lib/types';
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
@@ -38,18 +38,18 @@ const ProfileSettings = () => {
     const cvFileInputRef = useRef<HTMLInputElement>(null);
     
     // Form state
-    const [name, setName] = useState(currentUser?.name || '');
-    const [phone, setPhone] = useState(currentUser?.phone || '');
-    const [dob, setDob] = useState<Date | undefined>(currentUser?.dob ? new Date(currentUser.dob) : undefined);
-    const [bio, setBio] = useState(currentUser?.bio || '');
-    const [city, setCity] = useState(currentUser?.city || '');
-    const [from, setFrom] = useState(currentUser?.from || '');
-    const [relationshipStatus, setRelationshipStatus] = useState(currentUser?.relationshipStatus || '');
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [dob, setDob] = useState<Date | undefined>();
+    const [bio, setBio] = useState('');
+    const [city, setCity] = useState('');
+    const [from, setFrom] = useState('');
+    const [relationshipStatus, setRelationshipStatus] = useState('');
     
     // Complex state
-    const [workExperience, setWorkExperience] = useState<WorkExperience[]>(currentUser?.workExperience || []);
-    const [education, setEducation] = useState<Education[]>(currentUser?.education || []);
-    const [links, setLinks] = useState(currentUser?.links || []);
+    const [workExperience, setWorkExperience] = useState<WorkExperience[]>([]);
+    const [education, setEducation] = useState<Education[]>([]);
+    const [links, setLinks] = useState<UserLink[]>([]);
     
     // Temporary state for new entries
     const [newWork, setNewWork] = useState({ title: '', company: '' });
@@ -58,7 +58,7 @@ const ProfileSettings = () => {
 
     // CV and Links state
     const [cvFile, setCvFile] = useState<File | null>(null);
-    const [cvFileName, setCvFileName] = useState(currentUser?.cvFileName || '');
+    const [cvFileName, setCvFileName] = useState('');
 
     // Avatar state
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -74,17 +74,42 @@ const ProfileSettings = () => {
             setBio(currentUser.bio || '');
             setCity(currentUser.city || '');
             setFrom(currentUser.from || '');
+            setRelationshipStatus(currentUser.relationshipStatus || '');
             setCvFileName(currentUser.cvFileName || '');
             setLinks(currentUser.links || []);
             setWorkExperience(currentUser.workExperience || []);
             setEducation(currentUser.education || []);
-            setRelationshipStatus(currentUser.relationshipStatus || '');
 
-            setAvatarPreview(null);
+            // Reset file states on user change
             setAvatarFile(null);
+            setAvatarPreview(null);
             setCvFile(null);
         }
     }, [currentUser]);
+
+    const hasChanges = useMemo(() => {
+        if (!currentUser) return false;
+
+        const dobString = dob ? format(dob, 'yyyy-MM-dd') : undefined;
+        const currentUserDob = currentUser.dob ? format(new Date(currentUser.dob), 'yyyy-MM-dd') : undefined;
+
+        const arraysAreEqual = (arr1: any[], arr2: any[]) => JSON.stringify(arr1) === JSON.stringify(arr2);
+
+        return (
+            name !== currentUser.name ||
+            phone !== (currentUser.phone || '') ||
+            bio !== (currentUser.bio || '') ||
+            dobString !== currentUserDob ||
+            city !== (currentUser.city || '') ||
+            from !== (currentUser.from || '') ||
+            relationshipStatus !== (currentUser.relationshipStatus || '') ||
+            !arraysAreEqual(links, currentUser.links || []) ||
+            !arraysAreEqual(workExperience, currentUser.workExperience || []) ||
+            !arraysAreEqual(education, currentUser.education || []) ||
+            avatarFile !== null ||
+            cvFile !== null
+        );
+    }, [name, phone, bio, dob, city, from, relationshipStatus, links, workExperience, education, avatarFile, cvFile, currentUser]);
 
 
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,44 +178,34 @@ const ProfileSettings = () => {
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
-        const updatePayload: Partial<Omit<User, 'id'>> = {};
-
-        if (name.trim() && name.trim() !== currentUser.name) updatePayload.name = name.trim();
-        if (phone.trim() !== (currentUser.phone || '')) updatePayload.phone = phone.trim();
-        const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
-        if (formattedDob !== currentUser.dob) updatePayload.dob = formattedDob;
-        if (bio.trim() !== (currentUser.bio || '')) updatePayload.bio = bio.trim();
-        if (city.trim() !== (currentUser.city || '')) updatePayload.city = city.trim();
-        if (from.trim() !== (currentUser.from || '')) updatePayload.from = from.trim();
-        if (relationshipStatus.trim() !== (currentUser.relationshipStatus || '')) updatePayload.relationshipStatus = relationshipStatus.trim();
-        
-        // Correctly handle array updates
-        if (JSON.stringify(links) !== JSON.stringify(currentUser.links || [])) updatePayload.links = links;
-        if (JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || [])) updatePayload.workExperience = workExperience;
-        if (JSON.stringify(education) !== JSON.stringify(currentUser.education || [])) updatePayload.education = education;
-
-        const filesToUpload: { avatar?: File, cv?: File } = {};
-        if (avatarFile) filesToUpload.avatar = avatarFile;
-        if (cvFile) {
-            filesToUpload.cv = cvFile;
-            updatePayload.cvFileName = cvFileName;
-        }
-        
-        if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
-            toast({ description: "No changes to save." });
-            return;
-        }
-
-        if (updatePayload.name === '') {
+        if (name.trim() === '') {
              toast({ variant: "destructive", title: "Name is required", description: "The name field cannot be empty." });
             return;
         }
 
+        const updatePayload: Partial<User> = {
+            name,
+            phone,
+            bio,
+            dob: dob ? format(dob, 'yyyy-MM-dd') : '',
+            city,
+            from,
+            relationshipStatus,
+            links,
+            workExperience,
+            education,
+            cvFileName: cvFile ? cvFile.name : currentUser.cvFileName,
+        };
+
+        const filesToUpload: { avatar?: File, cv?: File } = {};
+        if (avatarFile) filesToUpload.avatar = avatarFile;
+        if (cvFile) filesToUpload.cv = cvFile;
+
         startTransition(async () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
-                setAvatarPreview(null);
                 setAvatarFile(null);
+                setAvatarPreview(null);
                 setCvFile(null);
                 toast({ title: "Success!", description: "Your profile information has been updated successfully." });
             } catch (error: any) {
@@ -209,22 +224,6 @@ const ProfileSettings = () => {
             </Card>
         )
     }
-    
-    const formattedDob = dob ? format(dob, 'yyyy-MM-dd') : undefined;
-    const hasChanges =
-      (name.trim() !== (currentUser.name || '') && name.trim() !== "") ||
-      (phone.trim() !== (currentUser.phone || '')) ||
-      (formattedDob !== (currentUser.dob || undefined)) ||
-      (bio.trim() !== (currentUser.bio || '')) ||
-      (city.trim() !== (currentUser.city || '')) ||
-      (from.trim() !== (currentUser.from || '')) ||
-      (relationshipStatus.trim() !== (currentUser.relationshipStatus || '')) ||
-      JSON.stringify(links) !== JSON.stringify(currentUser.links || []) ||
-      JSON.stringify(workExperience) !== JSON.stringify(currentUser.workExperience || []) ||
-      JSON.stringify(education) !== JSON.stringify(currentUser.education || []) ||
-      !!avatarFile || 
-      !!cvFile;
-
 
     return (
         <Card>

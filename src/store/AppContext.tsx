@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification, Comment, Reaction, WorkExperience, Education } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification, UserLink } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
-import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
+import { textToSpeech } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 import { useTranslation } from './LanguageContext';
 
@@ -47,7 +47,7 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<Omit<User, 'id'>>, files?: { avatar?: File, cv?: File }) => Promise<void>;
+  updateUserProfile: (data: Partial<User>, files?: { avatar?: File, cv?: File }) => Promise<void>;
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -854,7 +854,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setSmartReplies([]);
     }, []);
 
-    const updateUserProfile = async (data: Partial<Omit<User, 'id'>>, files?: { avatar?: File, cv?: File }) => {
+    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File, cv?: File }) => {
         if (!auth.currentUser) throw new Error("Not authenticated");
         
         const updateData: { [key: string]: any } = { ...data };
@@ -863,19 +863,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         if (files?.avatar) {
             const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${files.avatar.name}`);
             const snapshot = await uploadBytes(avatarRef, files.avatar);
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            updateData.avatar = downloadURL;
+            updateData.avatar = await getDownloadURL(snapshot.ref);
         }
 
         if (files?.cv) {
             const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
             const snapshot = await uploadBytes(cvRef, files.cv);
             updateData.cvUrl = await getDownloadURL(snapshot.ref);
-            // cvFileName is already in the `data` object
+            updateData.cvFileName = files.cv.name; // Ensure filename is updated from the file itself
         }
-
-        if (data.name && data.name !== currentUser?.name) {
+        
+        if (data.name && data.name !== auth.currentUser.displayName) {
             await updateProfile(auth.currentUser, { displayName: data.name });
+        }
+        if (data.avatar && data.avatar !== auth.currentUser.photoURL) {
+            await updateProfile(auth.currentUser, { photoURL: data.avatar });
         }
         
         if (Object.keys(updateData).length > 0) {
