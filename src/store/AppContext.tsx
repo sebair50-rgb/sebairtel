@@ -42,6 +42,7 @@ interface AppContextType {
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
+  deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
   calls: Call[];
   settings: AppSettings;
@@ -389,12 +390,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       likedBy: [],
       comments: [],
       timestamp: serverTimestamp(),
+      mediaType: postData.mediaType || null,
+      mediaSrc: postData.mediaSrc || null,
     };
-
-    if (postData.mediaType && postData.mediaSrc) {
-      dataToSave.mediaType = postData.mediaType;
-      dataToSave.mediaSrc = postData.mediaSrc;
-    }
 
     await addDoc(collection(db, 'posts'), dataToSave);
   };
@@ -403,6 +401,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const postRef = doc(db, "posts", postId);
       await updateDoc(postRef, data);
   }
+
+  const deletePost = async (postId: string) => {
+    const postRef = doc(db, 'posts', postId);
+    await deleteDoc(postRef);
+  };
 
   const addComment = async (postId: string, commentText: string) => {
     if (!currentUser) return;
@@ -813,6 +816,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     posts,
     addPost,
     updatePost,
+    deletePost,
     addComment,
     calls,
     settings,

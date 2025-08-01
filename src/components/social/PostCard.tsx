@@ -6,7 +6,7 @@ import type { Post, Comment } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, Bookmark, Send } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Send, MoreHorizontal, Trash2, Edit, Copy, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,23 @@ import {
 import { Input } from '../ui/input';
 import { formatDistanceToNow } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 interface CommentInputProps {
@@ -63,13 +80,15 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { toast } = useToast();
-  const { updatePost, currentUser, createNotification, addComment } = useAppContext();
+  const { updatePost, currentUser, createNotification, addComment, deletePost } = useAppContext();
   const [isSaved, setIsSaved] = React.useState(post.isSaved);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const router = useRouter();
 
   if (!currentUser) return null;
 
   const isLiked = post.likedBy?.includes(currentUser.id) || false;
+  const isOwnPost = post.userId === currentUser.id;
 
   const handleLike = () => {
       let newLikedBy = post.likedBy || [];
@@ -112,10 +131,34 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     return formatDistanceToNow(timestamp.toDate(), { addSuffix: true, locale: ar });
   }
 
+  const handleCopyLink = () => {
+    const postUrl = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard.writeText(postUrl);
+    toast({ description: "تم نسخ رابط المنشور!" });
+  };
+
+  const handleReport = () => {
+    toast({ title: "تم استلام بلاغك", description: "شكرًا لك، سنقوم بمراجعة المنشور." });
+  };
+  
+  const handleEdit = () => {
+    toast({ description: "ميزة تعديل المنشورات قيد التطوير." });
+  };
+
+  const handleDelete = async () => {
+    try {
+        await deletePost(post.id);
+        toast({ title: "تم حذف المنشور بنجاح" });
+    } catch (error) {
+        toast({ variant: 'destructive', title: "خطأ", description: "فشل حذف المنشور." });
+    }
+  };
+
   return (
+    <>
     <Card className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center gap-4 p-4">
-        <div className="flex items-center gap-4 cursor-pointer" onClick={handleNavigateToProfile}>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 p-4">
+        <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={handleNavigateToProfile}>
             <Avatar>
                 <AvatarImage src={post.avatar} alt={post.user} />
                 <AvatarFallback>{post.user?.charAt(0)}</AvatarFallback>
@@ -125,6 +168,36 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 <p className="text-xs text-muted-foreground">{post.time}</p>
             </div>
         </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <MoreHorizontal />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                {isOwnPost && (
+                    <>
+                        <DropdownMenuItem onClick={handleEdit}>
+                            <Edit className="ml-2 h-4 w-4" />
+                            <span>تعديل المنشور</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="text-destructive focus:text-destructive">
+                            <Trash2 className="ml-2 h-4 w-4" />
+                            <span>حذف المنشور</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                    </>
+                )}
+                 <DropdownMenuItem onClick={handleCopyLink}>
+                    <Copy className="ml-2 h-4 w-4" />
+                    <span>نسخ الرابط</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReport}>
+                    <Flag className="ml-2 h-4 w-4" />
+                    <span>الإبلاغ عن المنشور</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <p className="whitespace-pre-wrap">{post.content}</p>
@@ -190,6 +263,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </AccordionItem>
       </Accordion>
     </Card>
+     <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد تمامًا؟</AlertDialogTitle>
+            <AlertDialogDescription>
+                سيتم حذف هذا المنشور بشكل دائم ولا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                حذف
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
