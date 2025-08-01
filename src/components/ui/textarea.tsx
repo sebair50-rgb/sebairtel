@@ -14,11 +14,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
         if (textarea) {
             textarea.style.height = 'auto'; // Reset height to recalculate
             const scrollHeight = textarea.scrollHeight;
-            const maxHeight = 120; // max height 
+            const maxHeight = props.id === 'bio' ? 120 : 240; // max height for bio vs others
             textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
             textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
         }
-    }, []);
+    }, [props.id]);
     
     React.useLayoutEffect(() => {
         autoResize();
