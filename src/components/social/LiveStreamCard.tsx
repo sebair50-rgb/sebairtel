@@ -35,15 +35,15 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({ stream }) => {
             className="w-full overflow-hidden shadow-lg transition-transform hover:scale-105 cursor-pointer group"
             onClick={handleCardClick}
         >
-            <div className="relative aspect-video">
-                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" />
+            <div className="relative aspect-[16/9]">
+                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" data-ai-hint="person streaming" />
                 <div className="absolute top-2 right-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md text-sm font-bold">
                     <Radio className="w-4 h-4 animate-pulse" />
                     <span>Live</span>
                 </div>
                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded-md text-xs font-bold">
                     <Eye className="w-4 h-4" />
-                    <span>{stream.viewers}</span>
+                    <span>{stream.viewers.toLocaleString()}</span>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
                      <h3 className="font-bold text-white text-lg truncate">{stream.title}</h3>
