@@ -11,6 +11,8 @@ export interface User {
   dob?: string;
   bio?: string;
   phone?: string;
+  city?: string;
+  from?: string;
   friends?: string[];
   isOnline?: boolean;
   lastSeen?: Timestamp;

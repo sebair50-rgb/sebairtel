@@ -59,6 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             dob: '',
             bio: '',
             phone: '',
+            city: '',
+            from: '',
             isOnline: true,
             lastSeen: serverTimestamp() as any,
             settings: defaultSettings, // Set default settings on signup

@@ -7,7 +7,7 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin } from 'lucide-react';
+import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -206,18 +206,29 @@ const UserProfilePage = () => {
                                             <CardTitle>التفاصيل</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Home className="w-5 h-5" />
-                                                <span>يقيم في إسطنبول</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <MapPin className="w-5 h-5" />
-                                                <span>من حلب</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                                <span>عرض معلومات القسم "حول" لـ {profileUser.name}</span>
-                                            </div>
+                                            {profileUser.city && (
+                                                <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <Home className="w-5 h-5" />
+                                                    <span>Lives in {profileUser.city}</span>
+                                                </div>
+                                            )}
+                                            {profileUser.from && (
+                                                <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <MapPin className="w-5 h-5" />
+                                                    <span>From {profileUser.from}</span>
+                                                </div>
+                                            )}
+                                            {(!profileUser.city && !profileUser.from) && (
+                                                 <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <Info className="w-5 h-5" />
+                                                    <span>No location details available.</span>
+                                                </div>
+                                            )}
+                                            {profileUser.bio && (
+                                                 <div className="flex items-start gap-3 text-muted-foreground pt-2 border-t">
+                                                    <p>{profileUser.bio}</p>
+                                                </div>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </div>
