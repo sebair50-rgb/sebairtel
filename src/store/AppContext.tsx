@@ -870,14 +870,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
             const snapshot = await uploadBytes(cvRef, files.cv);
             updateData.cvUrl = await getDownloadURL(snapshot.ref);
-            updateData.cvFileName = files.cv.name; // Ensure filename is updated from the file itself
+            updateData.cvFileName = files.cv.name;
         }
         
         if (data.name && data.name !== auth.currentUser.displayName) {
             await updateProfile(auth.currentUser, { displayName: data.name });
         }
-        if (data.avatar && data.avatar !== auth.currentUser.photoURL) {
-            await updateProfile(auth.currentUser, { photoURL: data.avatar });
+        if (updateData.avatar && updateData.avatar !== auth.currentUser.photoURL) {
+            await updateProfile(auth.currentUser, { photoURL: updateData.avatar });
         }
         
         if (Object.keys(updateData).length > 0) {

@@ -37,48 +37,32 @@ const ProfileSettings = () => {
     const avatarFileInputRef = useRef<HTMLInputElement>(null);
     const cvFileInputRef = useRef<HTMLInputElement>(null);
     
-    // Form state
-    const [name, setName] = useState('');
-    const [phone, setPhone] = useState('');
-    const [dob, setDob] = useState<Date | undefined>();
-    const [bio, setBio] = useState('');
-    const [city, setCity] = useState('');
-    const [from, setFrom] = useState('');
-    const [relationshipStatus, setRelationshipStatus] = useState('');
+    const [initialState, setInitialState] = useState<Partial<User>>({});
+    const [formState, setFormState] = useState<Partial<User>>({});
     
-    // Complex state
-    const [workExperience, setWorkExperience] = useState<WorkExperience[]>([]);
-    const [education, setEducation] = useState<Education[]>([]);
-    const [links, setLinks] = useState<UserLink[]>([]);
-    
-    // Temporary state for new entries
-    const [newWork, setNewWork] = useState({ title: '', company: '' });
-    const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
-    const [newLink, setNewLink] = useState({ title: '', url: '' });
-
-    // CV and Links state
-    const [cvFile, setCvFile] = useState<File | null>(null);
-    const [cvFileName, setCvFileName] = useState('');
-
-    // Avatar state
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [cvFile, setCvFile] = useState<File | null>(null);
 
     const [isPending, startTransition] = useTransition();
 
      useEffect(() => {
         if (currentUser) {
-            setName(currentUser.name || '');
-            setPhone(currentUser.phone || '');
-            setDob(currentUser.dob ? new Date(currentUser.dob) : undefined);
-            setBio(currentUser.bio || '');
-            setCity(currentUser.city || '');
-            setFrom(currentUser.from || '');
-            setRelationshipStatus(currentUser.relationshipStatus || '');
-            setCvFileName(currentUser.cvFileName || '');
-            setLinks(currentUser.links || []);
-            setWorkExperience(currentUser.workExperience || []);
-            setEducation(currentUser.education || []);
+            const initialData = {
+                name: currentUser.name || '',
+                phone: currentUser.phone || '',
+                dob: currentUser.dob,
+                bio: currentUser.bio || '',
+                city: currentUser.city || '',
+                from: currentUser.from || '',
+                relationshipStatus: currentUser.relationshipStatus || '',
+                links: currentUser.links || [],
+                workExperience: currentUser.workExperience || [],
+                education: currentUser.education || [],
+                cvFileName: currentUser.cvFileName || '',
+            };
+            setInitialState(initialData);
+            setFormState(initialData);
 
             // Reset file states on user change
             setAvatarFile(null);
@@ -89,28 +73,15 @@ const ProfileSettings = () => {
 
     const hasChanges = useMemo(() => {
         if (!currentUser) return false;
+        if (avatarFile || cvFile) return true;
+        // Deep comparison for arrays/objects
+        return JSON.stringify(formState) !== JSON.stringify(initialState);
+    }, [formState, initialState, avatarFile, cvFile, currentUser]);
 
-        const dobString = dob ? format(dob, 'yyyy-MM-dd') : undefined;
-        const currentUserDob = currentUser.dob ? format(new Date(currentUser.dob), 'yyyy-MM-dd') : undefined;
 
-        const arraysAreEqual = (arr1: any[], arr2: any[]) => JSON.stringify(arr1) === JSON.stringify(arr2);
-
-        return (
-            name !== currentUser.name ||
-            phone !== (currentUser.phone || '') ||
-            bio !== (currentUser.bio || '') ||
-            dobString !== currentUserDob ||
-            city !== (currentUser.city || '') ||
-            from !== (currentUser.from || '') ||
-            relationshipStatus !== (currentUser.relationshipStatus || '') ||
-            !arraysAreEqual(links, currentUser.links || []) ||
-            !arraysAreEqual(workExperience, currentUser.workExperience || []) ||
-            !arraysAreEqual(education, currentUser.education || []) ||
-            avatarFile !== null ||
-            cvFile !== null
-        );
-    }, [name, phone, bio, dob, city, from, relationshipStatus, links, workExperience, education, avatarFile, cvFile, currentUser]);
-
+    const handleFieldChange = (field: keyof User, value: any) => {
+        setFormState(prev => ({ ...prev, [field]: value }));
+    };
 
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -132,69 +103,79 @@ const ProfileSettings = () => {
                 return;
             }
             setCvFile(file);
-            setCvFileName(file.name);
+            handleFieldChange('cvFileName', file.name);
         }
     };
     
     const handleAddLink = () => {
-        if (newLink.title.trim() && newLink.url.trim()) {
-            setLinks([...links, newLink]);
-            setNewLink({ title: '', url: '' });
+        const { links = [] } = formState;
+        const newLinkTitle = (document.getElementById('new-link-title') as HTMLInputElement)?.value;
+        const newLinkUrl = (document.getElementById('new-link-url') as HTMLInputElement)?.value;
+
+        if (newLinkTitle?.trim() && newLinkUrl?.trim()) {
+            handleFieldChange('links', [...links, { title: newLinkTitle, url: newLinkUrl }]);
+            (document.getElementById('new-link-title') as HTMLInputElement).value = '';
+            (document.getElementById('new-link-url') as HTMLInputElement).value = '';
         } else {
             toast({ variant: 'destructive', title: "Invalid Link", description: 'Please provide both a title and a URL.' });
         }
     };
 
     const handleRemoveLink = (index: number) => {
-        setLinks(links.filter((_, i) => i !== index));
+        const { links = [] } = formState;
+        handleFieldChange('links', links.filter((_, i) => i !== index));
     };
-
+    
     const handleAddWork = () => {
-        if (newWork.title.trim() && newWork.company.trim()) {
-            setWorkExperience([...workExperience, newWork]);
-            setNewWork({ title: '', company: '' });
+        const { workExperience = [] } = formState;
+        const newWorkTitle = (document.getElementById('new-work-title') as HTMLInputElement)?.value;
+        const newWorkCompany = (document.getElementById('new-work-company') as HTMLInputElement)?.value;
+
+        if (newWorkTitle?.trim() && newWorkCompany?.trim()) {
+            handleFieldChange('workExperience', [...workExperience, { title: newWorkTitle, company: newWorkCompany }]);
+            (document.getElementById('new-work-title') as HTMLInputElement).value = '';
+            (document.getElementById('new-work-company') as HTMLInputElement).value = '';
         } else {
             toast({ variant: 'destructive', title: "Invalid Work Entry", description: 'Please provide both a title and a company.' });
         }
     };
 
     const handleRemoveWork = (index: number) => {
-        setWorkExperience(workExperience.filter((_, i) => i !== index));
+        const { workExperience = [] } = formState;
+        handleFieldChange('workExperience', workExperience.filter((_, i) => i !== index));
     };
 
     const handleAddEdu = () => {
-        if (newEdu.school.trim() && newEdu.degree.trim()) {
-            setEducation([...education, newEdu]);
-            setNewEdu({ school: '', degree: '' });
+        const { education = [] } = formState;
+        const newEduSchool = (document.getElementById('new-edu-school') as HTMLInputElement)?.value;
+        const newEduDegree = (document.getElementById('new-edu-degree') as HTMLInputElement)?.value;
+
+        if (newEduSchool?.trim() && newEduDegree?.trim()) {
+            handleFieldChange('education', [...education, { school: newEduSchool, degree: newEduDegree }]);
+            (document.getElementById('new-edu-school') as HTMLInputElement).value = '';
+            (document.getElementById('new-edu-degree') as HTMLInputElement).value = '';
         } else {
             toast({ variant: 'destructive', title: "Invalid Education Entry", description: 'Please provide both a school and a degree.' });
         }
     };
 
     const handleRemoveEdu = (index: number) => {
-        setEducation(education.filter((_, i) => i !== index));
+        const { education = [] } = formState;
+        handleFieldChange('education', education.filter((_, i) => i !== index));
     };
+
 
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
-        if (name.trim() === '') {
+        if (!formState.name?.trim()) {
              toast({ variant: "destructive", title: "Name is required", description: "The name field cannot be empty." });
             return;
         }
 
         const updatePayload: Partial<User> = {
-            name,
-            phone,
-            bio,
-            dob: dob ? format(dob, 'yyyy-MM-dd') : '',
-            city,
-            from,
-            relationshipStatus,
-            links,
-            workExperience,
-            education,
-            cvFileName: cvFile ? cvFile.name : currentUser.cvFileName,
+            ...formState,
+            dob: formState.dob ? (formState.dob instanceof Timestamp ? formState.dob.toDate().toISOString().split('T')[0] : format(new Date(formState.dob), 'yyyy-MM-dd')) : '',
         };
 
         const filesToUpload: { avatar?: File, cv?: File } = {};
@@ -204,6 +185,10 @@ const ProfileSettings = () => {
         startTransition(async () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
+                
+                // After successful save, reset the initial state to the new state
+                setInitialState(formState);
+                
                 setAvatarFile(null);
                 setAvatarPreview(null);
                 setCvFile(null);
@@ -238,25 +223,25 @@ const ProfileSettings = () => {
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <Avatar className="w-24 h-24 text-4xl">
-                            <AvatarImage src={avatarPreview || currentUser?.avatar || undefined} alt={name} />
-                            <AvatarFallback>{name.charAt(0) || '?'}</AvatarFallback>
+                            <AvatarImage src={avatarPreview || currentUser?.avatar || undefined} alt={formState.name} />
+                            <AvatarFallback>{formState.name?.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
                         <Button size="icon" className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card" onClick={() => avatarFileInputRef.current?.click()}>
                             <Camera className="w-4 h-4"/><span className="sr-only">Change Picture</span>
                         </Button>
                     </div>
                      <div>
-                        <h2 className="text-2xl font-bold">{name}</h2>
+                        <h2 className="text-2xl font-bold">{formState.name}</h2>
                         <p className="text-muted-foreground">{currentUser.email}</p>
                     </div>
                 </div>
 
                 <div className="space-y-4">
-                    <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={formState.name} onChange={(e) => handleFieldChange('name', e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={formState.bio} onChange={(e) => handleFieldChange('bio', e.target.value)} /></div>
                     <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" defaultValue={currentUser.email} disabled /></div>
-                    <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., +1234567890" /></div>
-                    <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{dob ? format(dob, "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dob} onSelect={setDob} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
+                    <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={formState.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} placeholder="e.g., +1234567890" /></div>
+                    <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!formState.dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
                 </div>
 
                 <Separator />
@@ -266,12 +251,12 @@ const ProfileSettings = () => {
                         <div className="space-y-4">
                             <Button variant="outline" className="w-full justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
                                 <FileUp className="mr-2 h-4 w-4" />
-                                {cvFileName ? `Replace: ${cvFileName}` : 'Upload CV'}
+                                {formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV'}
                             </Button>
                             
                             <div className="space-y-2">
                                 <Label>External Links (Portfolio, LinkedIn, etc.)</Label>
-                                {links.map((link, index) => (
+                                {formState.links?.map((link, index) => (
                                     <div key={index} className="flex items-center gap-2">
                                         <Input value={link.title} disabled className="bg-muted" />
                                         <Input value={link.url} disabled className="bg-muted"/>
@@ -279,8 +264,8 @@ const ProfileSettings = () => {
                                     </div>
                                 ))}
                                 <div className="flex items-center gap-2">
-                                    <Input placeholder="Link Title (e.g., Portfolio)" value={newLink.title} onChange={e => setNewLink({...newLink, title: e.target.value})} />
-                                    <Input placeholder="https://..." value={newLink.url} onChange={e => setNewLink({...newLink, url: e.target.value})} />
+                                    <Input id="new-link-title" placeholder="Link Title (e.g., Portfolio)" />
+                                    <Input id="new-link-url" placeholder="https://..." />
                                     <Button variant="ghost" size="icon" onClick={handleAddLink}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                                 </div>
                             </div>
@@ -289,15 +274,15 @@ const ProfileSettings = () => {
 
                     <DetailSection title="Work Experience" icon={Briefcase}>
                          <div className="space-y-2">
-                            {workExperience.map((work, index) => (
+                            {formState.workExperience?.map((work, index) => (
                                 <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
                                     <p className="flex-1 text-sm"><span className="font-semibold">{work.title}</span> at {work.company}</p>
                                     <Button variant="ghost" size="icon" onClick={() => handleRemoveWork(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
-                                <Input placeholder="Job Title" value={newWork.title} onChange={e => setNewWork({...newWork, title: e.target.value})} />
-                                <Input placeholder="Company Name" value={newWork.company} onChange={e => setNewWork({...newWork, company: e.target.value})} />
+                                <Input id="new-work-title" placeholder="Job Title" />
+                                <Input id="new-work-company" placeholder="Company Name" />
                                 <Button variant="ghost" size="icon" onClick={handleAddWork}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
@@ -305,23 +290,23 @@ const ProfileSettings = () => {
                     
                     <DetailSection title="Education" icon={GraduationCap}>
                         <div className="space-y-2">
-                            {education.map((edu, index) => (
+                            {formState.education?.map((edu, index) => (
                                 <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
                                     <p className="flex-1 text-sm"><span className="font-semibold">{edu.degree}</span> from {edu.school}</p>
                                     <Button variant="ghost" size="icon" onClick={() => handleRemoveEdu(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
-                                <Input placeholder="School/University" value={newEdu.school} onChange={e => setNewEdu({...newEdu, school: e.target.value})} />
-                                <Input placeholder="Degree/Certificate" value={newEdu.degree} onChange={e => setNewEdu({...newEdu, degree: e.target.value})} />
+                                <Input id="new-edu-school" placeholder="School/University" />
+                                <Input id="new-edu-degree" placeholder="Degree/Certificate" />
                                 <Button variant="ghost" size="icon" onClick={handleAddEdu}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
                     </DetailSection>
                     
-                    <DetailSection title="Current City" icon={Home}><Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
-                    <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
-                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={relationshipStatus} onChange={(e) => setRelationshipStatus(e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
+                    <DetailSection title="Current City" icon={Home}><Input id="city" value={formState.city} onChange={(e) => handleFieldChange('city', e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
+                    <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={formState.from} onChange={(e) => handleFieldChange('from', e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
+                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={formState.relationshipStatus} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
                 </div>
 
 
