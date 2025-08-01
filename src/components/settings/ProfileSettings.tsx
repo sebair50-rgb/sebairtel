@@ -49,6 +49,7 @@ const ProfileSettings = () => {
         links: [],
         workExperience: [],
         education: [],
+        cvUrl: '',
         cvFileName: '',
         avatar: '',
     });
@@ -77,6 +78,7 @@ const ProfileSettings = () => {
                 links: currentUser.links || [],
                 workExperience: currentUser.workExperience || [],
                 education: currentUser.education || [],
+                cvUrl: currentUser.cvUrl || '',
                 cvFileName: currentUser.cvFileName || '',
                 avatar: currentUser.avatar || '',
             };
@@ -93,7 +95,7 @@ const ProfileSettings = () => {
     const hasChanges = useMemo(() => {
         if (!currentUser) return false;
 
-        // Check for changes in simple fields and arrays
+        // Compare the final state with the initial state
         const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
         
         // Check if there are new, un-added entries in the temp input fields
@@ -139,8 +141,9 @@ const ProfileSettings = () => {
     const handleRemoveCv = () => {
         setCvFile(null);
         handleFieldChange('cvFileName', '');
+        handleFieldChange('cvUrl', ''); // Also clear the URL from the form state
         if(cvFileInputRef.current) cvFileInputRef.current.value = "";
-    }
+    };
 
     const handleAddLink = () => {
         if (newLink.title.trim() && newLink.url.trim()) {
@@ -195,7 +198,7 @@ const ProfileSettings = () => {
              toast({ variant: "destructive", title: "Name is required", description: "The name field cannot be empty." });
             return;
         }
-
+        
         // Start with a clean payload
         let updatePayload: Partial<User> = {};
         
@@ -224,11 +227,17 @@ const ProfileSettings = () => {
                 (updatePayload as any)[key] = formValue;
             }
         });
-
+        
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
         if (cvFile) filesToUpload.cv = cvFile;
         
+        // This is a special case to handle CV removal when cvFileName becomes empty
+        if (initialState.cvFileName && !formState.cvFileName) {
+            updatePayload.cvFileName = '';
+            updatePayload.cvUrl = '';
+        }
+
         if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
              toast({ description: "No changes to save." });
              return;
@@ -238,6 +247,7 @@ const ProfileSettings = () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
                 toast({ title: "Success!", description: "Your profile information has been updated successfully." });
+                // No need to reset files here, useEffect on currentUser will handle it
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
                 const description = error.message.includes('bytes') ? "An image or file size is too large." : "Failed to update profile. Please try again.";
@@ -282,10 +292,10 @@ const ProfileSettings = () => {
                 </div>
 
                 <div className="space-y-4">
-                    <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={formState.name} onChange={(e) => handleFieldChange('name', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={formState.bio} onChange={(e) => handleFieldChange('bio', e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={formState.name || ''} onChange={(e) => handleFieldChange('name', e.target.value)} /></div>
+                    <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={formState.bio || ''} onChange={(e) => handleFieldChange('bio', e.target.value)} /></div>
                     <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={currentUser.email || ''} disabled /></div>
-                    <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={formState.phone} onChange={(e) => handleFieldChange('phone', e.target.value)} placeholder="e.g., +1234567890" /></div>
+                    <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={formState.phone || ''} onChange={(e) => handleFieldChange('phone', e.target.value)} placeholder="e.g., +1234567890" /></div>
                     <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!formState.dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
                 </div>
 
@@ -294,16 +304,24 @@ const ProfileSettings = () => {
                 <div className="space-y-6">
                     <DetailSection title="CV & Portfolio" icon={Briefcase}>
                         <div className="space-y-4">
-                             <div className="flex items-center gap-2">
-                                <Button variant="outline" className="flex-1 justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
-                                    <FileUp className="mr-2 h-4 w-4" />
-                                    {formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV'}
-                                </Button>
-                                {formState.cvFileName && (
-                                    <Button variant="ghost" size="icon" onClick={handleRemoveCv}>
-                                        <XCircle className="w-5 h-5 text-destructive" />
+                             <div className="flex items-center gap-4">
+                                <div className="flex-1 space-y-2">
+                                    <Button variant="outline" className="w-full justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
+                                        <FileUp className="mr-2 h-4 w-4" />
+                                        {cvFile ? `Selected: ${cvFile.name}` : (initialState.cvUrl ? "Replace CV" : "Upload CV")}
                                     </Button>
-                                )}
+
+                                    {initialState.cvUrl && !cvFile && (
+                                        <div className="flex items-center justify-between p-2 text-sm border rounded-md">
+                                             <a href={initialState.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium truncate">
+                                                {initialState.cvFileName || "View Saved CV"}
+                                            </a>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRemoveCv}>
+                                                <XCircle className="w-5 h-5 text-destructive" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             
                             <div className="space-y-2">
@@ -356,9 +374,9 @@ const ProfileSettings = () => {
                         </div>
                     </DetailSection>
                     
-                    <DetailSection title="Current City" icon={Home}><Input id="city" value={formState.city} onChange={(e) => handleFieldChange('city', e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
-                    <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={formState.from} onChange={(e) => handleFieldChange('from', e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
-                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={formState.relationshipStatus} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
+                    <DetailSection title="Current City" icon={Home}><Input id="city" value={formState.city || ''} onChange={(e) => handleFieldChange('city', e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
+                    <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={formState.from || ''} onChange={(e) => handleFieldChange('from', e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
+                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={formState.relationshipStatus || ''} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
                 </div>
 
 
@@ -374,3 +392,5 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
+
+    
