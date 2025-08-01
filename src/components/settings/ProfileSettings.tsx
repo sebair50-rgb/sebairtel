@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import type { User, WorkExperience, Education, UserLink } from '@/lib/types';
+import { Timestamp } from 'firebase/firestore';
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
@@ -38,7 +39,18 @@ const ProfileSettings = () => {
     const cvFileInputRef = useRef<HTMLInputElement>(null);
     
     const [initialState, setInitialState] = useState<Partial<User>>({});
-    const [formState, setFormState] = useState<Partial<User>>({});
+    const [formState, setFormState] = useState<Partial<User>>({
+        name: '',
+        phone: '',
+        bio: '',
+        city: '',
+        from: '',
+        relationshipStatus: '',
+        links: [],
+        workExperience: [],
+        education: [],
+        cvFileName: '',
+    });
     
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -173,24 +185,51 @@ const ProfileSettings = () => {
             return;
         }
 
-        const updatePayload: Partial<User> = {
-            ...formState,
-            dob: formState.dob ? (formState.dob instanceof Timestamp ? formState.dob.toDate().toISOString().split('T')[0] : format(new Date(formState.dob), 'yyyy-MM-dd')) : '',
-        };
+        const updatePayload: Partial<User> = {};
+
+        // Compare each field and add to payload only if it has changed
+        Object.keys(formState).forEach(key => {
+            const formValue = (formState as any)[key];
+            const initialValue = (initialState as any)[key];
+
+            if (JSON.stringify(formValue) !== JSON.stringify(initialValue)) {
+                (updatePayload as any)[key] = formValue;
+            }
+        });
+        
+        if (formState.dob && initialState.dob) {
+            const formDate = new Date(formState.dob).getTime();
+            const initialDate = new Date(initialState.dob).getTime();
+            if(formDate !== initialDate) {
+                 updatePayload.dob = formState.dob;
+            }
+        } else if (formState.dob) {
+            updatePayload.dob = formState.dob;
+        }
+
 
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
         if (cvFile) filesToUpload.cv = cvFile;
+        
+        if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
+            toast({ description: "No changes to save." });
+            return;
+        }
+
 
         startTransition(async () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
                 
-                // After successful save, reset the initial state to the new state
-                setInitialState(formState);
+                const newInitialState = { ...initialState, ...updatePayload };
+                if (filesToUpload.cv) {
+                    newInitialState.cvFileName = filesToUpload.cv.name;
+                }
+                setInitialState(newInitialState);
                 
                 setAvatarFile(null);
-                setAvatarPreview(null);
+                setAvatarPreview(newInitialState.avatar || null);
                 setCvFile(null);
                 toast({ title: "Success!", description: "Your profile information has been updated successfully." });
             } catch (error: any) {
@@ -251,7 +290,7 @@ const ProfileSettings = () => {
                         <div className="space-y-4">
                             <Button variant="outline" className="w-full justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
                                 <FileUp className="mr-2 h-4 w-4" />
-                                {formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV'}
+                                {cvFile ? cvFile.name : (formState.cvFileName ? `Replace: ${formState.cvFileName}` : 'Upload CV')}
                             </Button>
                             
                             <div className="space-y-2">
