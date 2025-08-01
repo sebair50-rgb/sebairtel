@@ -30,16 +30,6 @@ const DetailSection = ({ title, children, icon: Icon }: { title: string, childre
     </div>
 );
 
-const AddButton = ({ label, onClick }: { label: string, onClick?: () => void }) => {
-    const { toast } = useToast();
-    const clickHandler = onClick || (() => toast({ description: 'This feature will be activated soon.' }));
-    return (
-        <Button variant="outline" className="w-full justify-start p-3 bg-muted/50" onClick={clickHandler}>
-            {label}
-        </Button>
-    )
-};
-
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
