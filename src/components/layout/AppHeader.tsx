@@ -41,10 +41,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ title, icon: Icon }) => {
     return (
         <header className="p-4 md:px-6 md:py-4 border-b bg-background z-10 sticky top-0">
              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                    <Icon className="w-8 h-8 text-primary" />
-                    <h1 className="text-3xl font-bold">{title}</h1>
-                </div>
                 <div className="flex items-center gap-2">
                      <Button variant="ghost" size="icon" onClick={handleNotificationsClick} className="relative">
                         <Bell className="w-6 h-6 text-muted-foreground" />
@@ -64,6 +60,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ title, icon: Icon }) => {
                      <Button variant="ghost" size="icon">
                         <ShoppingCart className="w-6 h-6 text-muted-foreground" />
                     </Button>
+                </div>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold">{title}</h1>
+                    <Icon className="w-8 h-8 text-primary" />
                 </div>
             </div>
         </header>
