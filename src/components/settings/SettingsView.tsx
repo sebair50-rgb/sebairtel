@@ -23,15 +23,15 @@ interface SettingsViewProps {
 type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'sounds' | 'privacy' | 'account' | 'interface' | 'language' | 'help';
 
 const settingsSections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
-    { id: 'profile', label: 'الملف الشخصي', icon: User },
-    { id: 'appearance', label: 'المظهر', icon: Palette },
-    { id: 'interface', label: 'تخصيص الواجهة', icon: LayoutDashboard },
-    { id: 'notifications', label: 'الإشعارات', icon: Bell },
-    { id: 'sounds', label: 'النغمات والأصوات', icon: Music },
-    { id: 'privacy', label: 'الخصوصية', icon: Lock },
-    { id: 'account', label: 'الحساب والأمان', icon: Shield },
-    { id: 'language', label: 'اللغة', icon: Languages },
-    { id: 'help', label: 'المساعدة', icon: HelpCircle },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'interface', label: 'Customize Interface', icon: LayoutDashboard },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'sounds', label: 'Tones & Sounds', icon: Music },
+    { id: 'privacy', label: 'Privacy', icon: Lock },
+    { id: 'account', label: 'Account & Security', icon: Shield },
+    { id: 'language', label: 'Language', icon: Languages },
+    { id: 'help', label: 'Help', icon: HelpCircle },
 ];
 
 const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
@@ -55,13 +55,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
             case 'interface':
                 return <InterfaceSettings />;
             default:
-                return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">هذه الميزة سيتم تفعيلها قريبًا.</p></div>;
+                return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">This feature will be activated soon.</p></div>;
         }
     };
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black/90">
-            <AppHeader title="الإعدادات" icon={SettingsIcon} />
+            <AppHeader title="Settings" icon={SettingsIcon} />
 
             <div className="flex-1 overflow-hidden md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6">
                 
@@ -85,7 +85,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                     </nav>
                      <Button variant="ghost" onClick={onLogout} className="justify-start gap-3 px-4 py-3 text-base mt-auto text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg">
                         <LogOut className="w-5 h-5" />
-                        تسجيل الخروج
+                        Sign Out
                     </Button>
                 </aside>
 
@@ -117,8 +117,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                      {isMobile && (
                         <div className="mt-6 px-4 pb-4">
                              <Button variant="destructive" className="w-full" onClick={onLogout}>
-                                <LogOut className="ml-2" />
-                                تسجيل الخروج
+                                <LogOut className="mr-2" />
+                                Sign Out
                             </Button>
                         </div>
                     )}

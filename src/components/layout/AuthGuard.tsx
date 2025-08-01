@@ -36,7 +36,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
         <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">جاري التحميل...</p>
+        <p className="text-muted-foreground mt-2">Loading...</p>
       </div>
     );
   }
@@ -52,7 +52,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
         <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">جاري التوجيه...</p>
+        <p className="text-muted-foreground mt-2">Redirecting...</p>
       </div>
     );
 };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
@@ -35,11 +36,11 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   }, [setActiveTab, setSelectedChatId]);
 
   const allNavItems = useMemo(() => [
-    { name: 'ai', icon: Brain, label: 'الذكاء الاصطناعي', isVisible: settings.interface.showAiTab },
-    { name: 'contact', icon: Phone, label: 'تواصل', isVisible: settings.interface.showContactTab },
-    { name: 'social', icon: Home, label: 'المجتمع', isVisible: settings.interface.showSocialTab },
-    { name: 'apps', icon: AppWindow, label: 'التطبيقات', isVisible: settings.interface.showAppsTab },
-    { name: 'settings', icon: Settings, label: 'الإعدادات', isVisible: true }, // Always visible
+    { name: 'ai', icon: Brain, label: 'AI', isVisible: settings.interface.showAiTab },
+    { name: 'contact', icon: Phone, label: 'Contact', isVisible: settings.interface.showContactTab },
+    { name: 'social', icon: Home, label: 'Community', isVisible: settings.interface.showSocialTab },
+    { name: 'apps', icon: AppWindow, label: 'Apps', isVisible: settings.interface.showAppsTab },
+    { name: 'settings', icon: Settings, label: 'Settings', isVisible: true }, // Always visible
   ], [settings.interface]);
   
   const visibleNavItems = allNavItems.filter(item => item.isVisible);
@@ -50,7 +51,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   return (
     <>
       {/* Desktop Sidebar */}
-      <nav className="hidden md:flex flex-col items-center gap-4 p-2 bg-card border-l w-16">
+      <nav className="hidden md:flex flex-col items-center gap-4 p-2 bg-card border-r w-16">
         <div className="my-2">
             <Logo />
         </div>
@@ -69,12 +70,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                                 )}
                                 >
                                 <item.icon size={24} />
-                                 {item.badgeCount && item.badgeCount > 0 && (
-                                    <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{item.badgeCount}</Badge>
-                                )}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="left">
+                        <TooltipContent side="right">
                             <p>{item.label}</p>
                         </TooltipContent>
                     </Tooltip>
@@ -87,8 +85,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
                             <LogOut size={24} className='text-muted-foreground'/>
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="left">
-                        <p>تسجيل الخروج</p>
+                    <TooltipContent side="right">
+                        <p>Sign Out</p>
                     </TooltipContent>
                  </Tooltip>
                  <Avatar>
@@ -101,7 +99,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
 
       {/* Mobile Bottom Nav */}
       {showMobileNav && (
-        <nav className="fixed bottom-0 right-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
+        <nav className="fixed bottom-0 left-0 w-full bg-card border-t flex justify-around items-center p-1 md:hidden z-50">
           {visibleNavItems.map((item) => (
             <button
               key={item.name}
@@ -115,9 +113,6 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
             >
               <item.icon size={20} />
               <span className="mt-1">{item.label}</span>
-              {item.badgeCount && item.badgeCount > 0 && (
-                <Badge className="absolute top-1 right-3 h-4 w-4 justify-center p-0 text-[8px]">{item.badgeCount}</Badge>
-              )}
             </button>
           ))}
         </nav>

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Heart, UserPlus, PhoneMissed, MessageSquare } from 'lucide-react';
@@ -21,7 +21,7 @@ interface NotificationItemProps {
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onClick, isSelectionMode, isSelected }) => {
     
-    const timeAgo = formatDistanceToNow(notification.timestamp.toDate(), { addSuffix: true, locale: ar });
+    const timeAgo = formatDistanceToNow(notification.timestamp.toDate(), { addSuffix: true, locale: enUS });
 
     const getIcon = () => {
         switch (notification.type) {
@@ -78,7 +78,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onCli
                     <AvatarFallback>{notification.fromUser.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className={cn(
-                    "absolute -bottom-1 -right-1 rounded-full p-1.5 flex items-center justify-center",
+                    "absolute -bottom-1 -left-1 rounded-full p-1.5 flex items-center justify-center",
                     getIconBgColor()
                 )}>
                     {getIcon()}

@@ -4,48 +4,48 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Newspaper, ArrowLeft } from 'lucide-react';
+import { Newspaper, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
 const newsItems = [
     {
         id: 1,
-        title: 'تقنية جديدة تعد بثورة في عالم الذكاء الاصطناعي',
-        category: 'تكنولوجيا',
-        time: 'منذ ساعتين',
+        title: 'New technology promises a revolution in the world of AI',
+        category: 'Technology',
+        time: '2 hours ago',
         image: 'https://placehold.co/600x400/5e81ac/ffffff.png',
         'data-ai-hint': 'artificial intelligence',
-        description: 'كشف فريق من الباحثين عن نموذج جديد للذكاء الاصطناعي يمكنه التعلم من كميات أقل من البيانات، مما يفتح آفاقًا جديدة للتطبيقات في مختلف المجالات.',
+        description: 'A team of researchers has unveiled a new AI model that can learn from smaller amounts of data, opening new horizons for applications in various fields.',
         link: '#'
     },
     {
         id: 2,
-        title: 'الأسواق المالية تشهد تقلبات بعد قرارات اقتصادية جديدة',
-        category: 'اقتصاد',
-        time: 'منذ 5 ساعات',
+        title: 'Financial markets experience volatility after new economic decisions',
+        category: 'Economy',
+        time: '5 hours ago',
         image: 'https://placehold.co/600x400/a3be8c/ffffff.png',
         'data-ai-hint': 'financial markets',
-        description: 'تفاعلت أسواق الأسهم العالمية بشكل متباين مع حزمة الإجراءات الاقتصادية التي تم الإعلان عنها مؤخرًا، وسط حالة من عدم اليقين بين المستثمرين.',
+        description: 'Global stock markets reacted mixedly to the recently announced economic measures, amid a state of uncertainty among investors.',
         link: '#'
     },
     {
         id: 3,
-        title: 'اكتشاف كوكب جديد قد يكون صالحًا للحياة',
-        category: 'علوم وفضاء',
-        time: 'منذ يوم واحد',
+        title: 'Discovery of a new planet that could be habitable',
+        category: 'Science & Space',
+        time: '1 day ago',
         image: 'https://placehold.co/600x400/b48ead/ffffff.png',
         'data-ai-hint': 'exoplanet space',
-        description: 'أعلن علماء الفلك عن اكتشاف كوكب خارج المجموعة الشمسية يقع في النطاق الصالح للحياة، مما يزيد من احتمالية وجود مياه سائلة على سطحه.',
+        description: 'Astronomers have announced the discovery of an exoplanet located in the habitable zone, increasing the likelihood of liquid water on its surface.',
         link: '#'
     },
     {
         id: 4,
-        title: 'نهائي رياضي مثير يحبس الأنفاس وينتهي بنتيجة غير متوقعة',
-        category: 'رياضة',
-        time: 'منذ 3 أيام',
+        title: 'Thrilling sports final holds breaths and ends with an unexpected result',
+        category: 'Sports',
+        time: '3 days ago',
         image: 'https://placehold.co/600x400/ebcb8b/000000.png',
         'data-ai-hint': 'sports stadium',
-        description: 'في مباراة ماراثونية، تمكن الفريق الضيف من تحقيق فوز دراماتيكي في الدقائق الأخيرة من عمر المباراة، ليتوج باللقب للمرة الأولى في تاريخه.',
+        description: 'In a marathon match, the visiting team managed to achieve a dramatic victory in the final minutes, winning the title for the first time in its history.',
         link: '#'
     }
 ];
@@ -56,10 +56,10 @@ const NewsView = () => {
         <div className="max-w-4xl mx-auto">
              <div className="flex items-center gap-3 mb-6">
                 <Newspaper className="w-8 h-8 text-primary" />
-                <h1 className="text-3xl font-bold">آخر الأخبار</h1>
+                <h1 className="text-3xl font-bold">Latest News</h1>
             </div>
              <p className="text-muted-foreground mb-8">
-                تابع آخر التطورات والأحداث من مصادر موثوقة حول العالم.
+                Follow the latest developments and events from trusted sources around the world.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -87,8 +87,8 @@ const NewsView = () => {
                         </CardContent>
                         <CardFooter>
                             <Button variant="outline" className="w-full">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                قراءة المزيد
+                                Read More
+                                <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </CardFooter>
                     </Card>

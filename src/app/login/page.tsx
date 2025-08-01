@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, AtSign, MailWarning } from 'lucide-react';
+import { Loader2, KeyRound, AtSign } from 'lucide-react';
 import Logo from '@/components/shared/Logo';
 import Link from 'next/link';
 
@@ -26,16 +26,16 @@ export default function LoginPage() {
             await login(email, password);
             // AuthGuard will handle redirection
         } catch (error: any) {
-            let description = "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
+            let description = "An unexpected error occurred. Please try again.";
             if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                description = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+                description = 'Incorrect email or password.';
             } else if (error.code === 'auth/email-not-verified') {
-                 description = 'لم يتم التحقق من بريدك الإلكتروني. الرجاء التحقق من صندوق الوارد الخاص بك.';
+                 description = 'Your email has not been verified. Please check your inbox.';
             }
             console.error("Login Error: ", error.code, error.message);
             toast({
                 variant: "destructive",
-                title: "خطأ في تسجيل الدخول",
+                title: "Login Failed",
                 description: description,
             });
         }
@@ -56,13 +56,13 @@ export default function LoginPage() {
                 </div>
                 <Card className="shadow-2xl">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">مرحباً بعودتك!</CardTitle>
-                        <CardDescription>سجل الدخول للمتابعة إلى SebairTel</CardDescription>
+                        <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+                        <CardDescription>Sign in to continue to SebairTel</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">البريد الإلكتروني</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <div className="relative">
                                     <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
@@ -73,12 +73,11 @@ export default function LoginPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="pl-10"
-                                        dir="ltr"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password">كلمة المرور</Label>
+                                <Label htmlFor="password">Password</Label>
                                  <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
@@ -88,18 +87,17 @@ export default function LoginPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="pl-10"
-                                        dir="ltr"
                                     />
                                 </div>
                             </div>
                             <Button type="submit" className="w-full" disabled={loading}>
-                                {loading ? <Loader2 className="animate-spin" /> : "تسجيل الدخول"}
+                                {loading ? <Loader2 className="animate-spin" /> : "Sign In"}
                             </Button>
                         </form>
                          <div className="mt-4 text-center text-sm">
-                            ليس لديك حساب؟{" "}
+                            Don't have an account?{" "}
                             <Link href="/signup" className="underline text-primary">
-                                إنشاء حساب جديد
+                                Create a new account
                             </Link>
                         </div>
                     </CardContent>

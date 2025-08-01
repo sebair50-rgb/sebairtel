@@ -20,23 +20,23 @@ const SocialFeed = () => {
     const [activeSocialTab, setActiveSocialTab] = useState('feed');
 
     const socialTabs = [
-        { value: 'news', label: 'الأخبار', icon: Globe },
-        { value: 'business', label: 'الأعمال', icon: Briefcase },
-        { value: 'market', label: 'السوق', icon: Store },
-        { value: 'live', label: 'البث المباشر', icon: Video },
-        { value: 'feed', label: 'المنشورات العامة', icon: Notebook },
+        { value: 'news', label: 'News', icon: Globe },
+        { value: 'business', label: 'Business', icon: Briefcase },
+        { value: 'market', label: 'Market', icon: Store },
+        { value: 'live', label: 'Live', icon: Video },
+        { value: 'feed', label: 'Feed', icon: Notebook },
     ];
     
     return (
         <div className="w-full h-full flex flex-col bg-slate-100 dark:bg-black/90">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
                 <div className="bg-background border-b sticky top-0 z-10">
-                    <AppHeader title="المجتمع" icon={Home} />
+                    <AppHeader title="Community" icon={Home} />
                     <div className="px-4 md:px-6 pb-2">
                         <TabsList className="grid w-full grid-cols-5 h-auto p-1.5">
                         {socialTabs.map(tab => (
                                 <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                                    <tab.icon className="ml-1 sm:ml-2" />
+                                    <tab.icon className="mr-1 sm:mr-2" />
                                     {tab.label}
                                 </TabsTrigger>
                         ))}

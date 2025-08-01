@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/accordion"
 import { Input } from '../ui/input';
 import { formatDistanceToNow } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,7 +79,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ postId }) => {
                 <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <Input 
-                placeholder="اكتب تعليقًا..." 
+                placeholder="Write a comment..." 
                 className="flex-1"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
@@ -123,7 +123,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         if (!isOwnPost) {
              createNotification(post.userId, {
                 type: 'reaction',
-                message: `تفاعل <strong>${currentUser.name}</strong> مع منشورك بـ ${emoji}`,
+                message: `<strong>${currentUser.name}</strong> reacted to your post with ${emoji}`,
                 fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
                 link: `/post/${post.id}`
             })
@@ -136,12 +136,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const handleSave = () => {
     setIsSaved(!isSaved);
-    toast({ description: !isSaved ? "تم حفظ المنشور!" : "تمت إزالة الحفظ!" });
+    toast({ description: !isSaved ? "Post saved!" : "Post unsaved!" });
   }
 
   const handleShare = () => {
     navigator.clipboard.writeText(`Check out this post by ${post.user}!`);
-    toast({ description: "تم نسخ رابط المشاركة!" });
+    toast({ description: "Share link copied!" });
   }
   
   const handleNavigateToProfile = () => {
@@ -152,17 +152,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   
   const formatCommentTime = (timestamp: any) => {
     if (!timestamp) return "";
-    return formatDistanceToNow(timestamp.toDate(), { addSuffix: true, locale: ar });
+    return formatDistanceToNow(timestamp.toDate(), { addSuffix: true, locale: enUS });
   }
 
   const handleCopyLink = () => {
     const postUrl = `${window.location.origin}/post/${post.id}`;
     navigator.clipboard.writeText(postUrl);
-    toast({ description: "تم نسخ رابط المنشور!" });
+    toast({ description: "Post link copied!" });
   };
 
   const handleReport = () => {
-    toast({ title: "تم استلام بلاغك", description: "شكرًا لك، سنقوم بمراجعة المنشور." });
+    toast({ title: "Your report has been received", description: "Thank you, we will review the post." });
   };
   
   const handleEdit = () => {
@@ -172,9 +172,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const handleDelete = async () => {
     try {
         await deletePost(post.id);
-        toast({ title: "تم حذف المنشور بنجاح" });
+        toast({ title: "Post deleted successfully" });
     } catch (error) {
-        toast({ variant: 'destructive', title: "خطأ", description: "فشل حذف المنشور." });
+        toast({ variant: 'destructive', title: "Error", description: "Failed to delete post." });
     }
   };
   
@@ -226,23 +226,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 {isOwnPost && (
                     <>
                         <DropdownMenuItem onClick={handleEdit}>
-                            <Edit className="ml-2 h-4 w-4" />
-                            <span>تعديل المنشور</span>
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Edit Post</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="text-destructive focus:text-destructive">
-                            <Trash2 className="ml-2 h-4 w-4" />
-                            <span>حذف المنشور</span>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Delete Post</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                     </>
                 )}
                  <DropdownMenuItem onClick={handleCopyLink}>
-                    <Copy className="ml-2 h-4 w-4" />
-                    <span>نسخ الرابط</span>
+                    <Copy className="mr-2 h-4 w-4" />
+                    <span>Copy Link</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleReport}>
-                    <Flag className="ml-2 h-4 w-4" />
-                    <span>الإبلاغ عن المنشور</span>
+                    <Flag className="mr-2 h-4 w-4" />
+                    <span>Report Post</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -268,7 +268,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className={cn("flex items-center gap-2", myReaction && 'text-primary font-bold')}>
                       {myReaction ? <span className="text-lg">{myReaction.emoji}</span> : <Smile size={18} />}
-                      <span className="text-sm">{myReaction ? 'تفاعلت' : 'تفاعل'}</span>
+                      <span className="text-sm">{myReaction ? 'Reacted' : 'React'}</span>
                   </Button>
               </PopoverTrigger>
               <PopoverContent className="p-0 w-auto bg-transparent border-none shadow-none">
@@ -278,12 +278,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
           <Button variant="ghost" size="sm" className="flex items-center gap-2">
               <MessageCircle size={18} />
-              <span className="text-sm">تعليق</span>
+              <span className="text-sm">Comment</span>
           </Button>
           
           <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
               <Share2 size={18} />
-              <span className="text-sm">مشاركة</span>
+              <span className="text-sm">Share</span>
           </Button>
 
           </div>
@@ -312,14 +312,14 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                           </div>
                       ))
                   ) : (
-                      <p className="text-sm text-muted-foreground text-center">لا توجد تعليقات بعد. كن أول من يعلق!</p>
+                      <p className="text-sm text-muted-foreground text-center">No comments yet. Be the first to comment!</p>
                   )}
               </div>
               <CommentInput postId={post.id} />
           </AccordionContent>
           {post.comments.length > 0 && (
               <AccordionTrigger className="p-4 pt-0 text-sm font-semibold text-muted-foreground hover:no-underline">
-                  {`عرض كل التعليقات (${post.comments.length})`}
+                  {`View all comments (${post.comments.length})`}
               </AccordionTrigger>
           )}
           </AccordionItem>
@@ -328,15 +328,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
             <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد تمامًا؟</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-                سيتم حذف هذا المنشور بشكل دائم ولا يمكن التراجع عن هذا الإجراء.
+                This will permanently delete this post and cannot be undone.
             </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                حذف
+                Delete
             </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

@@ -34,7 +34,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, onReply, onEditMess
                 id: doc.id,
                 ...data,
                 // Convert Firestore Timestamp to JS Date, then to string for MessageItem
-                time: data.timestamp?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || '',
+                time: data.timestamp?.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || '',
               } as Message
           });
           setMessages(fetchedMessages);
@@ -90,8 +90,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ chatId, onReply, onEditMess
                         key={message.id}
                         message={message}
                         isOwnMessage={isOwnMessage}
-                        isFirstInGroup={isFirstInGroup}
-                        isLastInGroup={isLastInGroup}
                         onDelete={() => handleDeleteMessage(message.id)}
                         onReply={() => onReply(message)}
                         onEdit={() => onEditMessage(message)}

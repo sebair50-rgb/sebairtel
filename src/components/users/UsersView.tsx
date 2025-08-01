@@ -29,15 +29,15 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
         try {
             await sendFriendRequest(user);
             toast({
-                title: "تم إرسال الطلب!",
-                description: `تم إرسال طلب صداقة إلى ${user.name}.`,
+                title: "Request Sent!",
+                description: `A friend request has been sent to ${user.name}.`,
             });
         } catch (error) {
             console.error(error);
             toast({
                 variant: 'destructive',
-                title: "حدث خطأ",
-                description: "لم نتمكن من إرسال طلب الصداقة. يرجى المحاولة مرة أخرى.",
+                title: "An error occurred",
+                description: "We couldn't send the friend request. Please try again.",
             });
         }
     };
@@ -58,7 +58,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     );
     
     const listToShow = activeList === 'friends' ? filteredFriends : filteredSuggestedUsers;
-    const title = activeList === 'friends' ? `أصدقاؤك (${filteredFriends.length})` : `أشخاص قد تعرفهم (${filteredSuggestedUsers.length})`;
+    const title = activeList === 'friends' ? `Your Friends (${filteredFriends.length})` : `People You May Know (${filteredSuggestedUsers.length})`;
 
 
     const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' }) => (
@@ -76,7 +76,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 text-right overflow-hidden">
+                <div className="flex-1 text-left overflow-hidden">
                     <p className="font-bold text-lg truncate">{user.name}</p>
                 </div>
             </div>
@@ -87,13 +87,13 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                     onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}
                     disabled={user.requestSent}
                 >
-                    {user.requestSent ? <Check size={16} className="ml-1" /> : <UserPlus size={16} className="ml-1" />}
-                    {user.requestSent ? 'تم الإرسال' : 'إضافة'}
+                    {user.requestSent ? <Check size={16} className="mr-1" /> : <UserPlus size={16} className="mr-1" />}
+                    {user.requestSent ? 'Sent' : 'Add'}
                 </Button>
             ) : (
                 <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
-                    <MessageSquare size={16} className="ml-1" />
-                    مراسلة
+                    <MessageSquare size={16} className="mr-1" />
+                    Message
                 </Button>
             )}
         </motion.div>
@@ -103,7 +103,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
         <div className="w-full flex flex-col h-full bg-white">
             <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">الأصدقاء</h1>
+                    <h1 className="text-2xl font-bold">Friends</h1>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSearch(!showSearch)}>
                         <Search />
                     </Button>
@@ -117,10 +117,10 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         className="mt-4"
                     >
                         <div className="relative">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
-                                placeholder="البحث عن أصدقاء..."
-                                className="w-full rounded-full bg-slate-100 h-12 pr-12 text-base border-slate-200 focus:border-primary"
+                                placeholder="Search for friends..."
+                                className="w-full rounded-full bg-slate-100 h-12 pl-12 text-base border-slate-200 focus:border-primary"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -134,14 +134,14 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         className="rounded-full"
                         onClick={() => setActiveList('suggestions')}
                     >
-                        اقتراحات
+                        Suggestions
                     </Button>
                     <Button 
                         variant={activeList === 'friends' ? 'secondary' : 'ghost'} 
                         className="rounded-full"
                         onClick={() => setActiveList('friends')}
                     >
-                        أصدقاؤك
+                        Your Friends
                     </Button>
                 </div>
             </div>
@@ -165,16 +165,16 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         <div className="text-center text-muted-foreground pt-16">
                             <p className="font-semibold">
                                 {searchTerm 
-                                    ? `لا توجد نتائج بحث عن "${searchTerm}"`
+                                    ? `No results found for "${searchTerm}"`
                                     : (activeList === 'friends' 
-                                        ? 'لا يوجد لديك أصدقاء بعد.'
-                                        : 'لا توجد اقتراحات جديدة في الوقت الحالي.')
+                                        ? 'You don\'t have any friends yet.'
+                                        : 'No new suggestions at this time.')
                                 }
                             </p>
                             <p className="text-sm">
                                 {activeList === 'friends' && !searchTerm
-                                    ? 'قم بإضافة أصدقاء لبدء التواصل!'
-                                    : !searchTerm && 'تحقق مرة أخرى لاحقًا.'
+                                    ? 'Add friends to start communicating!'
+                                    : !searchTerm && 'Check back later.'
                                 }
                             </p>
                         </div>

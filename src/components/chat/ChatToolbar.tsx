@@ -29,7 +29,7 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSelectSmartReply }) => {
             await readChatAloud();
         } catch (error) {
             console.error('Failed to read chat aloud:', error);
-            toast({ variant: 'destructive', title: 'فشل قراءة المحادثة' });
+            toast({ variant: 'destructive', title: 'Failed to read chat' });
         } finally {
             setIsLoading(null);
         }
@@ -45,7 +45,7 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({ onSelectSmartReply }) => {
             await fetchSmartReplies();
         } catch (error) {
             console.error('Failed to fetch smart replies:', error);
-            toast({ variant: 'destructive', title: 'فشل جلب الردود الذكية' });
+            toast({ variant: 'destructive', title: 'Failed to fetch smart replies' });
         } finally {
             setIsLoading(null);
         }

@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 
@@ -48,8 +48,8 @@ const ProfileSettings = () => {
             if (file.size > 1048576) { // 1MB limit
                  toast({
                     variant: "destructive",
-                    title: "حجم الصورة كبير جداً",
-                    description: "الرجاء اختيار صورة حجمها أقل من 1 ميجابايت.",
+                    title: "Image size is too large",
+                    description: "Please choose an image smaller than 1MB.",
                 });
                 return;
             }
@@ -90,15 +90,15 @@ const ProfileSettings = () => {
         }
 
         if (Object.keys(updatePayload).length === 0) {
-            toast({ description: "لا توجد تغييرات لحفظها." });
+            toast({ description: "No changes to save." });
             return;
         }
 
         if (updatePayload.name === '') {
              toast({
                 variant: "destructive",
-                title: "الاسم مطلوب",
-                description: "لا يمكن ترك حقل الاسم فارغًا.",
+                title: "Name is required",
+                description: "The name field cannot be empty.",
             });
             return;
         }
@@ -109,18 +109,18 @@ const ProfileSettings = () => {
                 setAvatarPreview(null);
                 setAvatarFile(null);
                 toast({
-                    title: "تم بنجاح!",
-                    description: "تم تحديث معلومات ملفك الشخصي بنجاح.",
+                    title: "Success!",
+                    description: "Your profile information has been updated successfully.",
                 });
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
                 const description = error.message.includes('bytes')
-                    ? "حجم الصورة كبير جدًا. الرجاء اختيار صورة أصغر."
-                    : "فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.";
+                    ? "The image size is too large. Please choose a smaller image."
+                    : "Failed to update profile. Please try again.";
 
                 toast({
                     variant: "destructive",
-                    title: "حدث خطأ",
+                    title: "An error occurred",
                     description,
                 });
             }
@@ -131,12 +131,12 @@ const ProfileSettings = () => {
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>الملف الشخصي</CardTitle>
+                    <CardTitle>Profile</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center space-x-4">
                         <Loader2 className="animate-spin" />
-                        <span>...جاري تحميل بيانات المستخدم</span>
+                        <span>Loading user data...</span>
                     </div>
                 </CardContent>
             </Card>
@@ -155,8 +155,8 @@ const ProfileSettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>الملف الشخصي</CardTitle>
-                <CardDescription>هذه هي معلومات ملفك الشخصي العامة.</CardDescription>
+                <CardTitle>Profile</CardTitle>
+                <CardDescription>This is your public profile information.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <input
@@ -174,10 +174,10 @@ const ProfileSettings = () => {
                         </Avatar>
                         <Button 
                           size="icon" 
-                          className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border-2 border-card" 
+                          className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card" 
                           onClick={() => fileInputRef.current?.click()}>
                             <Camera className="w-4 h-4"/>
-                            <span className="sr-only">تغيير الصورة</span>
+                            <span className="sr-only">Change Picture</span>
                         </Button>
                     </div>
                      <div>
@@ -188,23 +188,23 @@ const ProfileSettings = () => {
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">الاسم الكامل</Label>
+                        <Label htmlFor="name">Full Name</Label>
                         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="bio">نبذة عني</Label>
-                        <Textarea id="bio" placeholder="اكتب شيئًا عن نفسك..." value={bio} onChange={(e) => setBio(e.target.value)} />
+                        <Label htmlFor="bio">About Me</Label>
+                        <Textarea id="bio" placeholder="Write something about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="email">البريد الإلكتروني</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" defaultValue={currentUser.email} disabled />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="phone">رقم الهاتف</Label>
-                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="مثال: +9665xxxxxxx" dir="ltr" />
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., +1234567890" />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="dob">تاريخ الميلاد</Label>
+                        <Label htmlFor="dob">Date of Birth</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -214,8 +214,8 @@ const ProfileSettings = () => {
                                     !dob && "text-muted-foreground"
                                     )}
                                 >
-                                    <CalendarIcon className="ml-2 h-4 w-4" />
-                                    {dob ? format(dob, "PPP", { locale: ar }) : <span>اختر تاريخ ميلادك</span>}
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {dob ? format(dob, "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -235,8 +235,8 @@ const ProfileSettings = () => {
 
                 <div className="flex justify-end">
                     <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges}>
-                        {isPending && <Loader2 className="ml-2 animate-spin" />}
-                        {isPending ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                        {isPending && <Loader2 className="mr-2 animate-spin" />}
+                        {isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </div>
             </CardContent>

@@ -35,25 +35,25 @@ const AppearanceSettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>المظهر</CardTitle>
-                <CardDescription>خصص شكل ومظهر التطبيق. سيتم الحفظ تلقائيًا لجهازك الحالي.</CardDescription>
+                <CardTitle>Appearance</CardTitle>
+                <CardDescription>Customize the look and feel of the app. Will be saved automatically for your current device.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                     <ThemeButton 
-                        label="فاتح" 
+                        label="Light" 
                         icon={Sun} 
                         isActive={theme === 'light'} 
                         onClick={() => setTheme('light')}
                     />
                     <ThemeButton 
-                        label="داكن" 
+                        label="Dark" 
                         icon={Moon} 
                         isActive={theme === 'dark'} 
                         onClick={() => setTheme('dark')}
                     />
                      <ThemeButton 
-                        label="النظام" 
+                        label="System" 
                         icon={Laptop} 
                         isActive={theme === 'system'} 
                         onClick={() => setTheme('system')}

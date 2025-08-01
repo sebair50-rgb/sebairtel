@@ -12,12 +12,12 @@ import { useToast } from '@/hooks/use-toast';
 type SoundKey = 'messageTone' | 'notificationTone' | 'callRingtone';
 
 const soundOptions = [
-    { value: 'default', label: 'افتراضي', freq: 440 },
-    { value: 'chime', label: 'رنين', freq: 523.25 },
-    { value: 'signal', label: 'إشارة', freq: 659.25 },
-    { value: 'alert', label: 'تنبيه', freq: 783.99 },
-    { value: 'vibrate', label: 'اهتزاز فقط', freq: 0 },
-    { value: 'custom', label: 'اختيار من الجهاز', icon: FolderUp },
+    { value: 'default', label: 'Default', freq: 440 },
+    { value: 'chime', label: 'Chime', freq: 523.25 },
+    { value: 'signal', label: 'Signal', freq: 659.25 },
+    { value: 'alert', label: 'Alert', freq: 783.99 },
+    { value: 'vibrate', label: 'Vibrate Only', freq: 0 },
+    { value: 'custom', label: 'Choose from device', icon: FolderUp },
 ];
 
 const playSound = (soundValue: string) => {
@@ -63,7 +63,7 @@ const SoundSettings = () => {
         if (!file || !currentSoundKey.current) return;
 
         if (!file.type.startsWith('audio/')) {
-            toast({ variant: 'destructive', title: 'ملف غير صالح', description: 'الرجاء اختيار ملف صوتي.' });
+            toast({ variant: 'destructive', title: 'Invalid File', description: 'Please select an audio file.' });
             return;
         }
 
@@ -76,15 +76,15 @@ const SoundSettings = () => {
                 sounds: { ...s.sounds, [key]: dataUrl }
             }));
             playSound(dataUrl);
-            toast({ title: 'تم بنجاح', description: `تم تعيين نغمة مخصصة لـ: ${getLabelForKey(key)}` });
+            toast({ title: 'Success', description: `Custom tone set for: ${getLabelForKey(key)}` });
         };
         reader.readAsDataURL(file);
     };
     
     const getLabelForKey = (key: SoundKey) => {
-        if (key === 'messageTone') return "الرسائل";
-        if (key === 'notificationTone') return "الإشعارات";
-        if (key === 'callRingtone') return "المكالمات";
+        if (key === 'messageTone') return "Messages";
+        if (key === 'notificationTone') return "Notifications";
+        if (key === 'callRingtone') return "Calls";
         return "";
     }
 
@@ -110,8 +110,8 @@ const SoundSettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>النغمات والأصوات</CardTitle>
-                <CardDescription>خصص أصوات التنبيهات للرسائل والمكالمات والإشعارات الأخرى.</CardDescription>
+                <CardTitle>Tones & Sounds</CardTitle>
+                <CardDescription>Customize alert sounds for messages, calls, and other notifications.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <input
@@ -123,19 +123,19 @@ const SoundSettings = () => {
                 />
                 <SoundOption
                     icon={Music}
-                    label="نغمة الرسائل"
+                    label="Message Tone"
                     value={getDisplayValue(settings.sounds.messageTone)}
                     onValueChange={(value) => handleSoundChange('messageTone', value)}
                 />
                  <SoundOption
                     icon={Bell}
-                    label="نغمة الإشعارات العامة"
+                    label="General Notification Tone"
                     value={getDisplayValue(settings.sounds.notificationTone)}
                     onValueChange={(value) => handleSoundChange('notificationTone', value)}
                 />
                  <SoundOption
                     icon={Phone}
-                    label="نغمة رنين المكالمات"
+                    label="Call Ringtone"
                     value={getDisplayValue(settings.sounds.callRingtone)}
                     onValueChange={(value) => handleSoundChange('callRingtone', value)}
                 />
@@ -157,7 +157,7 @@ const SoundOption = ({ icon: Icon, label, value, onValueChange }: {
         </div>
         <Select value={value} onValueChange={onValueChange}>
             <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="اختر نغمة" />
+                <SelectValue placeholder="Select a tone" />
             </SelectTrigger>
             <SelectContent>
                 {soundOptions.map(option => (

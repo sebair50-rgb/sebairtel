@@ -41,8 +41,8 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
 
     const getStatusText = () => {
         switch(status) {
-            case 'outgoing': return 'جاري الاتصال...';
-            case 'incoming': return 'مكالمة واردة...';
+            case 'outgoing': return 'Calling...';
+            case 'incoming': return 'Incoming call...';
             case 'connected': return formatDuration(duration);
             default: return '';
         }
@@ -76,13 +76,13 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
                  <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={onEnd}>
                     <PhoneOff size={28} />
                 </Button>
-                <span className="text-white">رفض</span>
+                <span className="text-white">Decline</span>
             </div>
              <div className="flex flex-col items-center gap-2">
                 <Button size="icon" className="bg-green-500 hover:bg-green-600 rounded-full w-20 h-16" onClick={onAnswer}>
                     <Phone size={28} />
                 </Button>
-                <span className="text-white">قبول</span>
+                <span className="text-white">Accept</span>
             </div>
         </div>
     )
@@ -107,14 +107,14 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
                 <div className="absolute inset-0 rounded-2xl overflow-hidden">
                     {!isVideoOff && <img src="https://placehold.co/800x1200/333/777.png?text=Remote" className="w-full h-full object-cover" data-ai-hint="person talking" />}
                 </div>
-                <div className="absolute top-4 right-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/50">
+                <div className="absolute top-4 left-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/50">
                      <img src="https://placehold.co/200x300/444/888.png?text=Local" className="w-full h-full object-cover" data-ai-hint="person selfie" />
                 </div>
                 </>
             )}
 
             <div className="relative z-10 flex items-center justify-between">
-                <div className="text-lg font-semibold">{status === 'connected' ? 'مكالمة جارية' : ''}</div>
+                <div className="text-lg font-semibold">{status === 'connected' ? 'Call in Progress' : ''}</div>
                 <Button variant="ghost" size="icon" className="text-white"><Maximize /></Button>
             </div>
             

@@ -21,14 +21,14 @@ export default function VerifyEmailPage() {
         try {
             await resendVerificationEmail();
             toast({
-                title: "تم إرسال الرابط",
-                description: `تم إرسال رابط تحقق جديد إلى ${email}.`,
+                title: "Link Sent",
+                description: `A new verification link has been sent to ${email}.`,
             });
         } catch (error: any) {
              toast({
                 variant: "destructive",
-                title: "حدث خطأ",
-                description: "فشل إرسال البريد. قد تكون قد طلبت رابطًا عدة مرات. حاول مرة أخرى لاحقًا.",
+                title: "An error occurred",
+                description: "Failed to send email. You may have requested a link too many times. Please try again later.",
             });
         }
     }
@@ -44,25 +44,25 @@ export default function VerifyEmailPage() {
                         <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
                             <MailCheck className="w-12 h-12 text-primary" />
                         </div>
-                        <CardTitle className="mt-4 text-2xl">تحقق من بريدك الإلكتروني</CardTitle>
+                        <CardTitle className="mt-4 text-2xl">Verify Your Email</CardTitle>
                         <CardDescription>
-                            لقد أرسلنا رابط تفعيل إلى <br />
-                            <span className="font-bold text-primary">{email || 'بريدك الإلكتروني'}</span>.
+                            We have sent an activation link to <br />
+                            <span className="font-bold text-primary">{email || 'your email'}</span>.
                             <br />
-                            الرجاء الضغط على الرابط لتفعيل حسابك.
+                            Please click the link to activate your account.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            إذا لم تجد البريد، الرجاء التحقق من مجلد الرسائل غير المرغوب فيها (Spam).
+                            If you don't find the email, please check your spam folder.
                         </p>
                         <Button onClick={handleResendEmail} disabled={loading} variant="secondary" className="w-full">
-                            {loading ? <Loader2 className="animate-spin" /> : "إعادة إرسال رابط التحقق"}
+                            {loading ? <Loader2 className="animate-spin" /> : "Resend Verification Link"}
                         </Button>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Button variant="outline" onClick={() => router.push('/login')}>
-                            العودة إلى صفحة تسجيل الدخول
+                            Back to Sign In
                         </Button>
                     </CardFooter>
                 </Card>

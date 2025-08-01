@@ -106,8 +106,8 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
             console.error("Error accessing microphone:", err);
             toast({
                 variant: 'destructive',
-                title: "خطأ في الوصول للميكروفون",
-                description: "الرجاء التأكد من منح الإذن لاستخدام الميكروفون."
+                title: "Error accessing microphone",
+                description: "Please ensure you have granted permission to use the microphone."
             });
         }
     }, [recordedAudio, toast]);
@@ -153,7 +153,7 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
             {editingMessage && (
                 <div className="p-2 mb-2 bg-primary/10 rounded-lg text-sm flex justify-between items-center">
                     <div>
-                        <p className="font-bold text-primary">تعديل الرسالة</p>
+                        <p className="font-bold text-primary">Editing Message</p>
                         <p className="text-muted-foreground truncate max-w-xs">{editingMessage.text}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={onCancelEdit}>
@@ -196,7 +196,7 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
                     </div>
                     <Textarea
                         ref={textareaRef}
-                        placeholder={isRecording ? "جارِ التسجيل..." : "اكتب رسالة..."}
+                        placeholder={isRecording ? "Recording..." : "Type a message..."}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -241,5 +241,3 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
 MessageInput.displayName = 'MessageInput';
 
 export default React.memo(MessageInput);
-
-    

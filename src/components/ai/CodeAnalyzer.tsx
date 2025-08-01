@@ -24,8 +24,8 @@ const CodeAnalyzer = () => {
         if (!code.trim()) {
             toast({
                 variant: 'destructive',
-                title: 'حقل الكود فارغ',
-                description: 'الرجاء إدخال كود برمجي لتحليله.',
+                title: 'Code field is empty',
+                description: 'Please enter a code snippet to analyze.',
             });
             return;
         }
@@ -40,8 +40,8 @@ const CodeAnalyzer = () => {
             console.error('AI action failed:', error);
             toast({
                 variant: 'destructive',
-                title: 'حدث خطأ',
-                description: 'فشل في معالجة الطلب. يرجى المحاولة مرة أخرى.',
+                title: 'An error occurred',
+                description: 'Failed to process the request. Please try again.',
             });
         } finally {
             setIsLoading(false);
@@ -51,22 +51,22 @@ const CodeAnalyzer = () => {
     return (
         <Card className="shadow-lg animate-fade-in">
             <CardHeader>
-                <CardTitle>محلل الكود بالذكاء الاصطناعي</CardTitle>
+                <CardTitle>AI Code Analyzer</CardTitle>
                 <CardDescription>
-                    أدخل أي كود برمجي (مثل Javascript, HTML, Python) واختر المهمة المطلوبة.
+                    Enter any code snippet (like Javascript, HTML, Python) and choose the desired task.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Tabs value={task} onValueChange={(value) => setTask(value as AIAction)} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="explain">شرح</TabsTrigger>
-                        <TabsTrigger value="fix">تصحيح الأخطاء</TabsTrigger>
-                        <TabsTrigger value="optimize">تحسين الأداء</TabsTrigger>
+                        <TabsTrigger value="explain">Explain</TabsTrigger>
+                        <TabsTrigger value="fix">Debug</TabsTrigger>
+                        <TabsTrigger value="optimize">Optimize</TabsTrigger>
                     </TabsList>
                 </Tabs>
                 <div className="font-code">
                     <Textarea
-                        placeholder="...الصق الكود هنا"
+                        placeholder="...Paste your code here"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         className="min-h-[200px] text-left bg-muted"
@@ -76,11 +76,11 @@ const CodeAnalyzer = () => {
                 <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
                     {isLoading ? (
                         <>
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                            جاري التحليل...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Analyzing...
                         </>
                     ) : (
-                        'تحليل الكود'
+                        'Analyze Code'
                     )}
                 </Button>
             </CardContent>
@@ -88,7 +88,7 @@ const CodeAnalyzer = () => {
             {aiResponse && (
                 <>
                     <CardHeader>
-                        <CardTitle>نتائج التحليل</CardTitle>
+                        <CardTitle>Analysis Results</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <CodeResponse response={aiResponse} />

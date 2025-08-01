@@ -77,11 +77,11 @@ const NotificationsView = () => {
     return (
         <div className="w-full h-full flex flex-col">
             <div className="border-b bg-background z-10">
-                <AppHeader title="الإشعارات" icon={Bell} />
+                <AppHeader title="Notifications" icon={Bell} />
                 <div className="flex items-center justify-end px-4 md:px-6 pb-2">
                     {notifications.length > 0 && (
                         <Button variant="outline" onClick={toggleSelectionMode}>
-                           {isSelectionMode ? 'إلغاء' : 'تحديد'}
+                           {isSelectionMode ? 'Cancel' : 'Select'}
                         </Button>
                     )}
                 </div>
@@ -99,12 +99,12 @@ const NotificationsView = () => {
                          <div className="flex items-center gap-2">
                             <Button variant="ghost" onClick={handleSelectAll}>
                                 {selectedIds.size === notifications.length ? <XCircle /> : <CheckCircle />}
-                                {selectedIds.size === notifications.length ? 'إلغاء تحديد الكل' : 'تحديد الكل'}
+                                {selectedIds.size === notifications.length ? 'Deselect All' : 'Select All'}
                             </Button>
                         </div>
                         <Button variant="destructive" onClick={handleDeleteSelected} disabled={selectedIds.size === 0}>
-                            <Trash className="ml-2" />
-                            حذف ({selectedIds.size})
+                            <Trash className="mr-2" />
+                            Delete ({selectedIds.size})
                         </Button>
                     </div>
                 </motion.div>
@@ -126,9 +126,9 @@ const NotificationsView = () => {
                     ) : (
                         <Card className="text-center text-muted-foreground p-8 mt-8">
                             <Bell size={48} className="mx-auto mb-4" />
-                            <p className="font-semibold">لا توجد إشعارات جديدة</p>
+                            <p className="font-semibold">No new notifications</p>
                             <p className="text-sm">
-                                ستظهر الإشعارات الخاصة بالتفاعلات الجديدة هنا.
+                                Notifications about new interactions will appear here.
                             </p>
                         </Card>
                     )}

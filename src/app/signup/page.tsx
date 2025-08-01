@@ -27,8 +27,8 @@ export default function SignupPage() {
         if (password !== confirmPassword) {
             toast({
                 variant: "destructive",
-                title: "كلمتا المرور غير متطابقتين",
-                description: "الرجاء التأكد من إدخال نفس كلمة المرور مرتين.",
+                title: "Passwords do not match",
+                description: "Please make sure you've entered the same password twice.",
             });
             return;
         }
@@ -40,8 +40,8 @@ export default function SignupPage() {
         } catch (error: any) {
              toast({
                 variant: "destructive",
-                title: "خطأ في إنشاء الحساب",
-                description: error.code === 'auth/email-already-in-use' ? 'هذا البريد الإلكتروني مستخدم بالفعل.' : 'حدث خطأ غير متوقع، الرجاء المحاولة مرة أخرى.',
+                title: "Signup Failed",
+                description: error.code === 'auth/email-already-in-use' ? 'This email is already in use.' : 'An unexpected error occurred, please try again.',
             });
         }
     };
@@ -54,47 +54,47 @@ export default function SignupPage() {
                 </div>
                 <Card className="shadow-2xl">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
-                        <CardDescription>انضم إلينا اليوم وابدأ رحلتك!</CardDescription>
+                        <CardTitle className="text-2xl">Create a New Account</CardTitle>
+                        <CardDescription>Join us today and start your journey!</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSignup} className="space-y-4">
                              <div className="space-y-2">
-                                <Label htmlFor="name">الاسم الكامل</Label>
+                                <Label htmlFor="name">Full Name</Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="name" type="text" placeholder="مثال: علي محمد" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10" />
+                                    <Input id="name" type="text" placeholder="e.g., Ali Mohammed" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">البريد الإلكتروني</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <div className="relative">
                                     <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" dir="ltr" />
+                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password">كلمة المرور</Label>
+                                <Label htmlFor="password">Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" dir="ltr" />
+                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" />
                                 </div>
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
+                                <Label htmlFor="confirm-password">Confirm Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10" dir="ltr" />
+                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10" />
                                 </div>
                             </div>
                             <Button type="submit" className="w-full" disabled={loading}>
-                                {loading ? <Loader2 className="animate-spin" /> : "إنشاء الحساب"}
+                                {loading ? <Loader2 className="animate-spin" /> : "Create Account"}
                             </Button>
                         </form>
                          <div className="mt-4 text-center text-sm">
-                           لديك حساب بالفعل؟{" "}
+                           Already have an account?{" "}
                             <Link href="/login" className="underline text-primary">
-                                تسجيل الدخول
+                                Sign In
                             </Link>
                         </div>
                     </CardContent>

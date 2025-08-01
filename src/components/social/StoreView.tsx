@@ -1,9 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Store, HeartPulse, ArrowLeft } from 'lucide-react';
+import { Store, HeartPulse, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const StoreView = () => {
@@ -12,31 +13,31 @@ const StoreView = () => {
     const sections = [
         {
             icon: Store,
-            title: "المتاجر والأسواق",
-            description: "تصفح المتاجر المحلية ومنتجاتها، واطلب احتياجاتك مباشرة.",
-            actionText: "تصفح المتاجر"
+            title: "Stores & Markets",
+            description: "Browse local stores and their products, and order your needs directly.",
+            actionText: "Browse Stores"
         },
         {
             icon: HeartPulse,
-            title: "الصيدليات والخدمات الصحية",
-            description: "ابحث عن أقرب صيدلية أو خدمة صحية متاحة في منطقتك.",
-            actionText: "بحث في الصيدليات"
+            title: "Pharmacies & Health Services",
+            description: "Find the nearest pharmacy or available health service in your area.",
+            actionText: "Search Pharmacies"
         }
     ];
 
     const handleActionClick = (title: string) => {
         toast({
-            title: `قريبا: ${title}`,
-            description: "نحن نعمل بجد لإطلاق هذا القسم. ترقبوا التحديثات!",
+            title: `Coming Soon: ${title}`,
+            description: "We're working hard to launch this section. Stay tuned for updates!",
         });
     };
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
             <div className="text-center">
-                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">السوق والخدمات المحلية</h1>
+                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Local Market & Services</h1>
                 <p className="mt-4 text-xl text-muted-foreground">
-                    كل ما تحتاجه من متاجر وصيدليات وخدمات في مكان واحد.
+                    Everything you need from stores, pharmacies, and services in one place.
                 </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -56,7 +57,7 @@ const StoreView = () => {
                             onClick={() => handleActionClick(section.title)}
                         >
                             {section.actionText}
-                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Card>
                 ))}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -33,44 +34,44 @@ const InterfaceSettings = () => {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle>تخصيص الواجهة</CardTitle>
-                        <CardDescription>تحكم في الأقسام التي تظهر في شريط التنقل.</CardDescription>
+                        <CardTitle>Customize Interface</CardTitle>
+                        <CardDescription>Control which sections appear in the navigation bar.</CardDescription>
                     </div>
                     <Button variant="outline" onClick={handleReset}>
-                        <RotateCcw className="ml-2 h-4 w-4" />
-                        إعادة تعيين
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Reset
                     </Button>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 <SettingToggle
                     id="contactTab"
-                    label="إظهار تبويب تواصل"
-                    description="عرض المحادثات، الأصدقاء، والمكالمات."
+                    label="Show Contact Tab"
+                    description="View conversations, friends, and calls."
                     icon={Phone}
                     checked={settings.interface.showContactTab}
                     onCheckedChange={(checked) => handleToggle('showContactTab', checked)}
                 />
                 <SettingToggle
                     id="socialTab"
-                    label="إظهار تبويب المجتمع"
-                    description="عرض المنشورات العامة والأخبار والبث المباشر."
+                    label="Show Community Tab"
+                    description="View public posts, news, and live streams."
                     icon={Home}
                     checked={settings.interface.showSocialTab}
                     onCheckedChange={(checked) => handleToggle('showSocialTab', checked)}
                 />
                 <SettingToggle
                     id="aiTab"
-                    label="إظهار تبويب الذكاء الاصطناعي"
-                    description="الوصول إلى أدوات الذكاء الاصطناعي الإبداعية."
+                    label="Show AI Tab"
+                    description="Access creative AI tools."
                     icon={Brain}
                     checked={settings.interface.showAiTab}
                     onCheckedChange={(checked) => handleToggle('showAiTab', checked)}
                 />
                 <SettingToggle
                     id="appsTab"
-                    label="إظهار تبويب التطبيقات"
-                    description="عرض قائمة التطبيقات والخدمات المصغرة."
+                    label="Show Apps Tab"
+                    description="View a list of mini-apps and services."
                     icon={AppWindow}
                     checked={settings.interface.showAppsTab}
                     onCheckedChange={(checked) => handleToggle('showAppsTab', checked)}

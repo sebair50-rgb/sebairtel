@@ -50,10 +50,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
   const handleShare = () => {
     let shareContent = message.text || '';
     if (message.type === 'image' || message.type === 'video' || message.type === 'file') {
-        shareContent = `[مرفق: ${message.fileInfo?.name}] ${message.text || ''}`.trim();
+        shareContent = `[Attachment: ${message.fileInfo?.name}] ${message.text || ''}`.trim();
     }
     navigator.clipboard.writeText(shareContent);
-    toast({ description: "تم نسخ محتوى الرسالة!" });
+    toast({ description: "Message content copied!" });
   }
 
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
@@ -67,7 +67,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
       <div
         className={cn(
           "relative flex items-end gap-1.5",
-          isOwnMessage ? "flex-row-reverse" : "flex-row"
+          isOwnMessage ? "flex-row" : "flex-row-reverse"
         )}
       >
         {!isOwnMessage && (
@@ -87,15 +87,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
            )}
         >
           {repliedToMessage && (
-            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-r-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10">
+            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-l-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10">
                 <p className="font-semibold text-xs text-primary">{repliedToMessage.user}</p>
-                <p className="opacity-80 truncate max-w-[200px]">{repliedToMessage.text?.substring(0, 50) || 'مرفق'}</p>
+                <p className="opacity-80 truncate max-w-[200px]">{repliedToMessage.text?.substring(0, 50) || 'Attachment'}</p>
             </a>
           )}
 
           <MessageContent message={message} isOwnMessage={isOwnMessage} />
 
-          <div className="float-right flex items-center gap-1.5 mt-1 ml-4" style={{direction: "ltr"}}>
+          <div className="float-left flex items-center gap-1.5 mt-1 mr-4" style={{direction: "ltr"}}>
             <span className="text-xs text-muted-foreground">{message.time}</span>
             {isOwnMessage && <MessageStatus status={message.status} />}
           </div>
@@ -103,7 +103,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
           {(message.likedBy?.length || 0) > 0 && (
              <div className={cn(
                  "absolute -bottom-3 rounded-full bg-card border px-1.5 py-0.5 text-xs flex items-center gap-1 shadow-sm z-10",
-                 isOwnMessage ? "left-2" : "right-2"
+                 isOwnMessage ? "right-2" : "left-2"
              )}>
                 <Heart className={cn("w-3 h-3", isLiked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
                 <span>{message.likedBy?.length}</span>
@@ -124,27 +124,27 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
                     <MoreHorizontal size={16}/>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isOwnMessage ? "start" : "end"}>
+              <DropdownMenuContent align={isOwnMessage ? "end" : "start"}>
                 <DropdownMenuItem onClick={handleShare}>
-                  <Share2 className="ml-2 h-4 w-4" />
-                  <span>مشاركة</span>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  <span>Share</span>
                 </DropdownMenuItem>
                 {(message.type === 'image' || message.type === 'video' || message.type === 'file') && (
                     <DropdownMenuItem onClick={handleDownload}>
-                        <Download className="ml-2 h-4 w-4" />
-                        <span>تنزيل</span>
+                        <Download className="mr-2 h-4 w-4" />
+                        <span>Download</span>
                     </DropdownMenuItem>
                 )}
                 {isOwnMessage && (message.type === 'text' || message.text) && (
                   <DropdownMenuItem onClick={onEdit}>
-                    <Edit className="ml-2 h-4 w-4" />
-                    <span>تعديل</span>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
                   </DropdownMenuItem>
                 )}
                 {isOwnMessage && (
                   <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
-                    <Trash2 className="ml-2 h-4 w-4" />
-                    <span>حذف</span>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete</span>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

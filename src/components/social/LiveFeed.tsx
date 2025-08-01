@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -22,7 +23,7 @@ const LiveFeed = () => {
     const streams: LiveStream[] = users.slice(0, 5).map((user, index) => ({
         id: `live_${user.id}`,
         user: { name: user.name, avatar: user.avatar },
-        title: `بث مباشر عن البرمجة مع ${user.name}`,
+        title: `Live stream about programming with ${user.name}`,
         thumbnail: `https://placehold.co/600x400.png?text=Live+${index + 1}`,
         viewers: Math.floor(Math.random() * 2000) + 50,
     }));
@@ -32,12 +33,12 @@ const LiveFeed = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center bg-card p-4 rounded-xl shadow-sm">
                 <div className="flex flex-col">
-                    <h2 className="text-xl font-bold">انضم إلى البث المباشر</h2>
-                    <p className="text-muted-foreground">شاهد أو ابدأ البث الخاص بك الآن.</p>
+                    <h2 className="text-xl font-bold">Join the Live Stream</h2>
+                    <p className="text-muted-foreground">Watch or start your own stream now.</p>
                 </div>
                 <Button onClick={handleGoLive} size="lg" className="rounded-full">
-                    <PlusCircle className="ml-2" />
-                    ابدأ بث مباشر
+                    <PlusCircle className="mr-2" />
+                    Start Live Stream
                 </Button>
             </div>
             
@@ -50,8 +51,8 @@ const LiveFeed = () => {
             ) : (
                 <div className="text-center text-muted-foreground pt-16">
                     <Video size={48} className="mx-auto mb-4" />
-                    <p className="font-semibold">لا يوجد أي بث مباشر حاليًا</p>
-                    <p className="text-sm">كن أول من يبدأ بثًا مباشرًا وشارك أفكارك!</p>
+                    <p className="font-semibold">No live streams at the moment</p>
+                    <p className="text-sm">Be the first to start a live stream and share your thoughts!</p>
                 </div>
             )}
         </div>

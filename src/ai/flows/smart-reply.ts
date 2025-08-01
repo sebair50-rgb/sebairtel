@@ -18,7 +18,7 @@ const SmartReplyInputSchema = z.object({
 export type SmartReplyInput = z.infer<typeof SmartReplyInputSchema>;
 
 const SmartReplyOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('An array of 3 short, context-aware suggested replies in Arabic.'),
+  suggestions: z.array(z.string()).describe('An array of 3 short, context-aware suggested replies in English.'),
 });
 export type SmartReplyOutput = z.infer<typeof SmartReplyOutputSchema>;
 
@@ -36,8 +36,8 @@ const smartReplyPrompt = ai.definePrompt({
     prompt: `You are an expert chat assistant that specializes in analyzing conversation contexts to provide relevant, smart replies.
 Your task is to analyze the following conversation history, understand the relationship and context, and identify the nature of the last message (e.g., is it a question, a statement, a shared image, code, etc.).
 
-Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "أنت".
-The replies must be in Arabic.
+Based on your analysis of the full context, generate three short, intelligent, and appropriate replies for the user "You".
+The replies must be in English.
 
 Conversation History:
 {{{history}}}

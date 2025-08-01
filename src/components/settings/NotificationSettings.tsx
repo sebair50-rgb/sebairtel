@@ -23,38 +23,38 @@ const NotificationSettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>الإشعارات</CardTitle>
-                <CardDescription>اختر كيف تريد أن يتم إعلامك.</CardDescription>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>Choose how you want to be notified.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
                     <SettingToggle
                         id="all"
-                        label="تفعيل كل الإشعارات"
-                        description="الخيار الرئيسي لتفعيل أو تعطيل جميع التنبيهات."
+                        label="Enable All Notifications"
+                        description="Master switch to enable or disable all alerts."
                         checked={settings.notifications.all}
                         onCheckedChange={(checked) => handleToggle('all', checked)}
                     />
                     <SettingToggle
                         id="messages"
-                        label="إشعارات الرسائل"
-                        description="تلقي إشعارات عند وصول رسائل جديدة."
+                        label="Message Notifications"
+                        description="Receive notifications when new messages arrive."
                         checked={settings.notifications.messages}
                         onCheckedChange={(checked) => handleToggle('messages', checked)}
                         disabled={!settings.notifications.all}
                     />
                     <SettingToggle
                         id="mentions"
-                        label="الإشارات (Mentions)"
-                        description="تلقي إشعارات عندما يذكرك شخص ما."
+                        label="Mentions"
+                        description="Receive notifications when someone mentions you."
                         checked={settings.notifications.mentions}
                         onCheckedChange={(checked) => handleToggle('mentions', checked)}
                         disabled={!settings.notifications.all}
                     />
                      <SettingToggle
                         id="calls"
-                        label="المكالمات الفائتة"
-                        description="تلقي إشعار عند وجود مكالمة فائتة."
+                        label="Missed Calls"
+                        description="Receive a notification for any missed calls."
                         checked={settings.notifications.calls}
                         onCheckedChange={(checked) => handleToggle('calls', checked)}
                         disabled={!settings.notifications.all}

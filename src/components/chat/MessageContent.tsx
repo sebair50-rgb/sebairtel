@@ -67,7 +67,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ message, isOwnMessage }
             return (
                 <div className="space-y-1">
                     <video src={message.src} controls className="rounded-lg max-w-full h-auto bg-black">
-                        متصفحك لا يدعم عرض الفيديو.
+                        Your browser does not support the video tag.
                     </video>
                     {message.text && <p className="text-sm mt-1 whitespace-pre-wrap">{renderTextWithLinksAndCode(message.text)}</p>}
                 </div>

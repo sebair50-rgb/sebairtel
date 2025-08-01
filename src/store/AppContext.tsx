@@ -12,6 +12,7 @@ import {
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
+import { enUS } from 'date-fns/locale';
 
 type Visibility = 'everyone' | 'friends' | 'nobody';
 type FriendRequestSetting = 'everyone' | 'friends_of_friends';
@@ -290,7 +291,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           return { 
               id: doc.id, 
               ...data,
-              time: data.timestamp?.toDate().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) || '',
+              time: data.timestamp?.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || '',
           } as Post
       });
       setPosts(postsData);
@@ -319,10 +320,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              return {
                  id: doc.id,
                  ...data,
-                 name: otherUserInfo ? otherUserInfo.name : "مستخدم محذوف",
+                 name: otherUserInfo ? otherUserInfo.name : "Deleted User",
                  avatar: otherUserInfo ? otherUserInfo.avatar : "",
                  lastMessageText: data.lastMessageText || '...',
-                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }) || '',
+                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' }) || '',
                  unreadCount: { [authUser.uid]: unreadCount },
              } as Chat;
         });
@@ -347,7 +348,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             return {
                 id: doc.id,
                 ...data,
-                time: data.timestamp?.toDate().toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) || ''
+                time: data.timestamp?.toDate().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) || ''
             } as Call;
         });
         setCalls(callsData);
@@ -425,19 +426,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         case 'text':
             return msg.text || '';
         case 'image':
-            return `أرسل صورة ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+            return `Sent an image ${msg.text ? `- with caption: ${msg.text}` : ''}`;
         case 'video':
-            return `أرسل فيديو ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+            return `Sent a video ${msg.text ? `- with caption: ${msg.text}` : ''}`;
         case 'audio':
-            return 'أرسل رسالة صوتية';
+            return 'Sent a voice message';
         case 'file':
-             return `أرسل ملفًا باسم '${msg.fileInfo?.name || 'ملف'}' ${msg.text ? `- مع تعليق: ${msg.text}` : ''}`;
+             return `Sent a file named '${msg.fileInfo?.name || 'file'}' ${msg.text ? `- with caption: ${msg.text}` : ''}`;
         case 'code':
             const codeMatch = msg.text?.match(/```(\w+)/);
-            const lang = codeMatch ? ` من نوع ${codeMatch[1]}` : '';
-            return `أرسل مقطعًا برمجيًا${lang}`;
+            const lang = codeMatch ? ` of type ${codeMatch[1]}` : '';
+            return `Sent a code snippet${lang}`;
         default:
-            return 'أرسل رسالة';
+            return 'Sent a message';
     }
   };
 
@@ -530,7 +531,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
         },
         lastMessageTimestamp: serverTimestamp() as any,
-        lastMessageText: `لقد بدأت محادثة مع ${friend.name}`,
+        lastMessageText: `You started a conversation with ${friend.name}`,
         unreadCount: { [currentUser.id]: 0, [friend.id]: 0 },
         isMuted: false,
         isBlocked: false,
@@ -540,14 +541,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     await createNotification(friend.id, {
         type: 'new_friend',
-        message: `بدأ ${currentUser.name} محادثة معك.`,
+        message: `${currentUser.name} started a conversation with you.`,
         fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
         link: `/chats/${newChatRef.id}`
     });
 
     const createdChatForState: Chat = {
         ...newChatData,
-        lastMessageTime: new Date().toLocaleTimeString('ar-EG', { hour: 'numeric', minute: 'numeric' }),
+        lastMessageTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' }),
     };
     
     setChats(prevChats => [createdChatForState, ...prevChats].sort((a,b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
@@ -603,7 +604,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
             await createNotification(otherUserId, {
                 type: 'new_message',
-                message: `لديك رسالة جديدة من <strong>${currentUser.name}</strong>`,
+                message: `You have a new message from <strong>${currentUser.name}</strong>`,
                 fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
                 link: `/chats/${chatId}`
             });
@@ -647,7 +648,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     // Create a notification for the other user
     await createNotification(friend.id, {
         type: 'friend_request',
-        message: `أرسل لك <strong>${currentUser.name}</strong> طلب صداقة.`,
+        message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
         fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
         link: `/users` // or a dedicated friend requests page
     });
@@ -711,7 +712,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       await addCallLog(user, 'missed');
       await createNotification(currentUser.id, {
           type: 'missed_call',
-          message: `لديك مكالمة فائتة من ${user.name}.`,
+          message: `You have a missed call from ${user.name}.`,
           fromUser: {id: user.id, name: user.name, avatar: user.avatar},
           link: `/calls`
       });

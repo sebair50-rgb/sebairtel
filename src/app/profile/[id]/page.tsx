@@ -7,13 +7,13 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, UserPlus, MessageSquare, Users, MoreVertical, UserX, Share2, UserMinus } from 'lucide-react';
+import { ArrowLeft, UserPlus, MessageSquare, Users, MoreVertical, UserX, Share2, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,16 +78,16 @@ const UserProfilePage = () => {
     const handleAddFriend = () => {
         if(!profileUser) return;
         toast({
-            title: `تم إرسال طلب صداقة إلى ${profileUser.name}`,
-            description: "(ميزة قيد التطوير)",
+            title: `Friend request sent to ${profileUser.name}`,
+            description: "(Feature in development)",
         });
     }
 
     const handleShareProfile = () => {
         navigator.clipboard.writeText(window.location.href);
         toast({
-            title: "تم نسخ الرابط",
-            description: "يمكنك الآن مشاركة ملفه الشخصي.",
+            title: "Link Copied",
+            description: "You can now share their profile.",
         });
     };
 
@@ -95,8 +95,8 @@ const UserProfilePage = () => {
         if(!profileUser) return;
         toast({
             variant: "destructive",
-            title: `تم حظر ${profileUser.name}`,
-            description: "(ميزة قيد التطوير)",
+            title: `${profileUser.name} has been blocked`,
+            description: "(Feature in development)",
         });
     };
     
@@ -105,12 +105,12 @@ const UserProfilePage = () => {
         try {
             await unfriendUser(profileUser.id);
             toast({
-                title: `تمت إزالة ${profileUser.name} من الأصدقاء`,
+                title: `Removed ${profileUser.name} from friends`,
             });
         } catch (error) {
             toast({
                 variant: 'destructive',
-                title: 'فشل في إزالة الصديق'
+                title: 'Failed to remove friend'
             });
         }
     };
@@ -122,9 +122,9 @@ const UserProfilePage = () => {
     if (!profileUser) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <h2 className="text-2xl font-bold">لم يتم العثور على المستخدم</h2>
-                <p className="text-muted-foreground mt-2">قد يكون الرابط غير صحيح أو تم حذف المستخدم.</p>
-                <Button onClick={() => router.back()} className="mt-4">العودة</Button>
+                <h2 className="text-2xl font-bold">User Not Found</h2>
+                <p className="text-muted-foreground mt-2">The link may be incorrect or the user may have been deleted.</p>
+                <Button onClick={() => router.back()} className="mt-4">Go Back</Button>
             </div>
         );
     }
@@ -132,12 +132,12 @@ const UserProfilePage = () => {
     const isFriend = friends.some(f => f.id === profileUser.id);
     
     const getStatus = () => {
-        if (isOwnProfile) return "هذا هو ملفك الشخصي";
-        if (profileUser.isOnline) return "متصل الآن";
+        if (isOwnProfile) return "This is your profile";
+        if (profileUser.isOnline) return "Online now";
         if (profileUser.lastSeen) {
-            return `آخر ظهور ${formatDistanceToNow(profileUser.lastSeen.toDate(), { addSuffix: true, locale: ar })}`;
+            return `Last seen ${formatDistanceToNow(profileUser.lastSeen.toDate(), { addSuffix: true, locale: enUS })}`;
         }
-        return `البريد الإلكتروني: ${profileUser.email}`;
+        return `Email: ${profileUser.email}`;
     }
 
     return (
@@ -146,10 +146,10 @@ const UserProfilePage = () => {
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="absolute top-6 right-6 z-10 bg-background/50 backdrop-blur-sm rounded-full"
+                    className="absolute top-6 left-6 z-10 bg-background/50 backdrop-blur-sm rounded-full"
                     onClick={() => router.back()}
                 >
-                    <ArrowRight />
+                    <ArrowLeft />
                 </Button>
 
                 <Card className="overflow-hidden shadow-lg">
@@ -167,19 +167,19 @@ const UserProfilePage = () => {
                         </div>
 
                         <div className="mt-4 text-muted-foreground">
-                            <p>{profileUser.bio || "لا توجد نبذة شخصية."}</p>
+                            <p>{profileUser.bio || "No biography available."}</p>
                         </div>
                         
                         {!isOwnProfile && (
                             <div className="mt-6 flex items-center gap-2">
                                 <Button className="flex-1" onClick={handleMessage}>
-                                    <MessageSquare size={16} className="ml-2" />
-                                    مراسلة
+                                    <MessageSquare size={16} className="mr-2" />
+                                    Message
                                 </Button>
                                 {!isFriend && (
                                      <Button variant="outline" className="flex-1" onClick={handleAddFriend}>
-                                        <UserPlus size={16} className="ml-2" />
-                                        إضافة صديق
+                                        <UserPlus size={16} className="mr-2" />
+                                        Add Friend
                                     </Button>
                                 )}
                                 <DropdownMenu>
@@ -190,19 +190,19 @@ const UserProfilePage = () => {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={handleShareProfile}>
-                                            <Share2 className="ml-2 h-4 w-4" />
-                                            <span>مشاركة الملف الشخصي</span>
+                                            <Share2 className="mr-2 h-4 w-4" />
+                                            <span>Share Profile</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {isFriend && (
                                             <DropdownMenuItem onClick={handleRemoveFriend} className="text-destructive focus:text-destructive">
-                                                <UserMinus className="ml-2 h-4 w-4" />
-                                                <span>إزالة الصديق</span>
+                                                <UserMinus className="mr-2 h-4 w-4" />
+                                                <span>Remove Friend</span>
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem onClick={handleBlockUser} className="text-destructive focus:text-destructive">
-                                            <UserX className="ml-2 h-4 w-4" />
-                                            <span>حظر المستخدم</span>
+                                            <UserX className="mr-2 h-4 w-4" />
+                                            <span>Block User</span>
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -216,7 +216,7 @@ const UserProfilePage = () => {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Users />
-                                الأصدقاء المشتركون ({mutualFriends.length})
+                                Mutual Friends ({mutualFriends.length})
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -278,5 +278,3 @@ const ProfileSkeleton = () => (
 
 
 export default UserProfilePage;
-
-    

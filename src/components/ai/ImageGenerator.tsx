@@ -20,8 +20,8 @@ const ImageGenerator = () => {
         if (!prompt.trim()) {
             toast({
                 variant: 'destructive',
-                title: 'حقل الوصف فارغ',
-                description: 'الرجاء إدخال وصف للصورة التي تريد إنشاءها.',
+                title: 'Description field is empty',
+                description: 'Please enter a description for the image you want to create.',
             });
             return;
         }
@@ -36,8 +36,8 @@ const ImageGenerator = () => {
             console.error('Image generation failed:', error);
             toast({
                 variant: 'destructive',
-                title: 'حدث خطأ',
-                description: 'فشل في توليد الصورة. يرجى المحاولة مرة أخرى.',
+                title: 'An error occurred',
+                description: 'Failed to generate the image. Please try again.',
             });
         } finally {
             setIsLoading(false);
@@ -57,14 +57,14 @@ const ImageGenerator = () => {
     return (
         <Card className="shadow-lg animate-fade-in">
             <CardHeader>
-                <CardTitle>مولّد الصور بالذكاء الاصطناعي</CardTitle>
+                <CardTitle>AI Image Generator</CardTitle>
                 <CardDescription>
-                    اكتب وصفًا نصيًا دقيقًا للصورة التي تتخيلها، وسيقوم الذكاء الاصطناعي بتحويلها إلى حقيقة.
+                    Write a detailed text description of the image you envision, and the AI will bring it to life.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea
-                    placeholder="مثال: قط يرتدي قبعة ساحر ويقرأ كتابًا في مكتبة قديمة"
+                    placeholder="Example: A cat wearing a wizard hat reading a book in an old library"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     className="min-h-[100px] bg-muted"
@@ -72,11 +72,11 @@ const ImageGenerator = () => {
                 <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
                     {isLoading ? (
                         <>
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                            جاري توليد الصورة...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating Image...
                         </>
                     ) : (
-                        'إنشاء الصورة'
+                        'Create Image'
                     )}
                 </Button>
             </CardContent>
@@ -84,14 +84,14 @@ const ImageGenerator = () => {
             {imageUrl && (
                 <CardContent className="flex flex-col items-center gap-4">
                     <CardHeader className="p-0">
-                        <CardTitle>صورتك جاهزة!</CardTitle>
+                        <CardTitle>Your Image is Ready!</CardTitle>
                     </CardHeader>
                     <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden border">
                          <Image src={imageUrl} alt={prompt} layout="fill" objectFit="cover" />
                     </div>
                      <Button variant="outline" onClick={handleDownload}>
-                        <Download className="ml-2 h-4 w-4" />
-                        تنزيل الصورة
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Image
                     </Button>
                 </CardContent>
             )}

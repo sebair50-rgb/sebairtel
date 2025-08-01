@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowRight, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,11 +28,11 @@ const CoHostVideo = ({ user, onRemove, isMyStream }: { user: User, onRemove: (us
             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <p className="font-bold mt-2">{user.name}</p>
-        <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 text-xs rounded-md">
-            مشارك
+        <div className="absolute bottom-2 right-2 bg-black/50 px-2 py-1 text-xs rounded-md">
+            Co-host
         </div>
         {isMyStream && (
-             <button onClick={() => onRemove(user)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+             <button onClick={() => onRemove(user)} className="absolute top-1 left-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <X size={16} />
             </button>
         )}
@@ -55,14 +55,14 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                     <UserPlus size={28} />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-slate-900 text-white border-slate-700 w-[350px] sm:w-[400px]">
+            <SheetContent side="right" className="bg-slate-900 text-white border-slate-700 w-[350px] sm:w-[400px]">
                 <SheetHeader>
-                    <SheetTitle className="text-white">المشاركون والدعوات</SheetTitle>
+                    <SheetTitle className="text-white">Participants & Invites</SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="h-[calc(100%-4rem)] mt-4 pr-4">
                     {joinRequests.length > 0 && (
                         <div className="mb-6">
-                            <h3 className="font-bold mb-2 text-primary">طلبات الانضمام ({joinRequests.length})</h3>
+                            <h3 className="font-bold mb-2 text-primary">Join Requests ({joinRequests.length})</h3>
                             <div className="space-y-4">
                                 {joinRequests.map(user => (
                                     <div key={user.id} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
@@ -74,8 +74,8 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                                             <p className="font-semibold">{user.name}</p>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button size="sm" variant="destructive" onClick={() => onDeclineRequest(user)}>رفض</Button>
-                                            <Button size="sm" variant="secondary" onClick={() => onAcceptRequest(user)}>قبول</Button>
+                                            <Button size="sm" variant="destructive" onClick={() => onDeclineRequest(user)}>Decline</Button>
+                                            <Button size="sm" variant="secondary" onClick={() => onAcceptRequest(user)}>Accept</Button>
                                         </div>
                                     </div>
                                 ))}
@@ -85,7 +85,7 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                     
                      {coHosts.length > 0 && (
                         <div className="mb-6">
-                            <h3 className="font-bold mb-2 text-green-400">المشاركون الحاليون ({coHosts.length})</h3>
+                            <h3 className="font-bold mb-2 text-green-400">Current Co-hosts ({coHosts.length})</h3>
                             <div className="space-y-4">
                                 {coHosts.map(user => (
                                     <div key={user.id} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg">
@@ -97,8 +97,8 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                                             <p className="font-semibold">{user.name}</p>
                                         </div>
                                         <Button size="sm" variant="destructive" onClick={() => onRemoveCoHost(user)}>
-                                            <UserX className="w-4 h-4 ml-1" />
-                                            إزالة
+                                            <UserX className="w-4 h-4 mr-1" />
+                                            Remove
                                         </Button>
                                     </div>
                                 ))}
@@ -107,7 +107,7 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                     )}
 
 
-                    <h3 className="font-bold mb-2">دعوة أصدقاء</h3>
+                    <h3 className="font-bold mb-2">Invite Friends</h3>
                     <div className="space-y-4">
                         {friends.map(friend => (
                             <div key={friend.id} className="flex items-center justify-between">
@@ -118,7 +118,7 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
                                     </Avatar>
                                     <p className="font-semibold">{friend.name}</p>
                                 </div>
-                                <Button size="sm" onClick={() => onInvite(friend)}>دعوة</Button>
+                                <Button size="sm" onClick={() => onInvite(friend)}>Invite</Button>
                             </div>
                         ))}
                     </div>
@@ -132,11 +132,11 @@ const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage,
     <div className={cn(
         "flex flex-col",
         isOverlay 
-            ? "bg-black/70 backdrop-blur-sm h-1/3 w-full absolute bottom-0 left-0 z-20"
-            : "w-full md:w-96 h-1/2 md:h-full bg-slate-900 border-l border-slate-700"
+            ? "bg-black/70 backdrop-blur-sm h-1/3 w-full absolute bottom-0 right-0 z-20"
+            : "w-full md:w-96 h-1/2 md:h-full bg-slate-900 border-r border-slate-700"
     )}>
         <div className="p-4 border-b border-slate-700">
-            <h2 className="text-xl font-bold text-center">الدردشة المباشرة</h2>
+            <h2 className="text-xl font-bold text-center">Live Chat</h2>
         </div>
         <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -157,7 +157,7 @@ const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage,
          <div className="p-4">
              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                 <Input 
-                    placeholder="اكتب تعليقًا..." 
+                    placeholder="Add a comment..." 
                     className="bg-slate-800 border-slate-600 rounded-full text-white" 
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
@@ -194,9 +194,9 @@ const LiveStreamPage = () => {
     
     // Mock chat messages
     const [messages, setMessages] = useState([
-        { id: 1, user: { name: "علي" }, text: "بث رائع!" },
-        { id: 2, user: { name: "فاطمة" }, text: "شكرًا على المعلومات القيمة." },
-        { id: 3, user: { name: "محمد" }, text: "هل يمكنك شرح النقطة الأخيرة مرة أخرى؟" },
+        { id: 1, user: { name: "Ali" }, text: "Great stream!" },
+        { id: 2, user: { name: "Fatima" }, text: "Thanks for the valuable info." },
+        { id: 3, user: { name: "Mohammed" }, text: "Can you explain the last point again?" },
     ]);
     const [newMessage, setNewMessage] = useState("");
 
@@ -243,8 +243,8 @@ const LiveStreamPage = () => {
                 setHasCameraPermission(false);
                 toast({
                     variant: 'destructive',
-                    title: 'خطأ في الوصول للكاميرا',
-                    description: 'الرجاء تمكين أذونات الكاميرا والميكروفون في متصفحك.',
+                    title: 'Camera Access Error',
+                    description: 'Please enable camera and microphone permissions in your browser.',
                 });
             } finally {
                 setIsLoading(false);
@@ -271,34 +271,34 @@ const LiveStreamPage = () => {
 
     const handleInviteUser = (user: User) => {
         if(coHosts.some(h => h.id === user.id)) {
-            toast({ description: `${user.name} موجود بالفعل في البث.` });
+            toast({ description: `${user.name} is already in the stream.` });
             return;
         }
         setCoHosts(prev => [...prev, user]);
-        toast({ title: 'تم إرسال الدعوة', description: `تم إرسال دعوة إلى ${user.name} للانضمام.` });
+        toast({ title: 'Invitation Sent', description: `An invitation has been sent to ${user.name} to join.` });
     }
     
     const handleAcceptRequest = (user: User) => {
         setJoinRequests(prev => prev.filter(req => req.id !== user.id));
         setCoHosts(prev => [...prev, user]);
-        toast({ title: "تم قبول الطلب", description: `انضم ${user.name} إلى البث.` });
+        toast({ title: "Request Accepted", description: `${user.name} has joined the stream.` });
     }
 
     const handleDeclineRequest = (user: User) => {
         setJoinRequests(prev => prev.filter(req => req.id !== user.id));
-        toast({ title: "تم رفض الطلب", description: `تم رفض طلب ${user.name}.`, variant: "destructive" });
+        toast({ title: "Request Declined", description: `The request from ${user.name} was declined.`, variant: "destructive" });
     }
     
     const handleRemoveCoHost = (user: User) => {
         setCoHosts(prev => prev.filter(h => h.id !== user.id));
-        toast({ title: "تمت الإزالة", description: `تمت إزالة ${user.name} من البث.`, variant: "destructive" });
+        toast({ title: "Removed", description: `${user.name} has been removed from the stream.`, variant: "destructive" });
     }
 
     const handleRequestToJoin = () => {
         setHasRequestedToJoin(true);
         toast({
-            title: "تم إرسال طلبك",
-            description: "لقد أرسلت طلبًا للانضمام إلى البث كمشارك."
+            title: "Your request has been sent",
+            description: "You have sent a request to join the stream as a co-host."
         });
         // In a real app, this would send a request to the streamer
     }
@@ -335,7 +335,7 @@ const LiveStreamPage = () => {
                             <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
                             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <p className="text-xl text-white">الكاميرا متوقفة</p>
+                        <p className="text-xl text-white">Camera is off</p>
                     </div>
                  )
             }
@@ -343,9 +343,9 @@ const LiveStreamPage = () => {
                  return (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/70">
                         <Alert variant="destructive" className="max-w-md">
-                            <AlertTitle>الكاميرا غير متاحة</AlertTitle>
+                            <AlertTitle>Camera Unavailable</AlertTitle>
                             <AlertDescription>
-                                لا يمكن بدء البث المباشر. يرجى السماح بالوصول إلى الكاميرا والميكروفون والمحاولة مرة أخرى.
+                                Cannot start the live stream. Please allow access to camera and microphone and try again.
                             </AlertDescription>
                         </Alert>
                     </div>
@@ -359,7 +359,7 @@ const LiveStreamPage = () => {
                 <Image src="https://placehold.co/1280x720/18171F/FFFFFF.png?text=Live+Stream" data-ai-hint="live stream broadcast" alt="Live stream placeholder" width={1280} height={720} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <p className="text-2xl font-bold text-white/80 backdrop-blur-sm p-4 rounded-lg">
-                        {`أنت تشاهد بث ${streamer?.name || 'مستخدم'}`}
+                        {`You are watching ${streamer?.name || 'a user'}'s stream`}
                     </p>
                 </div>
             </div>
@@ -367,15 +367,15 @@ const LiveStreamPage = () => {
     }
 
     return (
-        <div className="w-full h-screen bg-black flex flex-col md:flex-row items-center justify-center text-white">
+        <div className="w-full h-screen bg-black flex flex-col md:flex-row-reverse items-center justify-center text-white">
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="absolute top-6 right-6 z-30 bg-black/50 backdrop-blur-sm rounded-full"
+                    className="absolute top-6 left-6 z-30 bg-black/50 backdrop-blur-sm rounded-full"
                     onClick={handleExitActions}
                 >
-                    <ArrowRight />
+                    <ArrowLeft />
                 </Button>
 
                 <div ref={videoContainerRef} className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
@@ -384,7 +384,7 @@ const LiveStreamPage = () => {
                     </div>
                     
                      {coHosts.length > 0 && (
-                        <div className="absolute top-24 left-4 w-48 space-y-2 z-20">
+                        <div className="absolute top-24 right-4 w-48 space-y-2 z-20">
                            {coHosts.map(host => <CoHostVideo key={host.id} user={host} onRemove={handleRemoveCoHost} isMyStream={isMyStream} />)}
                         </div>
                     )}
@@ -413,7 +413,7 @@ const LiveStreamPage = () => {
                         )}
                     </AnimatePresence>
                     
-                     <div className="absolute top-4 left-4 z-20">
+                     <div className="absolute top-4 right-4 z-20">
                         <Card className="bg-black/50 border-none text-white">
                             <CardHeader className="flex flex-row items-center gap-3 p-3">
                                  <div className="relative">
@@ -421,11 +421,11 @@ const LiveStreamPage = () => {
                                         <AvatarImage src={streamer?.avatar} alt={streamer?.name} />
                                         <AvatarFallback>{streamer?.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <div className="absolute -bottom-1 -right-1 bg-red-600 rounded-full h-4 w-4 border-2 border-black" />
+                                    <div className="absolute -bottom-1 -left-1 bg-red-600 rounded-full h-4 w-4 border-2 border-black" />
                                 </div>
                                 <div>
                                     <CardTitle className="text-base">{streamer?.name}</CardTitle>
-                                    <p className="text-xs font-bold text-red-400">{isMyStream ? 'أنت تبث الآن' : 'يبث الآن'}</p>
+                                    <p className="text-xs font-bold text-red-400">{isMyStream ? 'You are now live' : 'Now Live'}</p>
                                 </div>
                             </CardHeader>
                         </Card>
@@ -434,7 +434,7 @@ const LiveStreamPage = () => {
                     <AnimatePresence>
                         {!isFullScreen && (
                             <motion.div 
-                                className="absolute bottom-4 right-4 z-20"
+                                className="absolute bottom-4 left-4 z-20"
                                 initial={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                             >
@@ -541,5 +541,3 @@ const LiveStreamSkeleton = () => (
 
 
 export default LiveStreamPage;
-
-    

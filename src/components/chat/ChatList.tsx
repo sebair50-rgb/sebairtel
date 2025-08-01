@@ -28,10 +28,10 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
     <div className="bg-slate-100 h-full flex flex-col w-full">
       <div className="p-4">
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder="بحث في المحادثات..."
-            className="w-full rounded-full bg-white h-12 pr-12 text-base"
+            placeholder="Search in conversations..."
+            className="w-full rounded-full bg-white h-12 pl-12 text-base"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -53,7 +53,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                             : 'bg-white hover:border-primary/50'
                         )}
                     >
-                        <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-right">
+                        <div className="grid grid-cols-[auto_1fr] items-center gap-3 text-left">
                             <div className="relative">
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={chat.avatar} alt={chat.name} />

@@ -11,20 +11,20 @@ import AppHeader from '../layout/AppHeader';
 
 const appCategories = [
     {
-        title: "المعاملات المالية",
+        title: "Financial Transactions",
         apps: [
             {
                 icon: Landmark,
-                title: "الخدمات البنكية",
-                description: "إدارة حساباتك",
+                title: "Banking Services",
+                description: "Manage your accounts",
                 color: "bg-blue-100 dark:bg-blue-900/50",
                 textColor: "text-blue-600 dark:text-blue-300",
                 action: () => {}
             },
             {
                 icon: FileDigit,
-                title: "الفواتير",
-                description: "دفع فواتيرك بسهولة",
+                title: "Bills",
+                description: "Pay your bills easily",
                 color: "bg-green-100 dark:bg-green-900/50",
                 textColor: "text-green-600 dark:text-green-300",
                 action: () => {}
@@ -32,28 +32,28 @@ const appCategories = [
         ]
     },
     {
-        title: "الخدمات اليومية",
+        title: "Daily Services",
         apps: [
              {
                 icon: ShoppingCart,
-                title: "الطلبات",
-                description: "توصيل طعام وبقالة",
+                title: "Orders",
+                description: "Food and grocery delivery",
                 color: "bg-orange-100 dark:bg-orange-900/50",
                 textColor: "text-orange-600 dark:text-orange-300",
                 action: () => {}
             },
             {
                 icon: Car,
-                title: "المواصلات",
-                description: "اطلب سيارة أجرة",
+                title: "Transportation",
+                description: "Order a taxi",
                 color: "bg-slate-200 dark:bg-slate-700",
                 textColor: "text-slate-700 dark:text-slate-300",
                 action: () => {}
             },
             {
                 icon: Mail,
-                title: "البريد",
-                description: "خدمات بريدية سريعة",
+                title: "Mail",
+                description: "Fast postal services",
                 color: "bg-red-100 dark:bg-red-900/50",
                 textColor: "text-red-600 dark:text-red-300",
                 action: () => {}
@@ -61,20 +61,20 @@ const appCategories = [
         ]
     },
      {
-        title: "تطبيقات SebairTel",
+        title: "SebairTel Apps",
         apps: [
             {
                 icon: Globe,
-                title: "المترجم",
-                description: "ترجمة فورية",
+                title: "Translator",
+                description: "Instant translation",
                 color: "bg-teal-100 dark:bg-teal-900/50",
                 textColor: "text-teal-600 dark:text-teal-300",
                 action: () => {}
             },
             {
                 icon: Terminal,
-                title: "محرر الكود",
-                description: "أداة للمطورين",
+                title: "Code Editor",
+                description: "A tool for developers",
                 color: "bg-purple-100 dark:bg-purple-900/50",
                 textColor: "text-purple-600 dark:text-purple-300",
                 action: () => {}
@@ -95,8 +95,8 @@ const AppCard = ({ icon: Icon, title, description, color, textColor, action }: {
 
     const handleActionClick = () => {
         toast({
-            title: `قريبا: ${title}`,
-            description: "نحن نعمل بجد لإطلاق هذا التطبيق. ترقبوا التحديثات!",
+            title: `Coming Soon: ${title}`,
+            description: "We're working hard to launch this app. Stay tuned for updates!",
         });
         action();
     };
@@ -127,7 +127,7 @@ const AppCard = ({ icon: Icon, title, description, color, textColor, action }: {
 const AppsView = () => {
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-gray-950">
-            <AppHeader title="التطبيقات" icon={AppWindow} />
+            <AppHeader title="Apps" icon={AppWindow} />
             
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto space-y-10">

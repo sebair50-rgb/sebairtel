@@ -5,7 +5,7 @@ import React from 'react';
 import type { Chat } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, Video, MoreVertical, Search, BellOff, Trash2, UserX } from 'lucide-react';
+import { ArrowLeft, Phone, Video, MoreVertical, Search, BellOff, Trash2, UserX } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,7 @@ import { useAppContext } from '@/store/AppContext';
 import useIsMobile from '@/hooks/use-is-mobile';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
 interface ChatHeaderProps {
   chat: Chat;
@@ -37,7 +37,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
     const newMutedState = !isMuted;
     setIsMuted(newMutedState);
     setChats(prev => prev.map(c => c.id === chat.id ? {...c, isMuted: newMutedState} : c));
-    toast({ title: newMutedState ? `تم كتم إشعارات ${chat.name}` : `تم إلغاء كتم ${chat.name}` });
+    toast({ title: newMutedState ? `Muted notifications for ${chat.name}` : `Unmuted ${chat.name}` });
   }
 
   const friendId = chat.users.find(uid => uid !== currentUser?.id);
@@ -53,15 +53,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
       if(friend) {
         initiateCall(friend, type);
       } else {
-          toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
+          toast({ variant: 'destructive', description: "User not found to start the call." });
       }
   }
   
   const getStatus = () => {
     if (!friend) return null;
-    if (friend.isOnline) return "متصل الآن";
+    if (friend.isOnline) return "Online now";
     if (friend.lastSeen) {
-        return `آخر ظهور ${formatDistanceToNow(friend.lastSeen.toDate(), { addSuffix: true, locale: ar })}`;
+        return `Last seen ${formatDistanceToNow(friend.lastSeen.toDate(), { addSuffix: true, locale: enUS })}`;
     }
     return null;
   }
@@ -71,7 +71,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
       <div className="flex items-center gap-3">
         {isMobile && (
             <Button variant="ghost" size="icon" onClick={onBack}>
-              <ArrowRight size={20} />
+              <ArrowLeft size={20} />
             </Button>
         )}
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleNavigateToProfile}>
@@ -99,22 +99,22 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ chat, onBack, onMenuAction }) =
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => toast({ description: "سيتم تفعيل البحث قريباً" })}>
-              <Search className="ml-2 h-4 w-4" />
-              <span>بحث في المحادثة</span>
+            <DropdownMenuItem onClick={() => toast({ description: "Search will be activated soon" })}>
+              <Search className="mr-2 h-4 w-4" />
+              <span>Search in Conversation</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleMute}>
-              <BellOff className="ml-2 h-4 w-4" />
-              <span>{isMuted ? 'إلغاء الكتم' : 'كتم الإشعارات'}</span>
+              <BellOff className="mr-2 h-4 w-4" />
+              <span>{isMuted ? 'Unmute' : 'Mute Notifications'}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onMenuAction('clear')}>
-              <Trash2 className="ml-2 h-4 w-4" />
-              <span>مسح المحادثة</span>
+              <Trash2 className="mr-2 h-4 w-4" />
+              <span>Clear Conversation</span>
             </DropdownMenuItem>
              <DropdownMenuItem onClick={() => onMenuAction('block')} className="text-destructive focus:text-destructive">
-              <UserX className="ml-2 h-4 w-4" />
-              <span>حظر المستخدم</span>
+              <UserX className="mr-2 h-4 w-4" />
+              <span>Block User</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

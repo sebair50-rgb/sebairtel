@@ -27,7 +27,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />
             <h2 className="text-2xl font-bold">{title}</h2>
-            <p className="text-muted-foreground mt-2">هذه الميزة ستكون متاحة قريباً!</p>
+            <p className="text-muted-foreground mt-2">This feature will be available soon!</p>
         </div>
     );
 
@@ -44,25 +44,25 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-100">
-             <AppHeader title="تواصل" icon={Phone} />
+             <AppHeader title="Contact" icon={Phone} />
              <Tabs value={activeSubTab} onValueChange={handleTabChange} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-background border-b">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-slate-200 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <MessageSquare className="ml-1 sm:ml-2" />
-                            دردشتي
+                            <MessageSquare className="mr-1 sm:mr-2" />
+                            My Chats
                         </TabsTrigger>
                          <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <Users className="ml-1 sm:ml-2" />
-                            أصدقائي
+                            <Users className="mr-1 sm:mr-2" />
+                            My Friends
                         </TabsTrigger>
                          <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <Phone className="ml-1 sm:ml-2" />
-                            مكالماتي
+                            <Phone className="mr-1 sm:mr-2" />
+                            My Calls
                         </TabsTrigger>
                         <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
-                            <UserCog className="ml-1 sm:ml-2" />
-                            مجموعاتي
+                            <UserCog className="mr-1 sm:mr-2" />
+                            My Groups
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -76,7 +76,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                     <CallsList />
                 </TabsContent>
                  <TabsContent value="groups" className="flex-1 bg-white">
-                    <ComingSoonContent title="المجموعات" icon={UserCog} />
+                    <ComingSoonContent title="Groups" icon={UserCog} />
                 </TabsContent>
             </Tabs>
         </div>

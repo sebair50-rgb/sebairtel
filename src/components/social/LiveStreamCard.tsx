@@ -37,11 +37,11 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({ stream }) => {
         >
             <div className="relative aspect-video">
                 <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" />
-                <div className="absolute top-2 left-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md text-sm font-bold">
+                <div className="absolute top-2 right-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md text-sm font-bold">
                     <Radio className="w-4 h-4 animate-pulse" />
-                    <span>مباشر</span>
+                    <span>Live</span>
                 </div>
-                 <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded-md text-xs font-bold">
+                 <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded-md text-xs font-bold">
                     <Eye className="w-4 h-4" />
                     <span>{stream.viewers}</span>
                 </div>

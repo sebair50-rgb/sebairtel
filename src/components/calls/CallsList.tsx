@@ -45,7 +45,7 @@ const CallsList = () => {
         if (user) {
             initiateCall(user, 'audio');
         } else {
-            toast({ variant: 'destructive', description: "لم يتم العثور على المستخدم لبدء المكالمة." });
+            toast({ variant: 'destructive', description: "User not found to start the call." });
         }
     }
 
@@ -62,9 +62,9 @@ const CallsList = () => {
         const userForMissedCall = suggestedUsers[0];
         if (userForMissedCall) {
             addMissedCall(userForMissedCall);
-            toast({ description: `تمت إضافة مكالمة فائتة من ${userForMissedCall.name}`});
+            toast({ description: `Added a missed call from ${userForMissedCall.name}`});
         } else {
-            toast({ variant: 'destructive', description: "لا يوجد مستخدمين متاحين لإضافة مكالمة فائتة." });
+            toast({ variant: 'destructive', description: "No available users to add a missed call." });
         }
     }
 
@@ -73,12 +73,12 @@ const CallsList = () => {
             <div className="px-4 md:px-0">
                 <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setFilter(value as any)}>
                     <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-200">
-                        <TabsTrigger value="all">كل المكالمات</TabsTrigger>
-                        <TabsTrigger value="missed">الفائتة</TabsTrigger>
+                        <TabsTrigger value="all">All Calls</TabsTrigger>
+                        <TabsTrigger value="missed">Missed</TabsTrigger>
                     </TabsList>
                 </Tabs>
                 <Button onClick={handleAddMissedCall} variant="outline" className="w-full mt-2">
-                    إضافة مكالمة فائتة (تجريبي)
+                    Add Missed Call (Demo)
                 </Button>
             </div>
             <ScrollArea className="flex-1 mt-4">
@@ -95,7 +95,7 @@ const CallsList = () => {
                                         <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <CallIcon type={call.type} />
-                                            <span>{call.type === 'incoming' ? 'مكالمة واردة' : call.type === 'outgoing' ? 'مكالمة صادرة' : 'مكالمة فائتة'}</span>
+                                            <span>{call.type === 'incoming' ? 'Incoming call' : call.type === 'outgoing' ? 'Outgoing call' : 'Missed call'}</span>
                                             <span>&middot;</span>
                                             <span>{call.time}</span>
                                         </div>
@@ -110,9 +110,9 @@ const CallsList = () => {
                 ) : (
                     <div className="text-center text-muted-foreground pt-16">
                         <PhoneMissed size={48} className="mx-auto mb-4" />
-                        <p className="font-semibold">لا توجد مكالمات</p>
+                        <p className="font-semibold">No Calls</p>
                         <p className="text-sm">
-                            {filter === 'missed' ? 'ليس لديك أي مكالمات فائتة.' : 'لم تقم بإجراء أو استقبال أي مكالمات بعد.'}
+                            {filter === 'missed' ? 'You have no missed calls.' : 'You haven\'t made or received any calls yet.'}
                         </p>
                     </div>
                 )}

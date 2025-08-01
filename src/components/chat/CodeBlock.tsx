@@ -46,7 +46,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(codeContent);
     setIsCopied(true);
-    toast({ description: "تم نسخ الكود!" });
+    toast({ description: "Code copied!" });
     setTimeout(() => setIsCopied(false), 2000);
   };
 
@@ -99,8 +99,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
       console.error('AI action failed:', error);
       toast({
         variant: 'destructive',
-        title: 'حدث خطأ',
-        description: 'فشل في معالجة الطلب. يرجى المحاولة مرة أخرى.',
+        title: 'An error occurred',
+        description: 'Failed to process the request. Please try again.',
       });
     } finally {
       setIsLoading(false);
@@ -116,10 +116,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
   }
 
   const actionConfig: { action: AIAction | 'run'; icon: React.ElementType; label: string }[] = [
-    { action: 'run', icon: Play, label: 'تشغيل' },
-    { action: 'explain', icon: BrainCircuit, label: 'شرح' },
-    { action: 'optimize', icon: Zap, label: 'تحسين' },
-    { action: 'fix', icon: Bug, label: 'تصحيح' },
+    { action: 'run', icon: Play, label: 'Run' },
+    { action: 'explain', icon: BrainCircuit, label: 'Explain' },
+    { action: 'optimize', icon: Zap, label: 'Optimize' },
+    { action: 'fix', icon: Bug, label: 'Fix' },
   ];
 
   const hasOutput = showPreview || executionResult !== null || executionError !== null || aiResponse !== null;
@@ -157,17 +157,17 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
         
         {isLoading && (
           <div className="p-4 text-center text-gray-400 border-t border-gray-700">
-            <div className="animate-pulse">جاري المعالجة بواسطة الذكاء الاصطناعي...</div>
+            <div className="animate-pulse">AI is processing...</div>
           </div>
         )}
 
         {hasOutput && (
-            <div className="border-t border-gray-700" dir="rtl">
+            <div className="border-t border-gray-700">
                 <div className="bg-gray-800/50 px-4 py-2 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <Terminal size={16} className="text-primary"/>
                         <h4 className="font-bold text-primary text-sm">
-                            {activeAction === 'run' ? 'النتائج' : 'مساعد الذكاء الاصطناعي'}
+                            {activeAction === 'run' ? 'Output' : 'AI Assistant'}
                         </h4>
                     </div>
                     <Button variant="ghost" size="icon" onClick={clearOutput} className="h-7 w-7 text-gray-400 hover:text-white">
@@ -191,7 +191,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code }) => {
 
                     {executionResult && (
                         <pre className="text-white whitespace-pre-wrap">
-                            {executionResult.join('\n') || <span className="text-gray-500">تم التنفيذ بنجاح. لا توجد مخرجات.</span>}
+                            {executionResult.join('\n') || <span className="text-gray-500">Executed successfully. No output.</span>}
                         </pre>
                     )}
                     

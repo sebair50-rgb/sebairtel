@@ -20,8 +20,8 @@ const StickerGenerator = () => {
         if (!prompt.trim()) {
             toast({
                 variant: 'destructive',
-                title: 'حقل الوصف فارغ',
-                description: 'الرجاء إدخال وصف للملصق الذي تريد إنشاءه.',
+                title: 'Description field is empty',
+                description: 'Please enter a description for the sticker you want to create.',
             });
             return;
         }
@@ -36,8 +36,8 @@ const StickerGenerator = () => {
             console.error('Sticker generation failed:', error);
             toast({
                 variant: 'destructive',
-                title: 'حدث خطأ',
-                description: 'فشل في توليد الملصق. يرجى المحاولة مرة أخرى.',
+                title: 'An error occurred',
+                description: 'Failed to generate the sticker. Please try again.',
             });
         } finally {
             setIsLoading(false);
@@ -57,14 +57,14 @@ const StickerGenerator = () => {
     return (
         <Card className="shadow-lg animate-fade-in">
             <CardHeader>
-                <CardTitle>صانع الملصقات (Stickers)</CardTitle>
+                <CardTitle>Sticker Maker</CardTitle>
                 <CardDescription>
-                    حوّل أفكارك إلى ملصقات رائعة للمحادثات. سيتم إنشاء الملصق بخلفية شفافة.
+                    Turn your ideas into cool stickers for chats. The sticker will be generated with a transparent background.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Textarea
-                    placeholder="مثال: ضفدع لطيف يبرمج على لابتوب"
+                    placeholder="Example: A cute frog coding on a laptop"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     className="min-h-[100px] bg-muted"
@@ -72,13 +72,13 @@ const StickerGenerator = () => {
                 <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
                     {isLoading ? (
                         <>
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                            جاري إنشاء الملصق...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Sticker...
                         </>
                     ) : (
                         <>
-                            <Wand2 className="ml-2 h-4 w-4" />
-                            إنشاء الملصق
+                            <Wand2 className="mr-2 h-4 w-4" />
+                            Create Sticker
                         </>
                     )}
                 </Button>
@@ -87,14 +87,14 @@ const StickerGenerator = () => {
             {imageUrl && (
                 <CardContent className="flex flex-col items-center gap-4">
                      <CardHeader className="p-0">
-                        <CardTitle>الملصق جاهز!</CardTitle>
+                        <CardTitle>Sticker is Ready!</CardTitle>
                     </CardHeader>
                     <div className="relative w-64 h-64 rounded-lg bg-slate-200 dark:bg-slate-800 p-4">
                          <Image src={imageUrl} alt={prompt} layout="fill" objectFit="contain" />
                     </div>
                      <Button variant="outline" onClick={handleDownload}>
-                        <Download className="ml-2 h-4 w-4" />
-                        تنزيل الملصق (PNG)
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Sticker (PNG)
                     </Button>
                 </CardContent>
             )}

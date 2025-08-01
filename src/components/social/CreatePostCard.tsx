@@ -49,7 +49,7 @@ const CreatePostCard = () => {
             mediaType: media?.type,
             mediaSrc: media?.src 
         });
-        toast({ description: "تم تحديث المنشور بنجاح." });
+        toast({ description: "Post updated successfully." });
     } else {
         await addPost({ 
             content, 
@@ -67,8 +67,8 @@ const CreatePostCard = () => {
       if (file.size > 1048576) { // 1MB limit
         toast({
             variant: "destructive",
-            title: "حجم الملف كبير جدًا",
-            description: "الرجاء اختيار ملف حجمه أقل من 1 ميجابايت.",
+            title: "File size is too large",
+            description: "Please choose a file smaller than 1MB.",
         });
         return;
       }
@@ -76,8 +76,8 @@ const CreatePostCard = () => {
       if (!fileType) {
         toast({
             variant: "destructive",
-            title: "نوع الملف غير مدعوم",
-            description: "الرجاء اختيار صورة أو ملف فيديو.",
+            title: "Unsupported file type",
+            description: "Please choose an image or video file.",
         });
         return;
       }
@@ -97,7 +97,7 @@ const CreatePostCard = () => {
     <Card ref={cardRef} className={isEditing ? 'ring-2 ring-primary border-primary' : ''}>
       <CardContent className="p-4 space-y-4">
         {isEditing && (
-            <div className="text-sm font-semibold text-primary">تعديل المنشور...</div>
+            <div className="text-sm font-semibold text-primary">Editing post...</div>
         )}
         <div className="flex items-start gap-4">
           <Avatar>
@@ -105,7 +105,7 @@ const CreatePostCard = () => {
             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
-            placeholder={isEditing ? 'تعديل منشورك...' : "بماذا تفكر يا صديقي؟"}
+            placeholder={isEditing ? 'Editing your post...' : "What's on your mind, my friend?"}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0"
@@ -136,11 +136,11 @@ const CreatePostCard = () => {
           </Button>
           <div className="flex gap-2">
             {isEditing && (
-                 <Button variant="outline" onClick={cancelEditPost}>إلغاء</Button>
+                 <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
             )}
             <Button onClick={handlePost} disabled={!content.trim() && !media}>
-                <Send className="ml-2" />
-                {isEditing ? 'تحديث' : 'نشر'}
+                <Send className="mr-2" />
+                {isEditing ? 'Update' : 'Post'}
             </Button>
           </div>
         </div>

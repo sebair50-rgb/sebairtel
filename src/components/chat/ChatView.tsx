@@ -73,27 +73,27 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   const handleReplyMessage = (message: Message) => {
     // For now, we'll just log this. A full reply UI would be more complex.
     console.log("Replying to:", message);
-    toast({ description: "سيتم تفعيل ميزة الرد قريبًا."});
+    toast({ description: "The reply feature will be activated soon."});
   }
 
   const handleMenuAction = (action: 'clear' | 'block') => {
       if(action === 'clear') {
           setShowConfirmation({
               show: true,
-              title: 'مسح المحادثة',
-              message: 'هل أنت متأكد أنك تريد مسح جميع الرسائل في هذه المحادثة؟ لا يمكن التراجع عن هذا الإجراء.',
+              title: 'Clear Conversation',
+              message: 'Are you sure you want to clear all messages in this conversation? This action cannot be undone.',
               onConfirm: () => {
-                  toast({title: "سيتم تفعيل هذه الميزة قريباً"});
+                  toast({title: "This feature will be activated soon"});
               },
           });
       } else if(action === 'block') {
            setShowConfirmation({
               show: true,
-              title: 'حظر المستخدم',
-              message: `هل أنت متأكد أنك تريد حظر ${chat.name}؟ لن تتمكن من إرسال أو استقبال رسائل منه.`,
+              title: 'Block User',
+              message: `Are you sure you want to block ${chat.name}? You will not be able to send or receive messages from them.`,
               onConfirm: () => {
                   setIsBlocked(true);
-                  toast({title: `تم حظر ${chat.name}`});
+                  toast({title: `${chat.name} has been blocked`});
               },
           });
       }
@@ -109,7 +109,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
       />
       {isBlocked ? (
         <div className="text-center p-4 bg-background/80 text-sm text-muted-foreground">
-            لقد قمت بحظر هذا المستخدم.
+            You have blocked this user.
         </div>
       ) : (
         <>
@@ -132,12 +132,12 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setShowConfirmation(null)}>إلغاء</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setShowConfirmation(null)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={() => {
                     showConfirmation.onConfirm();
                     setShowConfirmation(null);
                 }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  تأكيد
+                  Confirm
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

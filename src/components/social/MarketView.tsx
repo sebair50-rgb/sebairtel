@@ -4,7 +4,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Building2, ArrowLeft } from 'lucide-react';
+import { Briefcase, Building2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const MarketView = () => {
@@ -13,31 +13,31 @@ const MarketView = () => {
     const sections = [
         {
             icon: Briefcase,
-            title: "الوظائف والخدمات",
-            description: "ابحث عن فرص عمل أو أعلن عن وظائف شاغرة وخدمات لجمهور واسع.",
-            actionText: "عرض الوظائف"
+            title: "Jobs & Services",
+            description: "Find job opportunities or advertise your services to a wide audience.",
+            actionText: "View Jobs"
         },
         {
             icon: Building2,
-            title: "الشركات والمؤسسات",
-            description: "استكشف دليل الشركات والمؤسسات المحلية وتواصل معها مباشرة.",
-            actionText: "تصفح الشركات"
+            title: "Companies & Institutions",
+            description: "Explore a directory of local companies and institutions and connect with them directly.",
+            actionText: "Browse Companies"
         }
     ];
 
     const handleActionClick = (title: string) => {
         toast({
-            title: `قريبا: ${title}`,
-            description: "نحن نعمل بجد لإطلاق هذا القسم. ترقبوا التحديثات!",
+            title: `Coming Soon: ${title}`,
+            description: "We're working hard to launch this section. Stay tuned for updates!",
         });
     };
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
             <div className="text-center">
-                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">مركز الأعمال التجارية</h1>
+                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">Business Center</h1>
                 <p className="mt-4 text-xl text-muted-foreground">
-                    المكان الأمثل للبحث عن عمل، الإعلان عن خدمات، واستكشاف الشركات في مجتمعك.
+                    The perfect place to find jobs, advertise services, and explore companies in your community.
                 </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -57,7 +57,7 @@ const MarketView = () => {
                             onClick={() => handleActionClick(section.title)}
                         >
                             {section.actionText}
-                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Card>
                 ))}

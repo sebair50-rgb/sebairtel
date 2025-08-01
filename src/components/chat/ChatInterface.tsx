@@ -54,8 +54,8 @@ const ChatInterface = () => {
         ) : (
           <div className="hidden md:flex flex-col items-center justify-center h-full text-center text-muted-foreground bg-slate-100">
             <MessageSquare size={64} className="mb-4" />
-            <h2 className="text-2xl font-bold">حدد محادثة</h2>
-            <p>اختر محادثة من القائمة لبدء الدردشة.</p>
+            <h2 className="text-2xl font-bold">Select a Conversation</h2>
+            <p>Choose a conversation from the list to start chatting.</p>
           </div>
         )}
       </div>
