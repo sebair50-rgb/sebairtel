@@ -22,6 +22,7 @@ export default {
     './src/components/social/SocialFeed.tsx',
     './src/components/social/StoreView.tsx',
     './src/components/social/NewsView.tsx',
+    './src/components/social/PastStreamCard.tsx',
     './src/components/ui/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/users/**/*.{js,ts,jsx,tsx,mdx}',
   ],

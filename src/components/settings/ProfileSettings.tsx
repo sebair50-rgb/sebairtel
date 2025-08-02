@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, FileText, UploadCloud, Image as ImageIcon, Sparkles, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -18,6 +18,17 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import type { User, WorkExperience, Education, UserLink } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useRouter } from 'next/navigation';
+
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
@@ -34,19 +45,15 @@ const DetailSection = ({ title, children, icon: Icon }: { title: string, childre
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
     const { toast } = useToast();
+    const router = useRouter();
     const avatarFileInputRef = useRef<HTMLInputElement>(null);
     
-    // This state holds the data that the component was initialized with.
     const [initialState, setInitialState] = useState<Partial<User>>({});
-
-    // This state holds the current, mutable data of the form.
     const [formState, setFormState] = useState<Partial<User>>({});
     
-    // States for file inputs
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-    // States for temporary inputs for list items
     const [newLink, setNewLink] = useState({ title: '', url: '' });
     const [newWork, setNewWork] = useState({ title: '', company: '' });
     const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
@@ -76,18 +83,13 @@ const ProfileSettings = () => {
     }, [currentUser]);
     
     const hasChanges = useMemo(() => {
-        // Compare the live form state to the initial state
         const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
-        
-        // Check if there's text in any of the temporary input fields
+        const filesChanged = !!avatarFile;
         const newInputsHaveText = newLink.title.trim() !== '' || newLink.url.trim() !== '' ||
                                  newWork.title.trim() !== '' || newWork.company.trim() !== '' ||
                                  newEdu.school.trim() !== '' || newEdu.degree.trim() !== '';
 
-        // Check if new files have been staged for upload
-        const filesChanged = !!avatarFile;
-
-        return mainFormChanged || newInputsHaveText || filesChanged;
+        return mainFormChanged || filesChanged || newInputsHaveText;
     }, [formState, initialState, avatarFile, newLink, newWork, newEdu]);
 
 
@@ -107,8 +109,6 @@ const ProfileSettings = () => {
         }
     };
     
-
-    // Generic function to add an item to a list in the form state
     const addToList = <T extends UserLink | WorkExperience | Education>(
         field: 'links' | 'workExperience' | 'education', 
         newItemState: T,
@@ -119,13 +119,12 @@ const ProfileSettings = () => {
         if (validation()) {
             const currentList = (formState[field] as T[] | undefined) || [];
             handleFieldChange(field, [...currentList, newItemState]);
-            setNewItemState({ title: '', company: '', school: '', degree: '', url: '' }); // Reset generic state
+            setNewItemState({ title: '', company: '', school: '', degree: '', url: '' });
         } else {
             toast(errorToast);
         }
     };
 
-    // Generic function to remove an item from a list
     const removeFromList = (field: 'links' | 'workExperience' | 'education', index: number) => {
         const currentList = (formState[field] as any[]) || [];
         handleFieldChange(field, currentList.filter((_, i) => i !== index));
@@ -136,7 +135,6 @@ const ProfileSettings = () => {
         
         let finalFormState = { ...formState };
 
-        // Before saving, check if there are any un-added items in the temp fields and add them
         if (newLink.title.trim() && newLink.url.trim()) {
             finalFormState.links = [...(finalFormState.links || []), newLink];
             setNewLink({ title: '', url: '' });
@@ -150,7 +148,6 @@ const ProfileSettings = () => {
             setNewEdu({ school: '', degree: '' });
         }
 
-        // Now, construct the payload of only what changed
         let updatePayload: Partial<User> = {};
         (Object.keys(finalFormState) as Array<keyof typeof finalFormState>).forEach(key => {
             if (JSON.stringify(finalFormState[key]) !== JSON.stringify(initialState[key])) {
@@ -170,13 +167,10 @@ const ProfileSettings = () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
                 toast({ title: "Success!", description: "Your profile has been updated." });
-                // No need to reset form here, useEffect on `currentUser` will refresh it.
-                setAvatarFile(null); // Clear staged file after successful upload
+                setAvatarFile(null);
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
-                const description = error.code === 'storage/retry-limit-exceeded' 
-                    ? "Storage permission error. Please check rules."
-                    : (error.message.includes('bytes') ? "An image or file size is too large." : "Failed to update profile.");
+                const description = error.message || "An unexpected error occurred.";
                 toast({ variant: "destructive", title: "An error occurred", description });
             }
         });
@@ -202,13 +196,52 @@ const ProfileSettings = () => {
                 
                 <div className="flex items-center gap-6">
                     <div className="relative">
-                        <Avatar className="w-24 h-24 text-4xl">
+                         <Avatar className="w-24 h-24 text-4xl">
                             <AvatarImage src={avatarPreview || undefined} alt={formState.name} />
                             <AvatarFallback>{formState.name?.charAt(0) || '?'}</AvatarFallback>
                         </Avatar>
-                        <Button size="icon" className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card" onClick={() => avatarFileInputRef.current?.click()}>
-                            <Camera className="w-4 h-4"/><span className="sr-only">Change Picture</span>
-                        </Button>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                 <Button size="icon" className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card">
+                                    <Camera className="w-4 h-4"/><span className="sr-only">Change Picture</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                    <DialogTitle>Update Profile Picture</DialogTitle>
+                                    <DialogDescription>
+                                        Choose how you would like to update your avatar.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                     <DialogClose asChild>
+                                        <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => avatarFileInputRef.current?.click()}>
+                                            <UploadCloud className="w-6 h-6 text-primary" />
+                                            <div>
+                                                <p className="font-semibold text-left">Upload from Device</p>
+                                                <p className="text-xs text-muted-foreground text-left">Select an image from your computer or phone</p>
+                                            </div>
+                                        </Button>
+                                    </DialogClose>
+                                     <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => toast({description: "This feature will be available soon."})}>
+                                        <ImageIcon className="w-6 h-6 text-primary" />
+                                        <div>
+                                                <p className="font-semibold text-left">Choose from Photos</p>
+                                                <p className="text-xs text-muted-foreground text-left">Use an image you have already uploaded</p>
+                                            </div>
+                                    </Button>
+                                    <DialogClose asChild>
+                                        <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => router.push('/avatar-generator')}>
+                                            <Sparkles className="w-6 h-6 text-primary" />
+                                            <div>
+                                                    <p className="font-semibold text-left">Create with AI</p>
+                                                    <p className="text-xs text-muted-foreground text-left">Generate a unique avatar using AI</p>
+                                            </div>
+                                        </Button>
+                                    </DialogClose>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                      <div>
                         <h2 className="text-2xl font-bold">{formState.name}</h2>

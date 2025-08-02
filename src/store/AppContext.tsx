@@ -47,7 +47,7 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<User>, files?: { avatar?: File }) => Promise<void>;
+  updateUserProfile: (data: Partial<User>, files?: { avatar?: File | string }) => Promise<void>;
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -854,7 +854,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setSmartReplies([]);
     }, []);
 
-    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
+    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File | string }) => {
         if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
     
         const updateData: { [key: string]: any } = { ...data };
@@ -863,27 +863,36 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
         // Handle Avatar Upload
         if (files?.avatar) {
-            // Delete old avatar if it exists and is not the default placeholder
-            if (currentUser.avatar && !currentUser.avatar.includes('placehold.co')) {
+             if (currentUser.avatar && !currentUser.avatar.includes('placehold.co')) {
                 try {
                     const oldAvatarRef = ref(storage, currentUser.avatar);
                     await deleteObject(oldAvatarRef);
                 } catch (error: any) {
-                    // It's okay if the old file doesn't exist, we can ignore that error.
                     if (error.code !== 'storage/object-not-found') {
                         console.error("Error deleting old avatar:", error);
                     }
                 }
             }
-    
-            // Upload new avatar
-            const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${files.avatar.name}`);
-            const snapshot = await uploadBytes(avatarRef, files.avatar);
-            const newAvatarUrl = await getDownloadURL(snapshot.ref);
             
+            let newAvatarUrl: string;
+
+            if (typeof files.avatar === 'string') {
+                // It's a base64 data URI from the AI generator
+                const response = await fetch(files.avatar);
+                const blob = await response.blob();
+                const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/ai-generated-${Date.now()}.png`);
+                const snapshot = await uploadBytes(avatarRef, blob);
+                newAvatarUrl = await getDownloadURL(snapshot.ref);
+
+            } else {
+                // It's a File object from user upload
+                const avatarFile = files.avatar;
+                const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${avatarFile.name}`);
+                const snapshot = await uploadBytes(avatarRef, avatarFile);
+                newAvatarUrl = await getDownloadURL(snapshot.ref);
+            }
+
             updateData.avatar = newAvatarUrl;
-            
-            // Also update the photoURL in Firebase Auth user profile
             await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
         }
     
@@ -892,7 +901,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await updateProfile(auth.currentUser, { displayName: data.name });
         }
     
-        // Only update Firestore if there are changes to save
         if (Object.keys(updateData).length > 0) {
             await updateDoc(userDocRef, updateData);
         }
