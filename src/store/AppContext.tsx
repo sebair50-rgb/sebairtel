@@ -855,7 +855,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File, cv?: File }) => {
-        if (!auth.currentUser) throw new Error("Not authenticated");
+        if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
 
         const updateData: { [key: string]: any } = { ...data };
         const storage = getStorage();
@@ -868,31 +868,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (files?.cv) {
-            // If there's an old CV, delete it first.
-            if (currentUser?.cvFileName) {
+            if (currentUser.cvFileName) {
                 const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
                 try {
                     await deleteObject(oldCvRef);
                 } catch (error: any) {
                     if (error.code !== 'storage/object-not-found') {
-                        console.error("Could not delete old CV, but continuing with upload:", error);
+                        console.warn("Could not delete old CV, but continuing with upload:", error);
                     }
                 }
             }
-            // Upload the new CV.
             const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
             const snapshot = await uploadBytes(cvRef, files.cv);
             updateData.cvUrl = await getDownloadURL(snapshot.ref);
             updateData.cvFileName = files.cv.name;
         } else if (data.cvUrl === '' && data.cvFileName === '') {
-            // Handle explicit CV removal
-            if (currentUser?.cvFileName) {
+            if (currentUser.cvFileName) {
                 const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
                 try {
                     await deleteObject(oldCvRef);
                 } catch (error: any) {
                     if (error.code !== 'storage/object-not-found') {
-                         console.error("Could not delete old CV during removal:", error);
+                         console.warn("Could not delete old CV during removal:", error);
                     }
                 }
             }

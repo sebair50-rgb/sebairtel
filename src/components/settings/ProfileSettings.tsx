@@ -136,7 +136,7 @@ const ProfileSettings = () => {
         newItem: T,
         resetNewItem: () => void,
         validation: () => boolean,
-        errorToast: { title: string, description: string }
+        errorToast: { title: string, description: string, variant?: 'destructive' }
     ) => {
         if (validation()) {
             const currentList = (formState[field] as T[] | undefined) || [];
@@ -262,9 +262,9 @@ const ProfileSettings = () => {
                                 <div className="flex items-center gap-2 mt-2">
                                      <Button variant="outline" className="flex-1" onClick={() => cvFileInputRef.current?.click()}>
                                         <FileUp className="mr-2 h-4 w-4" />
-                                        {cvFile ? cvFile.name : (formState.cvFileName ? "Replace CV" : "Upload CV")}
+                                        {cvFile ? cvFile.name : (formState.cvUrl ? "Replace CV" : "Upload CV")}
                                     </Button>
-                                    {formState.cvUrl && !cvFile && (
+                                    {(formState.cvUrl || cvFile) && (
                                         <Button variant="ghost" size="icon" onClick={handleRemoveCv}><XCircle className="text-destructive" /></Button>
                                     )}
                                 </div>

@@ -2,20 +2,23 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access for all files, as avatars and CVs need to be viewable.
-    match /{allPaths=**} {
+    // Allow public read access to avatars and CVs for display purposes.
+    // In a production app, you might want to restrict this further.
+    match /avatars/{userId}/{allPaths=**} {
+      allow read;
+    }
+     match /cvs/{userId}/{allPaths=**} {
       allow read;
     }
 
-    // Allow authenticated users to write/delete files only in their own designated folders.
-    // This rule covers avatar uploads.
-    match /avatars/{userId}/{allPaths=**} {
+    // Allow authenticated users to write to their own avatar folder
+    match /avatars/{userId}/{fileName} {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // This rule covers CV uploads.
-    match /cvs/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
+    
+    // Allow authenticated users to write/delete from their own cvs folder
+    match /cvs/{userId}/{fileName} {
+       allow write, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
