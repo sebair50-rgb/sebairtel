@@ -105,7 +105,7 @@ const AvatarGeneratorPage = () => {
                          <Sparkles className="mr-2 h-5 w-5" />
                          إنشاء بالذكاء الاصطناعي
                     </Button>
-                    <Button size="lg" variant="outline" className="w-full" onClick={handleFeatureSoon}>
+                    <Button size="lg" variant="outline" className="w-full" onClick={() => router.push('/avatar-editor')}>
                          <Pencil className="mr-2 h-5 w-5" />
                          إنشاء يدوي
                     </Button>
@@ -200,4 +200,3 @@ const AvatarGeneratorPage = () => {
 };
 
 export default AvatarGeneratorPage;
-
