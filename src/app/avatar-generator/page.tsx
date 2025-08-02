@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ArrowLeft, Wand2, Check, Camera, Sparkles, Pencil } from 'lucide-react';
+import { Loader2, ArrowLeft, Wand2, Check, Camera, Sparkles, Pencil, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateAvatar } from '@/ai/flows/avatar-flow';
 import { useAppContext } from '@/store/AppContext';
