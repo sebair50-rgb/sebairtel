@@ -32,8 +32,6 @@ export interface User {
   isOnline?: boolean;
   lastSeen?: Timestamp;
   settings?: any; // To store user-specific settings
-  cvUrl?: string;
-  cvFileName?: string;
   links?: UserLink[];
   workExperience?: WorkExperience[];
   education?: Education[];

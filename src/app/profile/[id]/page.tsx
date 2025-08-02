@@ -110,16 +110,6 @@ const UserProfilePage = () => {
         }
     };
 
-    const handleDownloadCv = () => {
-        if (!profileUser?.cvUrl) return;
-        const a = document.createElement('a');
-        a.href = profileUser.cvUrl;
-        a.download = profileUser.cvFileName || 'cv.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    };
-
     if (isLoading) {
         return <ProfileSkeleton />;
     }
@@ -186,98 +176,6 @@ const UserProfilePage = () => {
                                 مراسلة
                             </Button>
                             
-                             <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" className="flex-1 max-w-xs">
-                                        <FileText size={20} className="mr-2" />
-                                        CV
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
-                                    <DialogHeader>
-                                        <DialogTitle className="text-2xl">Curriculum Vitae</DialogTitle>
-                                        <DialogDescription>
-                                           Professional summary for {profileUser.name}.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <ScrollArea className="flex-1 -mx-6">
-                                    <div className="px-6 space-y-6 py-4">
-                                        <div className="flex flex-col sm:flex-row items-start gap-6">
-                                            <Avatar className="w-24 h-24 text-4xl flex-shrink-0">
-                                                <AvatarImage src={profileUser.avatar} />
-                                                <AvatarFallback>{profileUser.name?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <h2 className="text-3xl font-bold">{profileUser.name}</h2>
-                                                        <div className="flex items-center gap-4 mt-2 text-muted-foreground flex-wrap">
-                                                            {profileUser.email && <div className="flex items-center gap-1"><Mail size={14} /> {profileUser.email}</div>}
-                                                            {profileUser.phone && <div className="flex items-center gap-1"><Phone size={14} /> {profileUser.phone}</div>}
-                                                        </div>
-                                                    </div>
-                                                    {profileUser.cvUrl && (
-                                                        <Button onClick={handleDownloadCv}>
-                                                            <Download size={16} className="mr-2" />
-                                                            Download CV
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <Separator />
-
-                                        <div>
-                                            <h3 className="text-xl font-semibold mb-2">Summary</h3>
-                                            <p className="text-muted-foreground">{profileUser.bio || "No summary provided."}</p>
-                                        </div>
-                                        
-                                        <Separator />
-
-                                        <div>
-                                            <h3 className="text-xl font-semibold mb-4">Work Experience</h3>
-                                            <div className="space-y-4 text-muted-foreground italic">
-                                                <div className="flex gap-4">
-                                                    <Briefcase className="mt-1 flex-shrink-0" />
-                                                    <div>
-                                                        <p>No work experience added yet.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <Separator />
-
-                                        <div>
-                                            <h3 className="text-xl font-semibold mb-4">Education</h3>
-                                             <div className="flex gap-4 text-muted-foreground italic">
-                                                <GraduationCap className="mt-1 flex-shrink-0" />
-                                                <p>No education details added yet.</p>
-                                            </div>
-                                        </div>
-
-                                        {(profileUser.links && profileUser.links.length > 0) && (
-                                            <>
-                                                <Separator />
-                                                <div>
-                                                    <h3 className="text-xl font-semibold mb-4">Links</h3>
-                                                    <div className="space-y-2">
-                                                        {profileUser.links.map((link, index) => (
-                                                            <a href={link.url} key={index} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-500 hover:underline">
-                                                                <LinkIcon size={16} />
-                                                                <span>{link.title}</span>
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                    </ScrollArea>
-                                </DialogContent>
-                            </Dialog>
-
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="secondary" size="icon">

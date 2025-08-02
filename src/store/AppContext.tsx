@@ -47,7 +47,7 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<User>, files?: { avatar?: File, cv?: File }) => Promise<void>;
+  updateUserProfile: (data: Partial<User>, files?: { avatar?: File }) => Promise<void>;
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
@@ -854,7 +854,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setSmartReplies([]);
     }, []);
 
-    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File, cv?: File }) => {
+    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
         if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
 
         const updateData: { [key: string]: any } = { ...data };
@@ -865,34 +865,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const snapshot = await uploadBytes(avatarRef, files.avatar);
             updateData.avatar = await getDownloadURL(snapshot.ref);
             await updateProfile(auth.currentUser, { photoURL: updateData.avatar });
-        }
-
-        if (files?.cv) {
-            if (currentUser.cvFileName) {
-                const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
-                try {
-                    await deleteObject(oldCvRef);
-                } catch (error: any) {
-                    if (error.code !== 'storage/object-not-found') {
-                        console.warn("Could not delete old CV, but continuing with upload:", error);
-                    }
-                }
-            }
-            const cvRef = ref(storage, `cvs/${auth.currentUser.uid}/${files.cv.name}`);
-            const snapshot = await uploadBytes(cvRef, files.cv);
-            updateData.cvUrl = await getDownloadURL(snapshot.ref);
-            updateData.cvFileName = files.cv.name;
-        } else if (data.cvUrl === '' && data.cvFileName === '') {
-            if (currentUser.cvFileName) {
-                const oldCvRef = ref(storage, `cvs/${auth.currentUser.uid}/${currentUser.cvFileName}`);
-                try {
-                    await deleteObject(oldCvRef);
-                } catch (error: any) {
-                    if (error.code !== 'storage/object-not-found') {
-                         console.warn("Could not delete old CV during removal:", error);
-                    }
-                }
-            }
         }
         
         if (data.name && data.name !== auth.currentUser.displayName) {

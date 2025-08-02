@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, FileUp, Link as LinkIcon, PlusCircle, Trash2, XCircle } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -35,7 +35,6 @@ const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
     const { toast } = useToast();
     const avatarFileInputRef = useRef<HTMLInputElement>(null);
-    const cvFileInputRef = useRef<HTMLInputElement>(null);
     
     // This state holds the data that the component was initialized with.
     const [initialState, setInitialState] = useState<Partial<User>>({});
@@ -46,7 +45,6 @@ const ProfileSettings = () => {
     // States for file inputs
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-    const [cvFile, setCvFile] = useState<File | null>(null);
 
     // State for temporary inputs for list items
     const [newLink, setNewLink] = useState({ title: '', url: '' });
@@ -68,15 +66,12 @@ const ProfileSettings = () => {
                 links: currentUser.links || [],
                 workExperience: currentUser.workExperience || [],
                 education: currentUser.education || [],
-                cvUrl: currentUser.cvUrl || '',
-                cvFileName: currentUser.cvFileName || '',
                 avatar: currentUser.avatar || '',
             };
             setInitialState(initialData);
             setFormState(initialData);
             setAvatarPreview(currentUser.avatar || null);
             setAvatarFile(null);
-            setCvFile(null);
         }
     }, [currentUser]);
     
@@ -90,10 +85,10 @@ const ProfileSettings = () => {
                                  newEdu.school.trim() !== '' || newEdu.degree.trim() !== '';
 
         // Check if new files have been staged for upload
-        const filesChanged = !!avatarFile || !!cvFile;
+        const filesChanged = !!avatarFile;
 
         return mainFormChanged || newInputsHaveText || filesChanged;
-    }, [formState, initialState, avatarFile, cvFile, newLink, newWork, newEdu]);
+    }, [formState, initialState, avatarFile, newLink, newWork, newEdu]);
 
 
     const handleFieldChange = (field: keyof User, value: any) => {
@@ -112,23 +107,6 @@ const ProfileSettings = () => {
         }
     };
     
-    const handleCvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 5 * 1048576) { // 5MB limit
-                toast({ variant: "destructive", title: "File size is too large", description: "Please choose a file smaller than 5MB." });
-                return;
-            }
-            setCvFile(file);
-        }
-    };
-    
-    const handleRemoveCv = () => {
-        setCvFile(null);
-        handleFieldChange('cvUrl', '');
-        handleFieldChange('cvFileName', '');
-        if(cvFileInputRef.current) cvFileInputRef.current.value = "";
-    };
 
     // Generic function to add an item to a list in the form state
     const addToList = <T extends UserLink | WorkExperience | Education>(
@@ -180,15 +158,8 @@ const ProfileSettings = () => {
             }
         });
         
-        const filesToUpload: { avatar?: File, cv?: File } = {};
+        const filesToUpload: { avatar?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
-        if (cvFile) filesToUpload.cv = cvFile;
-
-        // If CV is being removed, we need to explicitly set the fields to empty strings
-        if (initialState.cvUrl && !finalFormState.cvUrl) {
-            updatePayload.cvUrl = '';
-            updatePayload.cvFileName = '';
-        }
 
         if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
              toast({ description: "No changes to save." });
@@ -226,7 +197,6 @@ const ProfileSettings = () => {
             </CardHeader>
             <CardContent className="space-y-6">
                 <input type="file" ref={avatarFileInputRef} onChange={handleAvatarSelect} className="hidden" accept="image/*" />
-                <input type="file" ref={cvFileInputRef} onChange={handleCvFileSelect} className="hidden" accept=".pdf,.doc,.docx" />
                 
                 <div className="flex items-center gap-6">
                     <div className="relative">
@@ -255,26 +225,8 @@ const ProfileSettings = () => {
                 <Separator />
                 
                 <div className="space-y-6">
-                    <DetailSection title="CV & Portfolio" icon={Briefcase}>
+                    <DetailSection title="Portfolio" icon={Briefcase}>
                         <div className="space-y-4">
-                            <div>
-                                <Label>Curriculum Vitae (CV)</Label>
-                                <div className="flex items-center gap-2 mt-2">
-                                     <Button variant="outline" className="flex-1" onClick={() => cvFileInputRef.current?.click()}>
-                                        <FileUp className="mr-2 h-4 w-4" />
-                                        {cvFile ? cvFile.name : (formState.cvUrl ? "Replace CV" : "Upload CV")}
-                                    </Button>
-                                    {(formState.cvUrl || cvFile) && (
-                                        <Button variant="ghost" size="icon" onClick={handleRemoveCv}><XCircle className="text-destructive" /></Button>
-                                    )}
-                                </div>
-                                {formState.cvUrl && !cvFile && (
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                        Current file: <a href={formState.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{formState.cvFileName}</a>
-                                    </p>
-                                )}
-                            </div>
-                            
                             <div className="space-y-2">
                                 <Label>External Links (Portfolio, LinkedIn, etc.)</Label>
                                 {formState.links?.map((link, index) => (
