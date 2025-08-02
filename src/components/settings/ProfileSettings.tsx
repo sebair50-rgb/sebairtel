@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import type { User, WorkExperience, Education, UserLink } from '@/lib/types';
-import { Timestamp } from 'firebase/firestore';
 
 const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="space-y-4">
@@ -38,27 +37,18 @@ const ProfileSettings = () => {
     const avatarFileInputRef = useRef<HTMLInputElement>(null);
     const cvFileInputRef = useRef<HTMLInputElement>(null);
     
+    // This state holds the data that the component was initialized with.
     const [initialState, setInitialState] = useState<Partial<User>>({});
-    const [formState, setFormState] = useState<Partial<User>>({
-        name: '',
-        phone: '',
-        bio: '',
-        city: '',
-        from: '',
-        relationshipStatus: '',
-        links: [],
-        workExperience: [],
-        education: [],
-        cvUrl: '',
-        cvFileName: '',
-        avatar: '',
-    });
+
+    // This state holds the current, mutable data of the form.
+    const [formState, setFormState] = useState<Partial<User>>({});
     
+    // States for file inputs
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [cvFile, setCvFile] = useState<File | null>(null);
 
-    // State for temporary inputs
+    // State for temporary inputs for list items
     const [newLink, setNewLink] = useState({ title: '', url: '' });
     const [newWork, setNewWork] = useState({ title: '', company: '' });
     const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
@@ -85,29 +75,25 @@ const ProfileSettings = () => {
             setInitialState(initialData);
             setFormState(initialData);
             setAvatarPreview(currentUser.avatar || null);
-
-            // Reset file states on user change
             setAvatarFile(null);
             setCvFile(null);
         }
     }, [currentUser]);
     
     const hasChanges = useMemo(() => {
-        if (!currentUser) return false;
-
-        // Compare the final state with the initial state
+        // Compare the live form state to the initial state
         const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
         
-        // Check if there are new, un-added entries in the temp input fields
+        // Check if there's text in any of the temporary input fields
         const newInputsHaveText = newLink.title.trim() !== '' || newLink.url.trim() !== '' ||
                                  newWork.title.trim() !== '' || newWork.company.trim() !== '' ||
                                  newEdu.school.trim() !== '' || newEdu.degree.trim() !== '';
 
-        // Check for new file uploads
+        // Check if new files have been staged for upload
         const filesChanged = !!avatarFile || !!cvFile;
 
         return mainFormChanged || newInputsHaveText || filesChanged;
-    }, [formState, initialState, avatarFile, cvFile, currentUser, newLink, newWork, newEdu]);
+    }, [formState, initialState, avatarFile, cvFile, newLink, newWork, newEdu]);
 
 
     const handleFieldChange = (field: keyof User, value: any) => {
@@ -134,77 +120,45 @@ const ProfileSettings = () => {
                 return;
             }
             setCvFile(file);
-            handleFieldChange('cvFileName', file.name);
         }
     };
     
     const handleRemoveCv = () => {
         setCvFile(null);
+        handleFieldChange('cvUrl', '');
         handleFieldChange('cvFileName', '');
-        handleFieldChange('cvUrl', ''); // Also clear the URL from the form state
         if(cvFileInputRef.current) cvFileInputRef.current.value = "";
     };
 
-    const handleAddLink = () => {
-        if (newLink.title.trim() && newLink.url.trim()) {
-            const links = formState.links ? [...formState.links] : [];
-            handleFieldChange('links', [...links, { title: newLink.title, url: newLink.url }]);
-            setNewLink({ title: '', url: '' });
+    // Generic function to add an item to a list in the form state
+    const addToList = <T extends UserLink | WorkExperience | Education>(
+        field: 'links' | 'workExperience' | 'education', 
+        newItem: T,
+        resetNewItem: () => void,
+        validation: () => boolean,
+        errorToast: { title: string, description: string }
+    ) => {
+        if (validation()) {
+            const currentList = (formState[field] as T[] | undefined) || [];
+            handleFieldChange(field, [...currentList, newItem]);
+            resetNewItem();
         } else {
-            toast({ variant: 'destructive', title: "Invalid Link", description: 'Please provide both a title and a URL.' });
+            toast(errorToast);
         }
     };
 
-    const handleRemoveLink = (index: number) => {
-        const { links = [] } = formState;
-        handleFieldChange('links', links.filter((_, i) => i !== index));
+    // Generic function to remove an item from a list
+    const removeFromList = (field: 'links' | 'workExperience' | 'education', index: number) => {
+        const currentList = (formState[field] as any[]) || [];
+        handleFieldChange(field, currentList.filter((_, i) => i !== index));
     };
-    
-    const handleAddWork = () => {
-        if (newWork.title.trim() && newWork.company.trim()) {
-            const workExperience = formState.workExperience ? [...formState.workExperience] : [];
-            handleFieldChange('workExperience', [...workExperience, { title: newWork.title, company: newWork.company }]);
-            setNewWork({ title: '', company: '' });
-        } else {
-            toast({ variant: 'destructive', title: "Invalid Work Entry", description: 'Please provide both a title and a company.' });
-        }
-    };
-
-    const handleRemoveWork = (index: number) => {
-        const { workExperience = [] } = formState;
-        handleFieldChange('workExperience', workExperience.filter((_, i) => i !== index));
-    };
-
-    const handleAddEdu = () => {
-        if (newEdu.school.trim() && newEdu.degree.trim()) {
-            const education = formState.education ? [...formState.education] : [];
-            handleFieldChange('education', [...education, { school: newEdu.school, degree: newEdu.degree }]);
-            setNewEdu({ school: '', degree: '' });
-        } else {
-            toast({ variant: 'destructive', title: "Invalid Education Entry", description: 'Please provide both a school and a degree.' });
-        }
-    };
-
-    const handleRemoveEdu = (index: number) => {
-        const { education = [] } = formState;
-        handleFieldChange('education', education.filter((_, i) => i !== index));
-    };
-
 
     const handleSaveChanges = () => {
         if (!currentUser) return;
         
-        if (!formState.name?.trim()) {
-             toast({ variant: "destructive", title: "Name is required", description: "The name field cannot be empty." });
-            return;
-        }
-        
-        // Start with a clean payload
-        let updatePayload: Partial<User> = {};
-        
-        // Add any pending items from temp inputs into the formState before comparison
         let finalFormState = { ...formState };
 
+        // Before saving, check if there are any un-added items in the temp fields and add them
         if (newLink.title.trim() && newLink.url.trim()) {
             finalFormState.links = [...(finalFormState.links || []), newLink];
             setNewLink({ title: '', url: '' });
@@ -218,24 +172,22 @@ const ProfileSettings = () => {
             setNewEdu({ school: '', degree: '' });
         }
 
-        // Compare the final state with the initial state
+        // Now, construct the payload of only what changed
+        let updatePayload: Partial<User> = {};
         (Object.keys(finalFormState) as Array<keyof typeof finalFormState>).forEach(key => {
-            const formValue = finalFormState[key];
-            const initialValue = initialState[key];
-
-            if (JSON.stringify(formValue) !== JSON.stringify(initialValue)) {
-                (updatePayload as any)[key] = formValue;
+            if (JSON.stringify(finalFormState[key]) !== JSON.stringify(initialState[key])) {
+                (updatePayload as any)[key] = finalFormState[key];
             }
         });
         
         const filesToUpload: { avatar?: File, cv?: File } = {};
         if (avatarFile) filesToUpload.avatar = avatarFile;
         if (cvFile) filesToUpload.cv = cvFile;
-        
-        // This is a special case to handle CV removal when cvFileName becomes empty
-        if (initialState.cvFileName && !formState.cvFileName) {
-            updatePayload.cvFileName = '';
+
+        // If CV is being removed, we need to explicitly set the fields to empty strings
+        if (initialState.cvUrl && !finalFormState.cvUrl) {
             updatePayload.cvUrl = '';
+            updatePayload.cvFileName = '';
         }
 
         if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
@@ -246,11 +198,12 @@ const ProfileSettings = () => {
         startTransition(async () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
-                toast({ title: "Success!", description: "Your profile information has been updated successfully." });
-                // No need to reset files here, useEffect on currentUser will handle it
+                toast({ title: "Success!", description: "Your profile has been updated." });
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
-                const description = error.message.includes('bytes') ? "An image or file size is too large." : "Failed to update profile. Please try again.";
+                const description = error.code === 'storage/retry-limit-exceeded' 
+                    ? "Storage permission error. Please check rules."
+                    : (error.message.includes('bytes') ? "An image or file size is too large." : "Failed to update profile.");
                 toast({ variant: "destructive", title: "An error occurred", description });
             }
         });
@@ -304,24 +257,22 @@ const ProfileSettings = () => {
                 <div className="space-y-6">
                     <DetailSection title="CV & Portfolio" icon={Briefcase}>
                         <div className="space-y-4">
-                             <div className="flex items-center gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Button variant="outline" className="w-full justify-start p-3" onClick={() => cvFileInputRef.current?.click()}>
+                            <div>
+                                <Label>Curriculum Vitae (CV)</Label>
+                                <div className="flex items-center gap-2 mt-2">
+                                     <Button variant="outline" className="flex-1" onClick={() => cvFileInputRef.current?.click()}>
                                         <FileUp className="mr-2 h-4 w-4" />
-                                        {cvFile ? `Selected: ${cvFile.name}` : (initialState.cvUrl ? "Replace CV" : "Upload CV")}
+                                        {cvFile ? cvFile.name : (formState.cvFileName ? "Replace CV" : "Upload CV")}
                                     </Button>
-
-                                    {initialState.cvUrl && !cvFile && (
-                                        <div className="flex items-center justify-between p-2 text-sm border rounded-md">
-                                             <a href={initialState.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium truncate">
-                                                {initialState.cvFileName || "View Saved CV"}
-                                            </a>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRemoveCv}>
-                                                <XCircle className="w-5 h-5 text-destructive" />
-                                            </Button>
-                                        </div>
+                                    {formState.cvUrl && !cvFile && (
+                                        <Button variant="ghost" size="icon" onClick={handleRemoveCv}><XCircle className="text-destructive" /></Button>
                                     )}
                                 </div>
+                                {formState.cvUrl && !cvFile && (
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Current file: <a href={formState.cvUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{formState.cvFileName}</a>
+                                    </p>
+                                )}
                             </div>
                             
                             <div className="space-y-2">
@@ -330,13 +281,13 @@ const ProfileSettings = () => {
                                     <div key={index} className="flex items-center gap-2">
                                         <Input value={link.title} disabled className="bg-muted" />
                                         <Input value={link.url} disabled className="bg-muted"/>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveLink(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                        <Button variant="ghost" size="icon" onClick={() => removeFromList('links', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                     </div>
                                 ))}
                                 <div className="flex items-center gap-2">
                                     <Input value={newLink.title} onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))} placeholder="Link Title (e.g., Portfolio)" />
                                     <Input value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} placeholder="https://..." />
-                                    <Button variant="ghost" size="icon" onClick={handleAddLink}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => addToList('links', newLink, () => setNewLink({title:'', url:''}), () => !!(newLink.title && newLink.url), {variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                                 </div>
                             </div>
                         </div>
@@ -347,13 +298,13 @@ const ProfileSettings = () => {
                             {formState.workExperience?.map((work, index) => (
                                 <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
                                     <p className="flex-1 text-sm"><span className="font-semibold">{work.title}</span> at {work.company}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveWork(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('workExperience', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
                                 <Input value={newWork.title} onChange={(e) => setNewWork(prev => ({ ...prev, title: e.target.value }))} placeholder="Job Title" />
                                 <Input value={newWork.company} onChange={(e) => setNewWork(prev => ({ ...prev, company: e.target.value }))} placeholder="Company Name" />
-                                <Button variant="ghost" size="icon" onClick={handleAddWork}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => addToList('workExperience', newWork, () => setNewWork({title:'', company:''}), () => !!(newWork.title && newWork.company), {variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
                     </DetailSection>
@@ -363,13 +314,13 @@ const ProfileSettings = () => {
                             {formState.education?.map((edu, index) => (
                                 <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
                                     <p className="flex-1 text-sm"><span className="font-semibold">{edu.degree}</span> from {edu.school}</p>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveEdu(index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('education', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
                             <div className="flex items-center gap-2">
                                 <Input value={newEdu.school} onChange={(e) => setNewEdu(prev => ({ ...prev, school: e.target.value }))} placeholder="School/University" />
                                 <Input value={newEdu.degree} onChange={(e) => setNewEdu(prev => ({ ...prev, degree: e.target.value }))} placeholder="Degree/Certificate" />
-                                <Button variant="ghost" size="icon" onClick={handleAddEdu}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => addToList('education', newEdu, () => setNewEdu({school:'', degree:''}), () => !!(newEdu.school && newEdu.degree), {variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
                     </DetailSection>
@@ -392,5 +343,3 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
-
-    
