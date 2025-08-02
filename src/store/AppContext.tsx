@@ -856,23 +856,44 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
         if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
-
+    
         const updateData: { [key: string]: any } = { ...data };
         const storage = getStorage();
-
+        const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    
+        // Handle Avatar Upload
         if (files?.avatar) {
+            // Delete old avatar if it exists and is not the default placeholder
+            if (currentUser.avatar && !currentUser.avatar.includes('placehold.co')) {
+                try {
+                    const oldAvatarRef = ref(storage, currentUser.avatar);
+                    await deleteObject(oldAvatarRef);
+                } catch (error: any) {
+                    // It's okay if the old file doesn't exist, we can ignore that error.
+                    if (error.code !== 'storage/object-not-found') {
+                        console.error("Error deleting old avatar:", error);
+                    }
+                }
+            }
+    
+            // Upload new avatar
             const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${files.avatar.name}`);
             const snapshot = await uploadBytes(avatarRef, files.avatar);
-            updateData.avatar = await getDownloadURL(snapshot.ref);
-            await updateProfile(auth.currentUser, { photoURL: updateData.avatar });
+            const newAvatarUrl = await getDownloadURL(snapshot.ref);
+            
+            updateData.avatar = newAvatarUrl;
+            
+            // Also update the photoURL in Firebase Auth user profile
+            await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
         }
-        
+    
+        // Update user display name in Auth if it has changed
         if (data.name && data.name !== auth.currentUser.displayName) {
             await updateProfile(auth.currentUser, { displayName: data.name });
         }
-        
+    
+        // Only update Firestore if there are changes to save
         if (Object.keys(updateData).length > 0) {
-            const userDocRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userDocRef, updateData);
         }
     };

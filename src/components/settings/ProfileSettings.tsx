@@ -46,7 +46,7 @@ const ProfileSettings = () => {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-    // State for temporary inputs for list items
+    // States for temporary inputs for list items
     const [newLink, setNewLink] = useState({ title: '', url: '' });
     const [newWork, setNewWork] = useState({ title: '', company: '' });
     const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
@@ -55,10 +55,10 @@ const ProfileSettings = () => {
 
      useEffect(() => {
         if (currentUser) {
-            const initialData = {
+            const initialData: Partial<User> = {
                 name: currentUser.name || '',
                 phone: currentUser.phone || '',
-                dob: currentUser.dob,
+                dob: currentUser.dob || undefined,
                 bio: currentUser.bio || '',
                 city: currentUser.city || '',
                 from: currentUser.from || '',
@@ -111,15 +111,15 @@ const ProfileSettings = () => {
     // Generic function to add an item to a list in the form state
     const addToList = <T extends UserLink | WorkExperience | Education>(
         field: 'links' | 'workExperience' | 'education', 
-        newItem: T,
-        resetNewItem: () => void,
+        newItemState: T,
+        setNewItemState: React.Dispatch<React.SetStateAction<any>>,
         validation: () => boolean,
         errorToast: { title: string, description: string, variant?: 'destructive' }
     ) => {
         if (validation()) {
             const currentList = (formState[field] as T[] | undefined) || [];
-            handleFieldChange(field, [...currentList, newItem]);
-            resetNewItem();
+            handleFieldChange(field, [...currentList, newItemState]);
+            setNewItemState({ title: '', company: '', school: '', degree: '', url: '' }); // Reset generic state
         } else {
             toast(errorToast);
         }
@@ -170,6 +170,8 @@ const ProfileSettings = () => {
             try {
                 await updateUserProfile(updatePayload, filesToUpload);
                 toast({ title: "Success!", description: "Your profile has been updated." });
+                // No need to reset form here, useEffect on `currentUser` will refresh it.
+                setAvatarFile(null); // Clear staged file after successful upload
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
                 const description = error.code === 'storage/retry-limit-exceeded' 
@@ -239,7 +241,7 @@ const ProfileSettings = () => {
                                 <div className="flex items-center gap-2">
                                     <Input value={newLink.title} onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))} placeholder="Link Title (e.g., Portfolio)" />
                                     <Input value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} placeholder="https://..." />
-                                    <Button variant="ghost" size="icon" onClick={() => addToList('links', newLink, () => setNewLink({title:'', url:''}), () => !!(newLink.title && newLink.url), {variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => addToList('links', newLink, setNewLink, () => !!(newLink.title && newLink.url), {variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                                 </div>
                             </div>
                         </div>
@@ -256,7 +258,7 @@ const ProfileSettings = () => {
                             <div className="flex items-center gap-2">
                                 <Input value={newWork.title} onChange={(e) => setNewWork(prev => ({ ...prev, title: e.target.value }))} placeholder="Job Title" />
                                 <Input value={newWork.company} onChange={(e) => setNewWork(prev => ({ ...prev, company: e.target.value }))} placeholder="Company Name" />
-                                <Button variant="ghost" size="icon" onClick={() => addToList('workExperience', newWork, () => setNewWork({title:'', company:''}), () => !!(newWork.title && newWork.company), {variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => addToList('workExperience', newWork, setNewWork, () => !!(newWork.title && newWork.company), {variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
                     </DetailSection>
@@ -272,7 +274,7 @@ const ProfileSettings = () => {
                             <div className="flex items-center gap-2">
                                 <Input value={newEdu.school} onChange={(e) => setNewEdu(prev => ({ ...prev, school: e.target.value }))} placeholder="School/University" />
                                 <Input value={newEdu.degree} onChange={(e) => setNewEdu(prev => ({ ...prev, degree: e.target.value }))} placeholder="Degree/Certificate" />
-                                <Button variant="ghost" size="icon" onClick={() => addToList('education', newEdu, () => setNewEdu({school:'', degree:''}), () => !!(newEdu.school && newEdu.degree), {variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                <Button variant="ghost" size="icon" onClick={() => addToList('education', newEdu, setNewEdu, () => !!(newEdu.school && newEdu.degree), {variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
                             </div>
                         </div>
                     </DetailSection>
