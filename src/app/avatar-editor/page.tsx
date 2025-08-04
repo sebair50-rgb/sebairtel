@@ -69,7 +69,7 @@ const ManualAvatarEditorPage = () => {
                 </Button>
             </div>
             
-            <div className="flex-1 flex items-center justify-center">
+            <div className="relative flex-1 flex items-center justify-center">
                  <Image src="https://placehold.co/600x800/E2E8F0/334155.png?text=Avatar" data-ai-hint="avatar 3d model" layout="fill" objectFit="contain" alt="Avatar Preview" className="p-16" />
             </div>
 
@@ -122,4 +122,3 @@ const ManualAvatarEditorPage = () => {
 };
 
 export default ManualAvatarEditorPage;
-
