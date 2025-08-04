@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
@@ -16,15 +16,15 @@ type Gender = 'all' | 'male' | 'female';
 
 const bodyTypes = {
     male: [
-        { id: 'm1', name: 'Male Body 1', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=M1' },
-        { id: 'm2', name: 'Male Body 2', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=M2' },
-        { id: 'm3', name: 'Male Body 3', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=M3' },
-        { id: 'm4', name: 'Male Body 4', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=M4' },
+        { id: 'm1', name: 'Male Body 1', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Male+1' },
+        { id: 'm2', name: 'Male Body 2', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Male+2' },
+        { id: 'm3', name: 'Male Body 3', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Male+3' },
+        { id: 'm4', name: 'Male Body 4', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Male+4' },
     ],
     female: [
-        { id: 'f1', name: 'Female Body 1', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=F1' },
-        { id: 'f2', name: 'Female Body 2', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=F2' },
-        { id: 'f3', name: 'Female Body 3', image: 'https://placehold.co/200x300/e0e0e0/555555.png?text=F3' },
+        { id: 'f1', name: 'Female Body 1', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Female+1' },
+        { id: 'f2', name: 'Female Body 2', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Female+2' },
+        { id: 'f3', name: 'Female Body 3', image: 'https://placehold.co/600x800/e0e0e0/555555.png?text=Female+3' },
     ]
 }
 
@@ -38,6 +38,11 @@ const ManualAvatarEditorPage = () => {
         bodyType: 'm2',
     });
     const [activeGender, setActiveGender] = useState<Gender>('male');
+
+    const selectedBody = useMemo(() => {
+        return getAllBodyTypes().find(body => body.id === selections.bodyType);
+    }, [selections.bodyType]);
+
 
     const handleNext = () => {
        console.log("Proceeding to next step...");
@@ -74,7 +79,17 @@ const ManualAvatarEditorPage = () => {
             </div>
             
             <div className="relative flex-1 flex items-center justify-center p-4">
-                 <Image src="https://placehold.co/600x800/e2e8f0/334155.png?text=Avatar" data-ai-hint="avatar 3d model" layout="fill" objectFit="contain" alt="Avatar Preview" className="p-8" />
+                 {selectedBody && (
+                    <Image 
+                        key={selectedBody.id}
+                        src={selectedBody.image} 
+                        data-ai-hint="avatar 3d model" 
+                        layout="fill" 
+                        objectFit="contain" 
+                        alt="Avatar Preview" 
+                        className="p-8" 
+                    />
+                 )}
             </div>
 
             <Card className="absolute bottom-0 left-0 right-0 rounded-t-2xl shadow-2xl">
