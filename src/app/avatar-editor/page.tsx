@@ -15,15 +15,15 @@ type Gender = 'all' | 'male' | 'female';
 
 const bodyTypes = {
     male: [
-        { id: 'm1', name: 'Male Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_body_1.png?alt=media&token=e1136154-7278-45e0-99f5-1313495f2694' },
-        { id: 'm2', name: 'Male Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_body_2.png?alt=media&token=a6e7c186-075f-4318-9719-e5ab374187e0' },
-        { id: 'm3', name: 'Male Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_body_3.png?alt=media&token=c27c6534-714c-4a37-9759-543534a66a3d' },
-        { id: 'm4', name: 'Male Body 4', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_body_4.png?alt=media&token=262144b6-7c91-443b-8219-35c9a7215b2e' },
+        { id: 'm1', name: 'Male Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_1_new.png?alt=media&token=10675276-805c-433b-8287-3475c742c3d5' },
+        { id: 'm2', name: 'Male Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_2_new.png?alt=media&token=96a15250-9854-47f2-89c0-68a8537b03fd' },
+        { id: 'm3', name: 'Male Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_3_new.png?alt=media&token=5952f195-23c2-4014-933e-e092178d8a76' },
+        { id: 'm4', name: 'Male Body 4', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_4_new.png?alt=media&token=262144b6-7c91-443b-8219-35c9a7215b2e' },
     ],
     female: [
-        { id: 'f1', name: 'Female Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_body_1.png?alt=media&token=963b65a5-4f3b-4c54-8140-5a9163011400' },
-        { id: 'f2', name: 'Female Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_body_2.png?alt=media&token=5b018599-f21e-42c2-b51c-8a21f1d11128' },
-        { id: 'f3', name: 'Female Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_body_3.png?alt=media&token=0937a077-e6eb-4679-b883-7c852651475c' },
+        { id: 'f1', name: 'Female Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_1_new.png?alt=media&token=62a39626-4449-43c7-8c83-0498b94f061e' },
+        { id: 'f2', name: 'Female Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_2_new.png?alt=media&token=21734639-5095-46e3-a442-0f0653d955b2' },
+        { id: 'f3', name: 'Female Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_3_new.png?alt=media&token=c1c4e723-66f8-45a1-a486-77874a7eb845' },
     ]
 }
 
@@ -33,7 +33,7 @@ const getAllBodyTypes = () => [...bodyTypes.male, ...bodyTypes.female];
 const ManualAvatarEditorPage = () => {
     const router = useRouter();
     const [selections, setSelections] = useState<{ [key: string]: string | null }>({
-        bodyType: 'm2',
+        bodyType: 'm1',
     });
     const [activeGender, setActiveGender] = useState<Gender>('male');
 
