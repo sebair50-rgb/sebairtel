@@ -33,7 +33,6 @@ const getAllBodyTypes = () => [...bodyTypes.male, ...bodyTypes.female];
 
 const ManualAvatarEditorPage = () => {
     const router = useRouter();
-    const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [selections, setSelections] = useState<{ [key: string]: string | null }>({
         bodyType: 'm2',
     });
