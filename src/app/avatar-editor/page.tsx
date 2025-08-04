@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -15,15 +16,14 @@ type Gender = 'all' | 'male' | 'female';
 
 const bodyTypes = {
     male: [
-        { id: 'm1', name: 'Male Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_1_new.png?alt=media&token=10675276-805c-433b-8287-3475c742c3d5' },
-        { id: 'm2', name: 'Male Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_2_new.png?alt=media&token=96a15250-9854-47f2-89c0-68a8537b03fd' },
-        { id: 'm3', name: 'Male Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_3_new.png?alt=media&token=5952f195-23c2-4014-933e-e092178d8a76' },
-        { id: 'm4', name: 'Male Body 4', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Fmale_4_new.png?alt=media&token=262144b6-7c91-443b-8219-35c9a7215b2e' },
+        { id: 'm1', name: 'Male Style 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_male_1.png?alt=media&token=8e923180-8b18-4a6f-a89c-5e60d3c535f2' },
+        { id: 'm2', name: 'Male Style 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_male_2.png?alt=media&token=1d01f9b3-4f9e-4e6f-8241-551065b2d294' },
+        { id: 'm3', name: 'Male Style 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_male_3.png?alt=media&token=54d8b671-558e-45e0-8441-2b364d0d0498' },
     ],
     female: [
-        { id: 'f1', name: 'Female Body 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_1_new.png?alt=media&token=62a39626-4449-43c7-8c83-0498b94f061e' },
-        { id: 'f2', name: 'Female Body 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_2_new.png?alt=media&token=21734639-5095-46e3-a442-0f0653d955b2' },
-        { id: 'f3', name: 'Female Body 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2Ffemale_3_new.png?alt=media&token=c1c4e723-66f8-45a1-a486-77874a7eb845' },
+        { id: 'f1', name: 'Female Style 1', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_female_1.png?alt=media&token=4f039327-4c40-4e36-b457-3a15291d9271' },
+        { id: 'f2', name: 'Female Style 2', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_female_2.png?alt=media&token=e9f4a56a-12e2-45a7-96a2-23c2a63273e3' },
+        { id: 'f3', name: 'Female Style 3', image: 'https://firebasestorage.googleapis.com/v0/b/sebairtel.appspot.com/o/avatars_assets%2F2d_female_3.png?alt=media&token=9a15a773-4577-448f-9a74-4b5f8888034b' },
     ]
 }
 
@@ -81,7 +81,7 @@ const ManualAvatarEditorPage = () => {
                     <Image 
                         key={selectedBody.id}
                         src={selectedBody.image} 
-                        data-ai-hint="avatar 3d model" 
+                        data-ai-hint="avatar cartoon" 
                         layout="fill" 
                         objectFit="contain" 
                         alt="Avatar Preview" 
