@@ -1,0 +1,123 @@
+
+"use client";
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Bot, Download, FileCode } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { generateApp } from '@/ai/flows/app-creator-flow';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CodeBlock from '../chat/CodeBlock';
+
+const AppCreator = () => {
+    const [prompt, setPrompt] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!prompt.trim()) {
+            toast({
+                variant: 'destructive',
+                title: 'Description is empty',
+                description: 'Please describe the application you want to create.',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        setGeneratedFiles(null);
+
+        try {
+            const response = await generateApp({ prompt });
+            setGeneratedFiles(response.files);
+        } catch (error) {
+            console.error('App generation failed:', error);
+            toast({
+                variant: 'destructive',
+                title: 'An error occurred',
+                description: 'Failed to generate the application. Please try again.',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDownloadAll = () => {
+        if (!generatedFiles) return;
+        // In a real app, you'd use a library like JSZip to create a zip file.
+        // For this demo, we'll just log the action.
+        toast({
+            title: 'Download All (Coming Soon)',
+            description: 'This feature would package all generated files into a zip archive for download.',
+        });
+        console.log('Downloading all files:', generatedFiles);
+      };
+
+    return (
+        <Card className="shadow-lg animate-fade-in border-0">
+            <CardHeader>
+                <CardTitle>AI Application Creator</CardTitle>
+                <CardDescription>
+                    Describe a simple web application, and the AI will generate the initial boilerplate code using Next.js and Tailwind CSS.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Textarea
+                    placeholder="Example: A single page app that shows a list of user cards with names and email addresses. It should have a clean, modern design."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="min-h-[120px] bg-muted"
+                />
+                <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Building App...
+                        </>
+                    ) : (
+                        <>
+                            <Bot className="mr-2 h-4 w-4" />
+                            Generate Application
+                        </>
+                    )}
+                </Button>
+            </CardContent>
+
+            {generatedFiles && (
+                <CardContent className="space-y-4">
+                    <CardHeader className="p-0">
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Your Application Files</CardTitle>
+                            <Button variant="outline" onClick={handleDownloadAll} disabled>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download All (.zip)
+                            </Button>
+                        </div>
+                        <CardDescription>Review the generated files below.</CardDescription>
+                    </CardHeader>
+                    
+                    <Tabs defaultValue={Object.keys(generatedFiles)[0]} className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            {Object.keys(generatedFiles).map(filename => (
+                                <TabsTrigger key={filename} value={filename}>
+                                    <FileCode className="mr-2 h-4 w-4" />
+                                    {filename.split('/').pop()}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                        {Object.entries(generatedFiles).map(([filename, content]) => (
+                            <TabsContent key={filename} value={filename} className="mt-4">
+                                <CodeBlock code={`\`\`\`${filename.split('.').pop()}\n${content}\n\`\`\``} />
+                            </TabsContent>
+                        ))}
+                    </Tabs>
+                </CardContent>
+            )}
+        </Card>
+    );
+};
+
+export default AppCreator;
