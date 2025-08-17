@@ -55,6 +55,10 @@ const generateVideoFlow = ai.defineFlow(
           }
         
           if (operation.error) {
+            // Check for specific billing error within the operation result
+            if (operation.error.message && operation.error.message.includes('billing enabled')) {
+                 throw new Error("Video generation with Veo requires a Google Cloud project with billing enabled. Please enable billing in your GCP project to use this feature.");
+            }
             throw new Error('Failed to generate video: ' + operation.error.message);
           }
         
@@ -84,6 +88,7 @@ const generateVideoFlow = ai.defineFlow(
     
         return { videoUrl: `data:${contentType};base64,${base64Video}` };
     } catch (error: any) {
+        // Catch errors from the initial ai.generate() call
         if (error.message && error.message.includes('billing enabled')) {
             throw new Error("Video generation with Veo requires a Google Cloud project with billing enabled. Please enable billing in your GCP project to use this feature.");
         }
