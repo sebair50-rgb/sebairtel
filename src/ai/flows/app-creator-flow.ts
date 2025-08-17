@@ -24,6 +24,7 @@ const AppCreatorResponseSchema = z.object({
     'src/app/layout.tsx': z.string().describe("The content of the layout.tsx file."),
     'src/app/page.tsx': z.string().describe("The content of the page.tsx file."),
   }).describe("A JSON object where keys are filenames and values are the string content of those files."),
+  previewImageUrl: z.string().describe("A data URI of a generated preview image for the application's home page. Expected format: 'data:image/png;base64,<encoded_data>'."),
 });
 export type AppCreatorResponse = z.infer<typeof AppCreatorResponseSchema>;
 
@@ -37,7 +38,7 @@ const generateAppPrompt = ai.definePrompt({
     input: { schema: AppCreatorRequestSchema },
     output: { schema: AppCreatorResponseSchema },
     prompt: `You are an expert Next.js developer. A user wants to create a new application based on a prompt.
-Your task is to generate the complete code for a new Next.js application using the App Router.
+Your task is to generate the complete code for a new Next.js application using the App Router, AND generate a preview image for it.
 
 The user's request is: {{{prompt}}}
 
@@ -65,6 +66,11 @@ Generate the following files with complete and valid code:
     - Use placeholder images from 'https://placehold.co' where needed (e.g., \`https://placehold.co/600x400\`).
     - Use 'lucide-react' for icons if any are needed.
     - The code should be complete, with all necessary imports.
+
+5.  **previewImageUrl**:
+    - Based on the UI you designed for page.tsx, generate a realistic preview image of the application.
+    - You MUST use the 'googleai/gemini-2.0-flash-preview-image-generation' model for this.
+    - The image should be a data URI string.
 
 Return the result as a single JSON object where the keys are the full file paths and the values are the complete, final content of each file as a string.
 Ensure all code is valid, well-formatted, and production-ready.

@@ -5,16 +5,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Bot, Download, FileCode } from 'lucide-react';
+import { Loader2, Bot, Download, FileCode, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateApp } from '@/ai/flows/app-creator-flow';
+import { generateApp, AppCreatorResponse } from '@/ai/flows/app-creator-flow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CodeBlock from '../chat/CodeBlock';
+import Image from 'next/image';
 
 const AppCreator = () => {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [generatedFiles, setGeneratedFiles] = useState<Record<string, string> | null>(null);
+    const [generatedData, setGeneratedData] = useState<AppCreatorResponse | null>(null);
     const { toast } = useToast();
 
     const handleSubmit = async () => {
@@ -28,11 +29,11 @@ const AppCreator = () => {
         }
 
         setIsLoading(true);
-        setGeneratedFiles(null);
+        setGeneratedData(null);
 
         try {
             const response = await generateApp({ prompt });
-            setGeneratedFiles(response.files);
+            setGeneratedData(response);
         } catch (error) {
             console.error('App generation failed:', error);
             toast({
@@ -46,15 +47,18 @@ const AppCreator = () => {
     };
 
     const handleDownloadAll = () => {
-        if (!generatedFiles) return;
+        if (!generatedData?.files) return;
         // In a real app, you'd use a library like JSZip to create a zip file.
         // For this demo, we'll just log the action.
         toast({
             title: 'Download All (Coming Soon)',
             description: 'This feature would package all generated files into a zip archive for download.',
         });
-        console.log('Downloading all files:', generatedFiles);
+        console.log('Downloading all files:', generatedData.files);
       };
+
+    const generatedFiles = generatedData?.files;
+    const previewImageUrl = generatedData?.previewImageUrl;
 
     return (
         <Card className="shadow-lg animate-fade-in border-0">
@@ -86,7 +90,7 @@ const AppCreator = () => {
                 </Button>
             </CardContent>
 
-            {generatedFiles && (
+            {generatedData && (
                 <CardContent className="space-y-4">
                     <CardHeader className="p-0">
                         <div className="flex justify-between items-center">
@@ -96,19 +100,36 @@ const AppCreator = () => {
                                 Download All (.zip)
                             </Button>
                         </div>
-                        <CardDescription>Review the generated files below.</CardDescription>
+                        <CardDescription>Review the generated files and preview below.</CardDescription>
                     </CardHeader>
                     
-                    <Tabs defaultValue={Object.keys(generatedFiles)[0]} className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                            {Object.keys(generatedFiles).map(filename => (
+                    <Tabs defaultValue="preview" className="w-full">
+                        <TabsList className="grid w-full grid-cols-5">
+                             <TabsTrigger value="preview">
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                Preview
+                            </TabsTrigger>
+                            {generatedFiles && Object.keys(generatedFiles).map(filename => (
                                 <TabsTrigger key={filename} value={filename}>
                                     <FileCode className="mr-2 h-4 w-4" />
                                     {filename.split('/').pop()}
                                 </TabsTrigger>
                             ))}
                         </TabsList>
-                        {Object.entries(generatedFiles).map(([filename, content]) => (
+
+                        <TabsContent value="preview" className="mt-4">
+                            {previewImageUrl ? (
+                                <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
+                                    <Image src={previewImageUrl} alt="Generated App Preview" layout="fill" objectFit="cover" />
+                                </div>
+                            ) : (
+                                <div className="text-center text-muted-foreground p-8">
+                                    <p>No preview available.</p>
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        {generatedFiles && Object.entries(generatedFiles).map(([filename, content]) => (
                             <TabsContent key={filename} value={filename} className="mt-4">
                                 <CodeBlock code={`\`\`\`${filename.split('.').pop()}\n${content}\n\`\`\``} />
                             </TabsContent>
