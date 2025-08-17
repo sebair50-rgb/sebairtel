@@ -125,7 +125,7 @@ const AgenticAppCreator = () => {
                         .replace(/<main[^>]*>/, '<div class="flex min-h-screen flex-col items-center justify-center p-24">')
                         .replace(/<\\/main>/, '</div>')
                         .replace(/className=/g, 'class=')
-                        .replace(/<Image[^>]*\\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
+                        .replace(/<Image[^>]*\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
                         .replace(/<[A-Z][^>]*\\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
                         .replace(/\\{/g, '')
                         .replace(/\\}/g, '')
