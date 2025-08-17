@@ -88,7 +88,7 @@ const generateVideoFlow = ai.defineFlow(
     
         return { videoUrl: `data:${contentType};base64,${base64Video}` };
     } catch (error: any) {
-        // Catch errors from the initial ai.generate() call
+        // Catch errors from the initial ai.generate() call or the polling loop
         if (error.message && error.message.includes('billing enabled')) {
             throw new Error("Video generation with Veo requires a Google Cloud project with billing enabled. Please enable billing in your GCP project to use this feature.");
         }
