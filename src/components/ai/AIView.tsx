@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Video, Mic, BookOpen, Brush, LayoutTemplate, Bot } from 'lucide-react';
 import CodeAnalyzer from './CodeAnalyzer';
@@ -12,11 +12,20 @@ import { useToast } from '@/hooks/use-toast';
 import TextToSpeech from './TextToSpeech';
 import VideoGenerator from './VideoGenerator';
 import AutomatedTutor from './AutomatedTutor';
-import { AnimatePresence, motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
 
-const AIToolCard = ({ icon, title, description, onSelect, isActive, comingSoon = false }: { icon: React.ElementType, title: string, description: string, onSelect: () => void, isActive: boolean, comingSoon?: boolean }) => {
+interface ToolConfig {
+    id: AITool;
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    component: React.ElementType;
+    comingSoon?: boolean;
+}
+
+const AIToolCard = ({ icon, title, description, onSelect, comingSoon = false }: { icon: React.ElementType, title: string, description: string, onSelect: () => void, comingSoon?: boolean }) => {
     const Icon = icon;
     const { toast } = useToast();
     
@@ -33,7 +42,7 @@ const AIToolCard = ({ icon, title, description, onSelect, isActive, comingSoon =
 
     return (
         <button onClick={handleSelect} className="w-full text-left" disabled={comingSoon}>
-            <Card className={`h-full hover:border-primary transition-all duration-300 ${isActive ? 'border-primary ring-2 ring-primary' : ''} ${comingSoon ? 'opacity-60 cursor-not-allowed' : ''}`}>
+            <Card className={`h-full hover:border-primary transition-all duration-300 ${comingSoon ? 'opacity-60 cursor-not-allowed' : ''}`}>
                 <CardHeader className="flex flex-row items-center gap-4">
                     <div className="p-3 bg-primary/10 rounded-lg">
                         <Icon className="w-6 h-6 text-primary" />
@@ -59,46 +68,29 @@ const ToolSection = ({ title, children }: { title: string, children: React.React
 
 
 const AIView = () => {
-    const [activeTool, setActiveTool] = useState<AITool>('image');
-    const toolRef = useRef<HTMLDivElement>(null);
+    const [selectedTool, setSelectedTool] = useState<ToolConfig | null>(null);
 
-    useEffect(() => {
-        if (toolRef.current) {
-            toolRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, [activeTool]);
-
-    const renderActiveTool = () => {
-        switch (activeTool) {
-            case 'code': return <CodeAnalyzer />;
-            case 'image': return <ImageGenerator />;
-            case 'sticker': return <StickerGenerator />;
-            case 'tts': return <TextToSpeech />;
-            case 'video': return <VideoGenerator />;
-            case 'tutor': return <AutomatedTutor />;
-            default: return <ImageGenerator />;
-        }
-    }
-
-    const tools = {
+    const tools: { [key: string]: ToolConfig[] } = {
         media: [
-            { id: 'image', icon: ImageIcon, title: 'Image Generator', description: 'Turn your ideas into unique images.' },
-            { id: 'sticker', icon: Sparkles, title: 'Sticker Maker', description: 'Create creative stickers for chats.' },
-            { id: 'video', icon: Video, title: 'Video Generator', description: 'Create short video clips from text.' },
-            { id: 'tts', icon: Mic, title: 'Text to Speech', description: 'Convert text into natural-sounding audio.' },
+            { id: 'image', icon: ImageIcon, title: 'Image Generator', description: 'Turn your ideas into unique images.', component: ImageGenerator },
+            { id: 'sticker', icon: Sparkles, title: 'Sticker Maker', description: 'Create creative stickers for chats.', component: StickerGenerator },
+            { id: 'video', icon: Video, title: 'Video Generator', description: 'Create short video clips from text.', component: VideoGenerator },
+            { id: 'tts', icon: Mic, title: 'Text to Speech', description: 'Convert text into natural-sounding audio.', component: TextToSpeech },
         ],
         dev: [
-            { id: 'code', icon: Code, title: 'Code Assistant', description: 'Explain, fix, and optimize code.' },
-            { id: 'app', icon: Bot, title: 'App Creator', description: 'Generate app boilerplate.', comingSoon: true },
-            { id: 'website', icon: LayoutTemplate, title: 'Website Builder', description: 'Build landing pages.', comingSoon: true },
+            { id: 'code', icon: Code, title: 'Code Assistant', description: 'Explain, fix, and optimize code.', component: CodeAnalyzer },
+            { id: 'app', icon: Bot, title: 'App Creator', description: 'Generate app boilerplate.', component: () => null, comingSoon: true },
+            { id: 'website', icon: LayoutTemplate, title: 'Website Builder', description: 'Build landing pages.', component: () => null, comingSoon: true },
         ],
         content: [
-            { id: 'tutor', icon: BookOpen, title: 'AI Tutor', description: 'Ask questions and learn new topics.' },
-            { id: 'design', icon: Brush, title: 'Design Ideas', description: 'Get UI/UX mockups and ideas.', comingSoon: true },
-            { id: 'editor', icon: Video, title: 'Video Editor', description: 'AI-powered video editing assistance.', comingSoon: true },
+            { id: 'tutor', icon: BookOpen, title: 'AI Tutor', description: 'Ask questions and learn new topics.', component: AutomatedTutor },
+            { id: 'design', icon: Brush, title: 'Design Ideas', description: 'Get UI/UX mockups and ideas.', component: () => null, comingSoon: true },
+            { id: 'editor', icon: Video, title: 'Video Editor', description: 'AI-powered video editing assistance.', component: () => null, comingSoon: true },
         ]
-    }
+    };
 
+    const allTools = Object.values(tools).flat();
+    const ActiveToolComponent = selectedTool?.component;
 
     return (
         <div className="w-full h-full flex flex-col">
@@ -108,62 +100,46 @@ const AIView = () => {
                     Use the power of AI for creation and analysis. Choose one of the tools below to get started.
                 </p>
                 <div className="max-w-6xl mx-auto space-y-10">
-                    <ToolSection title="Media Generation">
-                         {tools.media.map(tool => (
-                            <AIToolCard
-                                key={tool.id}
-                                icon={tool.icon}
-                                title={tool.title}
-                                description={tool.description}
-                                onSelect={() => setActiveTool(tool.id as AITool)}
-                                isActive={activeTool === tool.id}
-                                comingSoon={tool.comingSoon}
-                            />
-                        ))}
-                    </ToolSection>
+                    {Object.entries(tools).map(([categoryKey, categoryTools]) => (
+                        <ToolSection key={categoryKey} title={
+                            categoryKey === 'media' ? "Media Generation" :
+                            categoryKey === 'dev' ? "Development & Code" :
+                            "Content & Learning"
+                        }>
+                            {categoryTools.map(tool => (
+                                <AIToolCard
+                                    key={tool.id}
+                                    icon={tool.icon}
+                                    title={tool.title}
+                                    description={tool.description}
+                                    onSelect={() => setSelectedTool(tool)}
+                                    comingSoon={tool.comingSoon}
+                                />
+                            ))}
+                        </ToolSection>
+                    ))}
+                </div>
 
-                    <ToolSection title="Development & Code">
-                         {tools.dev.map(tool => (
-                            <AIToolCard
-                                key={tool.id}
-                                icon={tool.icon}
-                                title={tool.title}
-                                description={tool.description}
-                                onSelect={() => setActiveTool(tool.id as AITool)}
-                                isActive={activeTool === tool.id}
-                                comingSoon={tool.comingSoon}
-                            />
-                        ))}
-                    </ToolSection>
-                    
-                     <ToolSection title="Content & Learning">
-                         {tools.content.map(tool => (
-                            <AIToolCard
-                                key={tool.id}
-                                icon={tool.icon}
-                                title={tool.title}
-                                description={tool.description}
-                                onSelect={() => setActiveTool(tool.id as AITool)}
-                                isActive={activeTool === tool.id}
-                                comingSoon={tool.comingSoon}
-                            />
-                        ))}
-                    </ToolSection>
-                </div>
-                
-                <div ref={toolRef} className="max-w-4xl mx-auto mt-12 pt-4">
-                     <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTool}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {renderActiveTool()}
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
+                <Dialog open={!!selectedTool} onOpenChange={(isOpen) => !isOpen && setSelectedTool(null)}>
+                    <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+                         {selectedTool && (
+                            <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-2xl">
+                                    <selectedTool.icon className="w-7 h-7 text-primary"/>
+                                    {selectedTool.title}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    {selectedTool.description}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="overflow-y-auto flex-1 -mr-6 pr-6">
+                                {ActiveToolComponent && <ActiveToolComponent />}
+                            </div>
+                            </>
+                         )}
+                    </DialogContent>
+                </Dialog>
              </div>
         </div>
     );
