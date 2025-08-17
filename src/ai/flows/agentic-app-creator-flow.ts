@@ -10,6 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { FilesSchema, Files, AgenticRequestSchema, AgenticRequest } from './agentic-app-creator-schemas';
+import type {Part} from 'genkit';
 
 const model = 'googleai/gemini-1.5-flash';
 
@@ -58,23 +59,28 @@ export async function generateAgenticResponse(input: AgenticRequest) {
     system: systemPrompt,
     history,
     config: {
-        // Lower temperature for more predictable, instruction-following behavior
         temperature: 0.1, 
     }
   });
 
   const toolCalls = output.requests;
   let generatedFiles: Files | undefined = undefined;
+  
+  // Construct the new history array correctly.
+  const newHistory: Part[] = [...history, { role: 'model', content: output.text || '' }];
 
   if (toolCalls && toolCalls.length > 0) {
     const toolCall = toolCalls[0];
     if (toolCall.tool.name === 'appCreatorTool') {
-      generatedFiles = toolCall.tool.input;
+        generatedFiles = toolCall.tool.input;
+        // Add the tool call request and a placeholder response to the history
+        newHistory.push({ role: 'model', content: [{ toolRequest: toolCall }] });
+        newHistory.push({ role: 'tool', content: [{ toolResponse: { name: 'appCreatorTool', output: undefined } }] });
     }
   }
 
   return {
-    history: [...history, output],
+    history: newHistory,
     files: generatedFiles,
     error: output.finishReason !== 'stop' && output.finishReason !== 'toolCalls' ? `AI generation stopped unexpectedly: ${output.finishReason}` : undefined
   };
