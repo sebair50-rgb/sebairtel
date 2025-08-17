@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { converseWithAppCreator, AppCreatorConversationResponse, AppCreatorConversationRequest } from '@/ai/flows/agentic-app-creator-flow';
+import { converseWithAppCreator } from '@/ai/flows/agentic-app-creator-flow';
+import type { AppCreatorConversationRequest, AppCreatorConversationResponse } from '@/ai/schemas/agentic-app-creator-schemas';
 import { 
     Bot, Menu, Download, Share2, Trash2, CodeXml, Eye, Github, RefreshCw, Save, Split, ArrowUp, Loader2, Sparkles, Send
 } from 'lucide-react';
@@ -15,6 +16,8 @@ import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Textarea } from '../ui/textarea';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import { cn } from '@/lib/utils';
 
 type ViewMode = 'split' | 'preview' | 'code';
 type Message = {
@@ -152,7 +155,7 @@ const AgenticAppCreator = () => {
                 history: messages,
                 prompt: userMessage,
             };
-            const result = await converseWithAppCreator(request);
+            const result: AppCreatorConversationResponse = await converseWithAppCreator(request);
             
             setMessages(prev => [...prev, { role: 'model', content: result.response }]);
 
