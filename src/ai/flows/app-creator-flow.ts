@@ -18,7 +18,12 @@ const AppCreatorRequestSchema = z.object({
 export type AppCreatorRequest = z.infer<typeof AppCreatorRequestSchema>;
 
 const AppCreatorResponseSchema = z.object({
-  files: z.record(z.string()).describe("A JSON object where keys are filenames (e.g., 'package.json', 'src/app/page.tsx') and values are the string content of those files."),
+  files: z.object({
+    'package.json': z.string().describe("The content of the package.json file."),
+    'src/app/globals.css': z.string().describe("The content of the globals.css file."),
+    'src/app/layout.tsx': z.string().describe("The content of the layout.tsx file."),
+    'src/app/page.tsx': z.string().describe("The content of the page.tsx file."),
+  }).describe("A JSON object where keys are filenames and values are the string content of those files."),
 });
 export type AppCreatorResponse = z.infer<typeof AppCreatorResponseSchema>;
 
