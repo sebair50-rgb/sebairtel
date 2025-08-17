@@ -50,7 +50,7 @@ const agenticAppCreatorFlow = ai.defineFlow(
     outputSchema: AppCreatorConversationResponseSchema,
   },
   async ({ history, prompt }) => {
-    const model = googleAI.model('gemini-1.5-pro-preview');
+    const model = googleAI.model('gemini-1.5-pro-preview-0514');
 
     const systemPrompt = `You are an expert AI developer agent. Your task is to help the user build a complete, functional, and production-ready Next.js application based on their requests.
 
