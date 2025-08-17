@@ -13,7 +13,6 @@ import TextToSpeech from './TextToSpeech';
 import VideoGenerator from './VideoGenerator';
 import AutomatedTutor from './AutomatedTutor';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import AppCreator from './AppCreator';
 
 type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
 
@@ -80,7 +79,6 @@ const AIView = () => {
         ],
         dev: [
             { id: 'code', icon: Code, title: 'Code Assistant', description: 'Explain, fix, and optimize code.', component: CodeAnalyzer },
-            { id: 'app', icon: Bot, title: 'App Creator', description: 'Generate app boilerplate.', component: AppCreator, comingSoon: false },
             { id: 'website', icon: LayoutTemplate, title: 'Website Builder', description: 'Build landing pages.', component: () => null, comingSoon: true },
         ],
         content: [
