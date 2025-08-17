@@ -7,6 +7,7 @@ import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Video, Mic, BookOpen,
 import AppHeader from '../layout/AppHeader';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
 
@@ -35,19 +36,23 @@ const AIToolCard = ({ icon, title, description, onSelect, comingSoon = false }: 
     }
 
     return (
-        <button onClick={handleSelect} className="w-full text-left" disabled={comingSoon}>
-            <Card className={`h-full hover:border-primary transition-all duration-300 ${comingSoon ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                <CardHeader className="flex flex-row items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                        <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                        <CardTitle>{title}</CardTitle>
-                        <CardDescription>{description}</CardDescription>
-                    </div>
-                </CardHeader>
-            </Card>
-        </button>
+        <Card 
+            onClick={handleSelect} 
+            className={cn(
+                "h-full transition-all duration-300",
+                comingSoon ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
+            )}
+        >
+            <CardHeader className="flex flex-row items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                    <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </div>
+            </CardHeader>
+        </Card>
     )
 }
 
