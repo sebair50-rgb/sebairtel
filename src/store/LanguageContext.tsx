@@ -18,14 +18,14 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguageState] = useState<Language>('en'); // Default to 'en' for server render
+  const [language, setLanguageState] = useState<Language>('en'); 
   const [translations, setTranslations] = useState<Translations>({});
   const [direction, setDirection] = useState<Direction>('ltr');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // This effect runs only once on the client after initial hydration
     setIsMounted(true);
-    // On initial mount, load the last known language from localStorage or default to system.
     const storedLang = localStorage.getItem('app-language') as LanguageOption | null;
     setLanguage(storedLang || 'system');
   }, []);
@@ -51,13 +51,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         .then(module => setTranslations(module.default))
         .catch(error => {
             console.error(`Could not load ${effectiveLang}.json`, error);
-            // Fallback to English if translation file is missing
             import(`@/locales/en.json`).then(module => setTranslations(module.default));
         });
   }, []);
   
   useEffect(() => {
-    // This effect runs only on the client after `isMounted` becomes true.
     if (isMounted) {
       document.documentElement.lang = language;
       document.documentElement.dir = direction;
@@ -66,8 +64,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   const t = (key: string, options?: { [key: string]: string | number }): string => {
     if (!isMounted) {
-      // During SSR or before hydration, return an empty string or a non-committal placeholder
-      // to avoid mismatch.
       return ''; 
     }
     const keys = key.split('.');
@@ -80,7 +76,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     
     if (result === undefined) {
         console.warn(`Translation not found for key: ${key}`);
-        return key; // return key as fallback
+        return key; 
     }
 
     if (typeof result === 'string' && options) {
