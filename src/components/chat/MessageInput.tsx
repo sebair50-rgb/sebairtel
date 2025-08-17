@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Smile, Paperclip, Mic, Send, X, Square, Trash2 } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Square, Trash2, Code } from 'lucide-react';
 import { Card } from '../ui/card';
 import type { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -24,6 +24,7 @@ export interface MessageInputHandles {
 
 const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSendMessage, editingMessage, onCancelEdit }, ref) => {
     const [text, setText] = useState('');
+    const [isCodeMode, setIsCodeMode] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
@@ -76,10 +77,11 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
 
     const handleSend = useCallback(() => {
         if (text.trim()) {
-            onSendMessage(text, { type: 'text' });
+            onSendMessage(text, { type: isCodeMode ? 'code' : 'text' });
             setText('');
+            if (isCodeMode) setIsCodeMode(false);
         }
-    }, [onSendMessage, text]);
+    }, [onSendMessage, text, isCodeMode]);
     
     const startRecording = useCallback(async () => {
         if (recordedAudio) setRecordedAudio(null);
@@ -147,6 +149,15 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
     }, [handleSend]);
 
     const hasContent = text.trim().length > 0;
+    
+    const toggleCodeMode = () => {
+        setIsCodeMode(!isCodeMode);
+        if (!isCodeMode) {
+            // entering code mode
+            setText('');
+        }
+        textareaRef.current?.focus();
+    };
 
     return (
         <div className="p-2 md:p-4 bg-transparent border-t border-transparent mb-2">
@@ -193,15 +204,19 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
                         <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">
                             <Smile />
                         </Button>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full" onClick={toggleCodeMode}>
+                            <Code className={cn(isCodeMode && "text-primary")} />
+                        </Button>
                     </div>
                     <Textarea
                         ref={textareaRef}
-                        placeholder={isRecording ? "Recording..." : "Type a message..."}
+                        placeholder={isRecording ? "Recording..." : (isCodeMode ? "Paste your code here..." : "Type a message...")}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        className="flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2"
+                        className={cn("flex-1 bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base resize-none py-2", isCodeMode && "font-code text-sm")}
+                        dir={isCodeMode ? "ltr" : undefined}
                         disabled={isRecording}
                     />
                     {!hasContent && !isRecording && (
