@@ -12,8 +12,6 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/store/AppContext';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { enUS, ar } from 'date-fns/locale';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from '@/store/LanguageContext';
+import CodeBlock from '../chat/CodeBlock';
 
 const ThumbsUpIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
@@ -135,6 +134,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     );
   }
 
+  const isCodePost = post.mediaType === 'code' || (post.content.includes('```') && !post.mediaSrc);
+
   return (
     <>
     <Card className="overflow-hidden bg-card shadow-sm border rounded-lg">
@@ -189,15 +190,23 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </CardHeader>
 
       <CardContent className="p-0">
-        <p className="whitespace-pre-wrap px-4 pb-2">{post.content}</p>
-        {post.mediaSrc && (
-          <div className="bg-black flex items-center justify-center">
-             {post.mediaType === 'image' ? (
-                <Image src={post.mediaSrc} alt="Post media" width={600} height={600} className="w-full h-auto max-h-[70vh] object-contain" />
-             ) : (
-                <video src={post.mediaSrc} controls className="w-full h-auto max-h-[70vh]" />
-             )}
-          </div>
+        {isCodePost ? (
+            <div className="px-4 pb-2">
+                <CodeBlock code={post.content} />
+            </div>
+        ) : (
+            <>
+                <p className="whitespace-pre-wrap px-4 pb-2">{post.content}</p>
+                {post.mediaSrc && (
+                    <div className="bg-black flex items-center justify-center">
+                        {post.mediaType === 'image' ? (
+                            <Image src={post.mediaSrc} alt="Post media" width={600} height={600} className="w-full h-auto max-h-[70vh] object-contain" />
+                        ) : (
+                            <video src={post.mediaSrc} controls className="w-full h-auto max-h-[70vh]" />
+                        )}
+                    </div>
+                )}
+            </>
         )}
       </CardContent>
 

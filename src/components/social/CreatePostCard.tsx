@@ -6,15 +6,17 @@ import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Send, X } from 'lucide-react';
+import { Image as ImageIcon, Send, X, Code } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const CreatePostCard = () => {
   const { addPost, updatePost, currentUser, editingPost, cancelEditPost } = useAppContext();
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<{ type: 'image' | 'video'; src: string } | null>(null);
+  const [isCodeMode, setIsCodeMode] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -24,8 +26,10 @@ const CreatePostCard = () => {
   useEffect(() => {
     if (editingPost) {
         setContent(editingPost.content);
-        if (editingPost.mediaSrc && editingPost.mediaType) {
-            setMedia({ type: editingPost.mediaType, src: editingPost.mediaSrc });
+        const isCodePost = editingPost.mediaType === 'code' || (editingPost.content.includes('```') && !editingPost.mediaSrc);
+        setIsCodeMode(isCodePost);
+        if (!isCodePost && editingPost.mediaSrc && editingPost.mediaType) {
+            setMedia({ type: editingPost.mediaType as 'image' | 'video', src: editingPost.mediaSrc });
         } else {
             setMedia(null);
         }
@@ -36,29 +40,30 @@ const CreatePostCard = () => {
         // Reset form when not editing
         setContent('');
         setMedia(null);
+        setIsCodeMode(false);
     }
   }, [editingPost]);
 
 
   const handlePost = async () => {
-    if (!content.trim() && !media) return;
+    if (!content.trim()) return;
+
+    let postData: any = { content };
+    if (isCodeMode) {
+        postData.mediaType = 'code';
+    } else if (media) {
+        postData.mediaType = media.type;
+        postData.mediaSrc = media.src;
+    }
 
     if (isEditing && editingPost) {
-        await updatePost(editingPost.id, { 
-            content, 
-            mediaType: media?.type,
-            mediaSrc: media?.src 
-        });
+        await updatePost(editingPost.id, postData);
         toast({ description: "Post updated successfully." });
     } else {
-        await addPost({ 
-            content, 
-            mediaType: media?.type,
-            mediaSrc: media?.src 
-        });
+        await addPost(postData);
     }
     
-    cancelEditPost(); // Resets the form fields via useEffect
+    cancelEditPost();
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,10 +91,16 @@ const CreatePostCard = () => {
       reader.onload = (event) => {
         const fileDataUrl = event.target?.result as string;
         setMedia({ type: fileType, src: fileDataUrl });
+        setIsCodeMode(false);
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const toggleCodeMode = () => {
+      setIsCodeMode(!isCodeMode);
+      setMedia(null);
+  }
   
   if (!currentUser) return null;
 
@@ -105,10 +116,14 @@ const CreatePostCard = () => {
             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
-            placeholder={isEditing ? 'Editing your post...' : "What's on your mind, my friend?"}
+            placeholder={isCodeMode ? "Share your code snippet..." : "What's on your mind, my friend?"}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0"
+            className={cn(
+                "flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0",
+                isCodeMode && "font-code text-sm"
+            )}
+            dir={isCodeMode ? "ltr" : undefined}
           />
         </div>
         {media && (
@@ -124,21 +139,26 @@ const CreatePostCard = () => {
             </div>
         )}
         <div className="flex justify-between items-center ml-16">
-          <input
-            type="file"
-            accept="image/*,video/*"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}>
-            <ImageIcon className="text-primary" />
-          </Button>
+          <div className="flex items-center gap-1">
+             <input
+                type="file"
+                accept="image/*,video/*"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden"
+            />
+            <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isCodeMode}>
+                <ImageIcon className={cn("text-primary", isCodeMode && "text-muted-foreground")} />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={toggleCodeMode}>
+                <Code className={cn(isCodeMode && "text-primary")} />
+            </Button>
+          </div>
           <div className="flex gap-2">
             {isEditing && (
                  <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
             )}
-            <Button onClick={handlePost} disabled={!content.trim() && !media}>
+            <Button onClick={handlePost} disabled={!content.trim()}>
                 <Send className="mr-2" />
                 {isEditing ? 'Update' : 'Post'}
             </Button>

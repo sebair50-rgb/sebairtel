@@ -93,7 +93,7 @@ export interface Post {
   userId: string;
   avatar: string; // photoURL
   content: string;
-  mediaType?: 'image' | 'video';
+  mediaType?: 'image' | 'video' | 'code';
   mediaSrc?: string;
   time: string;
   timestamp: Timestamp;

@@ -49,7 +49,7 @@ interface AppContextType {
   currentUser: User | null;
   updateUserProfile: (data: Partial<User>, files?: { avatar?: File | string }) => Promise<void>;
   posts: Post[];
-  addPost: (post: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => Promise<void>;
+  addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaSrc?: string }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
@@ -444,7 +444,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addPost = async (postData: { content: string, mediaType?: 'image' | 'video', mediaSrc?: string }) => {
+  const addPost = async (postData: { content: string, mediaType?: 'image' | 'video' | 'code', mediaSrc?: string }) => {
     if (!currentUser) return;
     
     const dataToSave: any = {
@@ -455,9 +455,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       reactions: [],
       comments: [],
       timestamp: serverTimestamp(),
-      mediaType: postData.mediaType || null,
+      mediaType: postData.mediaType || 'text',
       mediaSrc: postData.mediaSrc || null,
     };
+    
+    if (dataToSave.mediaType === 'text' && dataToSave.content.includes('```')) {
+        dataToSave.mediaType = 'code';
+    }
+
 
     if (dataToSave.mediaSrc && dataToSave.mediaSrc.length > 1048487) {
         throw new Error("File size exceeds 1MB limit.");
@@ -481,6 +486,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         updateData.mediaType = data.mediaType;
       }
       
+      // Auto-detect code type on update as well
+      if (updateData.content && updateData.content.includes('```') && !updateData.mediaSrc) {
+        updateData.mediaType = 'code';
+      } else if (data.mediaType) {
+        updateData.mediaType = data.mediaType;
+      }
+
       await updateDoc(postRef, updateData);
   }
 
