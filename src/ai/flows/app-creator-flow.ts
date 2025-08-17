@@ -17,13 +17,15 @@ const AppCreatorRequestSchema = z.object({
 });
 export type AppCreatorRequest = z.infer<typeof AppCreatorRequestSchema>;
 
-const AppCreatorResponseSchema = z.object({
-  files: z.object({
+const AppFilesSchema = z.object({
     'package.json': z.string().describe("The content of the package.json file."),
     'src/app/globals.css': z.string().describe("The content of the globals.css file."),
     'src/app/layout.tsx': z.string().describe("The content of the layout.tsx file."),
     'src/app/page.tsx': z.string().describe("The content of the page.tsx file."),
-  }).describe("A JSON object where keys are filenames and values are the string content of those files."),
+});
+
+const AppCreatorResponseSchema = z.object({
+  files: AppFilesSchema.describe("A JSON object where keys are filenames and values are the string content of those files."),
   previewImageUrl: z.string().describe("A data URI of a generated preview image for the application's home page. Expected format: 'data:image/png;base64,<encoded_data>'."),
 });
 export type AppCreatorResponse = z.infer<typeof AppCreatorResponseSchema>;
@@ -32,13 +34,13 @@ export async function generateApp(input: AppCreatorRequest): Promise<AppCreatorR
   return generateAppFlow(input);
 }
 
-const generateAppPrompt = ai.definePrompt({
-    name: 'generateAppPrompt',
+const generateCodePrompt = ai.definePrompt({
+    name: 'generateCodePrompt',
     model: 'googleai/gemini-1.5-flash',
     input: { schema: AppCreatorRequestSchema },
-    output: { schema: AppCreatorResponseSchema },
+    output: { schema: z.object({ files: AppFilesSchema }) },
     prompt: `You are an expert Next.js developer. A user wants to create a new application based on a prompt.
-Your task is to generate the complete code for a new Next.js application using the App Router, AND generate a preview image for it.
+Your task is to generate the complete code for a new Next.js application using the App Router.
 
 The user's request is: {{{prompt}}}
 
@@ -67,17 +69,11 @@ Generate the following files with complete and valid code:
     - Use 'lucide-react' for icons if any are needed.
     - The code should be complete, with all necessary imports.
 
-5.  **previewImageUrl**:
-    - Based on the UI you designed for page.tsx, generate a realistic preview image of the application.
-    - You MUST use the 'googleai/gemini-2.0-flash-preview-image-generation' model for this.
-    - The image should be a data URI string.
-
 Return the result as a single JSON object where the keys are the full file paths and the values are the complete, final content of each file as a string.
 Ensure all code is valid, well-formatted, and production-ready.
 Do not include any files other than the four specified above.
 `,
 });
-
 
 const generateAppFlow = ai.defineFlow(
   {
@@ -86,10 +82,31 @@ const generateAppFlow = ai.defineFlow(
     outputSchema: AppCreatorResponseSchema,
   },
   async (input) => {
-    const { output } = await generateAppPrompt(input);
-    if (!output) {
-      throw new Error('Failed to generate the application files.');
+    // Step 1: Generate the code files.
+    const { output: codeOutput } = await generateCodePrompt(input);
+    if (!codeOutput || !codeOutput.files) {
+      throw new Error('Failed to generate the application code files.');
     }
-    return output;
+    const { files } = codeOutput;
+
+    // Step 2: Generate the preview image based on the generated page.tsx.
+    const pageContent = files['src/app/page.tsx'];
+    const { media } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: `Generate a realistic, high-quality preview image of what this Next.js/Tailwind CSS component would look like in a web browser. The component is defined by the following code:\n\n\`\`\`tsx\n${pageContent}\n\`\`\``,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+    });
+
+    if (!media || !media.url) {
+      throw new Error('Failed to generate a preview image for the application.');
+    }
+
+    // Step 3: Combine and return the final response.
+    return {
+      files,
+      previewImageUrl: media.url,
+    };
   }
 );
