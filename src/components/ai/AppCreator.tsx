@@ -24,7 +24,7 @@ type Message = {
     content: string;
 };
 
-const defaultFiles = {
+const defaultFiles: Files = {
     'package.json': `{
   "name": "new-app",
   "version": "0.1.0",
@@ -98,7 +98,7 @@ const AgenticAppCreator = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('split');
-    const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>(defaultFiles);
+    const [generatedFiles, setGeneratedFiles] = useState<Files>(defaultFiles);
     const [previewContent, setPreviewContent] = useState('');
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -120,10 +120,10 @@ const AgenticAppCreator = () => {
                         // Super naive conversion for preview purposes only
                         .substring(pageTsx.indexOf('return') + 6)
                         .replace(/<main[^>]*>/, '<div class="flex min-h-screen flex-col items-center justify-center p-24">')
-                        .replace(/<\\/main>/, '</div>')
+                        .replace(/<\/main>/, '</div>')
                         .replace(/className=/g, 'class=')
-                        .replace(/<Image[^>]*\\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
-                        .replace(/<[A-Z][^>]*\\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
+                        .replace(/<Image[^>]*\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
+                        .replace(/<[A-Z][^>]*\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
                         .replace(/\\{/g, '')
                         .replace(/\\}/g, '')
                     }</div>
@@ -159,10 +159,10 @@ const AgenticAppCreator = () => {
 
             if (result.generatedFiles) {
                 setGeneratedFiles(prev => {
-                    const updatedFiles: { [key: string]: string } = {};
+                    const updatedFiles: Partial<Files> = {};
                     for (const [key, value] of Object.entries(result.generatedFiles!)) {
                         if (value !== undefined) {
-                            updatedFiles[key] = value;
+                            updatedFiles[key as keyof Files] = value;
                         }
                     }
                     return { ...prev, ...updatedFiles };
