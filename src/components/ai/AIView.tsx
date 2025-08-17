@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import TextToSpeech from './TextToSpeech';
 import VideoGenerator from './VideoGenerator';
 import AutomatedTutor from './AutomatedTutor';
+import AppCreator from './AppCreator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
@@ -78,6 +79,7 @@ const AIView = () => {
             { id: 'tts', icon: Mic, title: 'Text to Speech', description: 'Convert text into natural-sounding audio.', component: TextToSpeech },
         ],
         dev: [
+            { id: 'app', icon: Bot, title: 'App Creator', description: 'Build an entire app from a prompt.', component: AppCreator },
             { id: 'code', icon: Code, title: 'Code Assistant', description: 'Explain, fix, and optimize code.', component: CodeAnalyzer },
             { id: 'website', icon: LayoutTemplate, title: 'Website Builder', description: 'Build landing pages.', component: () => null, comingSoon: true },
         ],
