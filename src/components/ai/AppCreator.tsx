@@ -4,8 +4,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Bot, Download, FileCode, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Bot, Download, FileCode, Image as ImageIcon, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateApp, AppCreatorResponse } from '@/ai/flows/app-creator-flow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +17,8 @@ const AppCreator = () => {
     const [generatedData, setGeneratedData] = useState<AppCreatorResponse | null>(null);
     const { toast } = useToast();
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!prompt.trim()) {
             toast({
                 variant: 'destructive',
@@ -69,25 +69,38 @@ const AppCreator = () => {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Textarea
-                    placeholder="Example: A single page app that shows a list of user cards with names and email addresses. It should have a clean, modern design."
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[120px] bg-muted"
-                />
-                <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Building App...
-                        </>
-                    ) : (
-                        <>
-                            <Bot className="mr-2 h-4 w-4" />
-                            Generate Application
-                        </>
-                    )}
-                </Button>
+                <form onSubmit={handleSubmit}>
+                    <div className="relative">
+                        <div className="bg-slate-800 text-slate-100 rounded-lg p-4 font-mono text-sm shadow-inner">
+                            <div className="flex items-center gap-2">
+                                <span className="text-green-400">$</span>
+                                <span className="text-slate-400">create-app</span>
+                                <ChevronRight className="w-4 h-4 text-slate-500" />
+                                <input
+                                    type="text"
+                                    placeholder="A single page app that shows user cards..."
+                                    value={prompt}
+                                    onChange={(e) => setPrompt(e.target.value)}
+                                    className="bg-transparent w-full focus:outline-none placeholder:text-slate-500"
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                     <Button type="submit" disabled={isLoading} className="w-full mt-4">
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Building App...
+                            </>
+                        ) : (
+                            <>
+                                <Bot className="mr-2 h-4 w-4" />
+                                Generate Application
+                            </>
+                        )}
+                    </Button>
+                </form>
             </CardContent>
 
             {generatedData && (
