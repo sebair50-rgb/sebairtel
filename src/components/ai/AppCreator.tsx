@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Textarea } from '../ui/textarea';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn } from '@/lib/utils';
+import useIsMobile from '@/hooks/use-is-mobile';
 
 type ViewMode = 'split' | 'preview' | 'code';
 type Message = {
@@ -94,12 +95,14 @@ export default function RootLayout({
 
 const AgenticAppCreator = () => {
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('split');
+    const [viewMode, setViewMode] = useState<ViewMode>('preview');
     const [generatedFiles, setGeneratedFiles] = useState<Files>(defaultFiles);
     const [previewContent, setPreviewContent] = useState('');
+    const [isChatPanelVisible, setIsChatPanelVisible] = useState(true);
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     
@@ -120,10 +123,10 @@ const AgenticAppCreator = () => {
                         // Super naive conversion for preview purposes only
                         .substring(pageTsx.indexOf('return') + 6)
                         .replace(/<main[^>]*>/, '<div class="flex min-h-screen flex-col items-center justify-center p-24">')
-                        .replace(/<\/main>/, '</div>')
+                        .replace(/<\\/main>/, '</div>')
                         .replace(/className=/g, 'class=')
-                        .replace(/<Image[^>]*\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
-                        .replace(/<[A-Z][^>]*\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
+                        .replace(/<Image[^>]*\\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
+                        .replace(/<[A-Z][^>]*\\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
                         .replace(/\\{/g, '')
                         .replace(/\\}/g, '')
                     }</div>
@@ -198,7 +201,8 @@ const AgenticAppCreator = () => {
     const renderChatPanel = () => (
         <div className={cn(
             "flex flex-col border-r bg-slate-50 dark:bg-black",
-             viewMode === 'split' ? 'w-full md:w-1/2' : (viewMode === 'preview' ? 'hidden' : 'w-full')
+            "h-full w-full md:w-[450px]",
+            !isChatPanelVisible && "hidden"
         )}>
             <ScrollArea className="flex-1" ref={chatContainerRef}>
                 <div className="p-4 space-y-4">
@@ -238,7 +242,7 @@ const AgenticAppCreator = () => {
             <div className="p-4 border-t">
                 <div className="relative">
                     <Textarea 
-                        placeholder="Describe the app you want to build or the changes you want to make..."
+                        placeholder="Describe the app you want to build..."
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
@@ -259,37 +263,33 @@ const AgenticAppCreator = () => {
         </div>
     );
     
-    const renderPreviewPanel = () => (
-         <div className={cn(
-            "flex-1 bg-slate-100 dark:bg-slate-800",
-            viewMode === 'split' ? 'w-1/2' : (viewMode === 'code' ? 'hidden' : 'w-full')
-        )}>
-             <iframe
-                srcDoc={previewContent}
-                title="App Preview"
-                sandbox="allow-scripts"
-                className="w-full h-full border-none bg-white"
-            />
-        </div>
-    );
-    
-    const renderCodePanel = () => (
+    const renderContentPanel = () => (
          <div className={cn(
             "flex-1 bg-slate-100 dark:bg-slate-900",
-            viewMode === 'split' ? 'w-1/2' : (viewMode === 'preview' ? 'hidden' : 'w-full')
+             isChatPanelVisible && isMobile && "hidden"
         )}>
-            <Tabs defaultValue={Object.keys(generatedFiles)[3]} className="w-full h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 shrink-0">
-                    {Object.keys(generatedFiles).map(filename => (
-                        <TabsTrigger key={filename} value={filename}>{filename.replace('src/app/', '')}</TabsTrigger>
+             {viewMode === 'preview' && (
+                 <iframe
+                    srcDoc={previewContent}
+                    title="App Preview"
+                    sandbox="allow-scripts"
+                    className="w-full h-full border-none bg-white"
+                />
+            )}
+             {viewMode === 'code' && (
+                <Tabs defaultValue={Object.keys(generatedFiles)[3]} className="w-full h-full flex flex-col">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 shrink-0">
+                        {Object.keys(generatedFiles).map(filename => (
+                            <TabsTrigger key={filename} value={filename}>{filename.replace('src/app/', '')}</TabsTrigger>
+                        ))}
+                    </TabsList>
+                    {Object.entries(generatedFiles).map(([filename, content]) => (
+                         <TabsContent key={filename} value={filename} className="flex-1 overflow-y-auto">
+                            <CodeBlock code={`\`\`\`tsx\n${content}\n\`\`\``} />
+                        </TabsContent>
                     ))}
-                </TabsList>
-                {Object.entries(generatedFiles).map(([filename, content]) => (
-                     <TabsContent key={filename} value={filename} className="flex-1 overflow-y-auto">
-                        <CodeBlock code={`\`\`\`tsx\n${content}\n\`\`\``} />
-                    </TabsContent>
-                ))}
-            </Tabs>
+                </Tabs>
+            )}
         </div>
     );
 
@@ -337,35 +337,27 @@ const AgenticAppCreator = () => {
                         </SheetTrigger>
                         <SheetContent side="left">{renderMenu()}</SheetContent>
                     </Sheet>
-                    <h1 className="font-semibold text-lg">AI App Creator</h1>
+                    <h1 className="font-semibold text-lg hidden sm:block">AI App Creator</h1>
                  </div>
                  <div className="flex items-center gap-2 p-1 bg-muted rounded-full">
-                    <Button size="sm" variant={viewMode === 'split' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => setViewMode('split')}><Split className="mr-2 h-4 w-4" />Split</Button>
-                    <Button size="sm" variant={viewMode === 'preview' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => setViewMode('preview')}><Eye className="mr-2 h-4 w-4" />Preview</Button>
-                    <Button size="sm" variant={viewMode === 'code' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => setViewMode('code')}><CodeXml className="mr-2 h-4 w-4" />Code</Button>
+                    {isMobile && (
+                        <Button size="sm" variant={isChatPanelVisible ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => setIsChatPanelVisible(true)}>
+                            <Bot className="mr-2 h-4 w-4" />Chat
+                        </Button>
+                    )}
+                    <Button size="sm" variant={viewMode === 'preview' && !isChatPanelVisible ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => { setViewMode('preview'); setIsChatPanelVisible(false); }}>
+                        <Eye className="mr-2 h-4 w-4" />Preview
+                    </Button>
+                    <Button size="sm" variant={viewMode === 'code' && !isChatPanelVisible ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => { setViewMode('code'); setIsChatPanelVisible(false); }}>
+                        <CodeXml className="mr-2 h-4 w-4" />Code
+                    </Button>
                  </div>
             </header>
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                {viewMode === 'split' && (
-                    <>
-                        {renderChatPanel()}
-                        {renderPreviewPanel()}
-                    </>
-                )}
-                {viewMode === 'preview' && (
-                    <>
-                        {renderChatPanel()}
-                        {renderPreviewPanel()}
-                    </>
-                )}
-                 {viewMode === 'code' && (
-                    <>
-                        {renderChatPanel()}
-                        {renderCodePanel()}
-                    </>
-                )}
+                {renderChatPanel()}
+                {renderContentPanel()}
             </main>
         </div>
     );

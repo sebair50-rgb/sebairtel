@@ -1,4 +1,3 @@
-
 import { z } from 'genkit';
 
 // Schema for the code files the AI can generate or modify
