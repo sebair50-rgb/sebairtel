@@ -7,12 +7,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { converseWithAppCreator } from '@/ai/flows/agentic-app-creator-flow';
-import type { AppCreatorConversationRequest, AppCreatorConversationResponse } from '@/ai/schemas/agentic-app-creator-schemas';
+import type { AppCreatorConversationRequest, Files } from '@/ai/schemas/agentic-app-creator-schemas';
 import { 
-    Bot, Menu, Download, Share2, Trash2, CodeXml, Eye, Github, RefreshCw, Save, Split, ArrowUp, Loader2, Sparkles, Send
+    Bot, Menu, Download, Share2, Trash2, CodeXml, Eye, Github, RefreshCw, Save, Split, Send, Loader2
 } from 'lucide-react';
 import CodeBlock from '../chat/CodeBlock';
-import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Textarea } from '../ui/textarea';
@@ -40,6 +39,11 @@ const defaultFiles = {
     "react": "latest",
     "react-dom": "latest",
     "next": "latest"
+  },
+"devDependencies": {
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest"
   }
 }`,
     'src/app/globals.css': `@tailwind base;
@@ -93,42 +97,36 @@ const AgenticAppCreator = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('preview');
+    const [viewMode, setViewMode] = useState<ViewMode>('split');
     const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>(defaultFiles);
     const [previewContent, setPreviewContent] = useState('');
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     
-    // Create a mock iframe preview content
     useEffect(() => {
+        // This is a simplified mock preview.
+        // A real implementation would require a secure sandbox and a proper React renderer.
         const pageTsx = generatedFiles['src/app/page.tsx'] || '';
         const globalsCss = generatedFiles['src/app/globals.css'] || '';
-        // A very simplified way to get JSX out of a TSX file string.
-        // This is not a real renderer and has many limitations.
-        const jsxContent = pageTsx.substring(pageTsx.indexOf('return') + 6).trim().replace(/;$/, '');
-
-        // For a more robust preview, we would need a proper sandbox.
-        // This is a simplified mock.
+        
         const html = `
             <html>
                 <head>
-                    <style>
-                        @import url('https://cdn.tailwindcss.com');
-                        ${globalsCss}
-                    </style>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <style>${globalsCss}</style>
                 </head>
                 <body class="bg-background text-foreground">
-                    <div id="root"></div>
-                    <script type="module">
-                        // This is a mock script to render a static view. It won't work for real.
-                        // A real implementation would need a secure sandbox and React renderer.
-                        const content = \`${jsxContent.replace(/`/g, '\\`')}\`;
-                        // A very crude way to convert JSX-like string to HTML string for demo
-                        let htmlContent = content.replace(/className=/g, 'class=');
-                        htmlContent = htmlContent.replace(/<\\/main>/g, '</div>');
-                        htmlContent = htmlContent.replace(/<main.*?>/g, '<div class="flex min-h-screen flex-col items-center justify-center p-24">');
-                        document.getElementById('root').innerHTML = htmlContent;
-                    </script>
+                    <div class="p-4">${pageTsx
+                        // Super naive conversion for preview purposes only
+                        .substring(pageTsx.indexOf('return') + 6)
+                        .replace(/<main[^>]*>/, '<div class="flex min-h-screen flex-col items-center justify-center p-24">')
+                        .replace(/<\\/main>/, '</div>')
+                        .replace(/className=/g, 'class=')
+                        .replace(/<Image[^>]*\\/>/g, '<div class="w-64 h-48 bg-muted rounded-lg flex items-center justify-center">Image Placeholder</div>')
+                        .replace(/<[A-Z][^>]*\\/>/g, (match) => `<div class="p-2 border rounded-md bg-muted/50">${match}</div>`)
+                        .replace(/\\{/g, '')
+                        .replace(/\\}/g, '')
+                    }</div>
                 </body>
             </html>
         `;
@@ -155,12 +153,20 @@ const AgenticAppCreator = () => {
                 history: messages,
                 prompt: userMessage,
             };
-            const result: AppCreatorConversationResponse = await converseWithAppCreator(request);
+            const result = await converseWithAppCreator(request);
             
             setMessages(prev => [...prev, { role: 'model', content: result.response }]);
 
             if (result.generatedFiles) {
-                setGeneratedFiles(prev => ({ ...prev, ...result.generatedFiles }));
+                setGeneratedFiles(prev => {
+                    const updatedFiles: { [key: string]: string } = {};
+                    for (const [key, value] of Object.entries(result.generatedFiles!)) {
+                        if (value !== undefined) {
+                            updatedFiles[key] = value;
+                        }
+                    }
+                    return { ...prev, ...updatedFiles };
+                });
                 toast({
                     title: "Code Updated",
                     description: "The AI agent has updated the application files.",
@@ -188,6 +194,104 @@ const AgenticAppCreator = () => {
             description: "We're working hard to add this feature. Stay tuned!",
         });
     }
+    
+    const renderChatPanel = () => (
+        <div className={cn(
+            "flex flex-col border-r bg-slate-50 dark:bg-black",
+             viewMode === 'split' ? 'w-full md:w-1/2' : (viewMode === 'preview' ? 'hidden' : 'w-full')
+        )}>
+            <ScrollArea className="flex-1" ref={chatContainerRef}>
+                <div className="p-4 space-y-4">
+                    {messages.length === 0 && (
+                         <div className="flex items-start gap-3">
+                             <Avatar className='w-8 h-8'><AvatarFallback><Bot /></AvatarFallback></Avatar>
+                             <div className="max-w-md p-3 rounded-lg bg-muted">
+                                <p className="text-sm">Welcome to the App Creator! Describe the application you want to build, and I'll generate the code for you.</p>
+                            </div>
+                        </div>
+                    )}
+                    {messages.map((msg, index) => (
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <div className={cn("flex items-start gap-3", msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                                {msg.role === 'model' && <Avatar className='w-8 h-8'><AvatarFallback><Bot /></AvatarFallback></Avatar>}
+                                <div className={cn(
+                                    "max-w-md p-3 rounded-lg prose dark:prose-invert prose-sm",
+                                    msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                                )}>
+                                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                    {isLoading && (
+                        <div className="flex items-center gap-3">
+                             <Avatar className='w-8 h-8'><AvatarFallback><Bot /></AvatarFallback></Avatar>
+                             <Loader2 className="w-5 h-5 animate-spin" />
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+                <div className="relative">
+                    <Textarea 
+                        placeholder="Describe the app you want to build or the changes you want to make..."
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
+                        className="pr-12 rounded-lg"
+                        rows={1}
+                    />
+                    <Button 
+                        type="submit" 
+                        size="icon" 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                        onClick={handleSendMessage}
+                        disabled={isLoading || !input.trim()}
+                    >
+                        <Send className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+    
+    const renderPreviewPanel = () => (
+         <div className={cn(
+            "flex-1 bg-slate-100 dark:bg-slate-800",
+            viewMode === 'split' ? 'w-1/2' : (viewMode === 'code' ? 'hidden' : 'w-full')
+        )}>
+             <iframe
+                srcDoc={previewContent}
+                title="App Preview"
+                sandbox="allow-scripts"
+                className="w-full h-full border-none bg-white"
+            />
+        </div>
+    );
+    
+    const renderCodePanel = () => (
+         <div className={cn(
+            "flex-1 bg-slate-100 dark:bg-slate-900",
+            viewMode === 'split' ? 'w-1/2' : (viewMode === 'preview' ? 'hidden' : 'w-full')
+        )}>
+            <Tabs defaultValue={Object.keys(generatedFiles)[3]} className="w-full h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 shrink-0">
+                    {Object.keys(generatedFiles).map(filename => (
+                        <TabsTrigger key={filename} value={filename}>{filename.replace('src/app/', '')}</TabsTrigger>
+                    ))}
+                </TabsList>
+                {Object.entries(generatedFiles).map(([filename, content]) => (
+                     <TabsContent key={filename} value={filename} className="flex-1 overflow-y-auto">
+                        <CodeBlock code={`\`\`\`tsx\n${content}\n\`\`\``} />
+                    </TabsContent>
+                ))}
+            </Tabs>
+        </div>
+    );
 
     const renderMenu = () => (
         <>
@@ -243,89 +347,25 @@ const AgenticAppCreator = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 flex overflow-hidden">
-                {/* Chat Panel */}
-                <div className={cn(
-                    "flex flex-col border-r bg-slate-50 dark:bg-black",
-                    viewMode === 'split' ? "w-1/2" : (viewMode === 'preview' || viewMode === 'code') ? "hidden" : "w-full"
-                )}>
-                    <ScrollArea className="flex-1" ref={chatContainerRef}>
-                        <div className="p-4 space-y-4">
-                            {messages.map((msg, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                >
-                                    <div className={cn("flex items-start gap-3", msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                        {msg.role === 'model' && <Avatar className='w-8 h-8'><AvatarFallback><Bot /></AvatarFallback></Avatar>}
-                                        <div className={cn(
-                                            "max-w-md p-3 rounded-lg",
-                                            msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                                        )}>
-                                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex items-center gap-3">
-                                     <Avatar className='w-8 h-8'><AvatarFallback><Bot /></AvatarFallback></Avatar>
-                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                </div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                    <div className="p-4 border-t">
-                        <div className="relative">
-                            <Textarea 
-                                placeholder="Describe the app you want to build or the changes you want to make..."
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }}}
-                                className="pr-12 rounded-full"
-                                rows={1}
-                            />
-                            <Button 
-                                type="submit" 
-                                size="icon" 
-                                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
-                                onClick={handleSendMessage}
-                                disabled={isLoading || !input.trim()}
-                            >
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Preview / Code Panel */}
-                <div className={cn(
-                    "flex-1 bg-slate-100 dark:bg-slate-800",
-                    viewMode === 'split' ? "w-1/2" : "w-full"
-                )}>
-                    {viewMode !== 'code' ? (
-                         <iframe
-                            srcDoc={previewContent}
-                            title="App Preview"
-                            sandbox="allow-scripts"
-                            className="w-full h-full border-none bg-white"
-                        />
-                    ) : (
-                        <Tabs defaultValue={Object.keys(generatedFiles)[3]} className="w-full h-full flex flex-col">
-                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 shrink-0">
-                                {Object.keys(generatedFiles).map(filename => (
-                                    <TabsTrigger key={filename} value={filename}>{filename.replace('src/app/', '')}</TabsTrigger>
-                                ))}
-                            </TabsList>
-                            {Object.entries(generatedFiles).map(([filename, content]) => (
-                                 <TabsContent key={filename} value={filename} className="flex-1 overflow-y-auto">
-                                    <CodeBlock code={`\`\`\`tsx\n${content}\n\`\`\``} />
-                                </TabsContent>
-                            ))}
-                        </Tabs>
-                    )}
-                </div>
+            <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                {viewMode === 'split' && (
+                    <>
+                        {renderChatPanel()}
+                        {renderPreviewPanel()}
+                    </>
+                )}
+                {viewMode === 'preview' && (
+                    <>
+                        {renderChatPanel()}
+                        {renderPreviewPanel()}
+                    </>
+                )}
+                 {viewMode === 'code' && (
+                    <>
+                        {renderChatPanel()}
+                        {renderCodePanel()}
+                    </>
+                )}
             </main>
         </div>
     );
