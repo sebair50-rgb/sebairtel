@@ -37,19 +37,38 @@ const generateAppPrompt = ai.definePrompt({
     input: { schema: AppCreatorRequestSchema },
     output: { schema: AppCreatorResponseSchema },
     prompt: `You are an expert Next.js developer. A user wants to create a new application based on a prompt.
-Your task is to generate the basic file structure for a new Next.js application using the App Router.
+Your task is to generate the complete code for a new Next.js application using the App Router.
 
 The user's request is: {{{prompt}}}
 
-Generate the following files:
-1.  **package.json**: Include dependencies for Next.js, React, and Tailwind CSS. Add a 'dev' script. Do not include any comments in the JSON.
-2.  **src/app/globals.css**: The basic Tailwind CSS directives.
-3.  **src/app/layout.tsx**: A root layout with basic HTML structure and Tailwind CSS.
-4.  **src/app/page.tsx**: A simple React component for the main page that reflects the user's prompt. Use Tailwind CSS for styling. Use placeholder images from 'https://placehold.co' if needed.
+Generate the following files with complete and valid code:
+1.  **package.json**: 
+    - Include dependencies: "next", "react", "react-dom", "tailwindcss", and "lucide-react".
+    - Include devDependencies: "typescript", "@types/node", "@types/react", "@types/react-dom", "postcss", "tailwindcss-animate", "class-variance-authority", "clsx", "tailwind-merge".
+    - Include a "dev" script: "next dev".
+    - Do NOT include any comments in the JSON file.
 
-Return the result as a single JSON object where the keys are the full file paths and the values are the complete content of each file as a string.
-Do not include any files not explicitly requested.
-Ensure all code is valid and well-formatted.
+2.  **src/app/globals.css**: 
+    - Include the standard Tailwind CSS directives: \`@tailwind base;\`, \`@tailwind components;\`, \`@tailwind utilities;\`.
+    - Define a root theme with modern HSL CSS variables for light mode: --background, --foreground, --primary, --secondary, --destructive, --muted, --accent, --card. Use a professional and clean color palette. For example, a slate or gray-based theme.
+
+3.  **src/app/layout.tsx**: 
+    - Create a standard Next.js root layout for the App Router.
+    - Import and apply a font from 'next/font/google', like Inter.
+    - Include basic metadata with a sensible title.
+    - Import 'globals.css'.
+    - Ensure the <html> and <body> tags are present.
+
+4.  **src/app/page.tsx**: 
+    - Create a complete and functional React component for the main page that accurately reflects the user's prompt.
+    - Use Tailwind CSS for all styling. Create a visually appealing and modern layout.
+    - Use placeholder images from 'https://placehold.co' where needed (e.g., \`https://placehold.co/600x400\`).
+    - Use 'lucide-react' for icons if any are needed.
+    - The code should be complete, with all necessary imports.
+
+Return the result as a single JSON object where the keys are the full file paths and the values are the complete, final content of each file as a string.
+Ensure all code is valid, well-formatted, and production-ready.
+Do not include any files other than the four specified above.
 `,
 });
 
