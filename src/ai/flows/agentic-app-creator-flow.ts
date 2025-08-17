@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -25,10 +26,10 @@ const appCreatorTool = ai.defineTool(
   {
     name: 'appCreatorTool',
     description: 'Generates or updates the necessary files for a web application based on the user\'s request. Use this tool to create or modify the codebase.',
-    inputSchema: z.object({ files: FilesSchema }),
+    inputSchema: FilesSchema,
     outputSchema: z.object({ success: z.boolean() }),
   },
-  async ({ files }) => {
+  async (files) => {
     // In a real scenario, this would write the files to the filesystem.
     // For this simulation, we just acknowledge the "write".
     console.log('AI is updating files:', Object.keys(files));
@@ -87,7 +88,7 @@ const agenticAppCreatorFlow = ai.defineFlow(
     if (toolCalls && toolCalls.length > 0) {
       const toolCall = toolCalls[0];
       if (toolCall.tool.name === 'appCreatorTool') {
-        generatedFiles = (toolCall.tool.input as { files: Files }).files;
+        generatedFiles = toolCall.tool.input as Files;
       }
     }
 
