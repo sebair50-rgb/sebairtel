@@ -37,6 +37,7 @@ const VideoGenerator = () => {
                 variant: 'destructive',
                 title: 'An error occurred',
                 description: error.message || 'Failed to generate the video. Please try again.',
+                duration: 9000,
             });
         } finally {
             setIsLoading(false);
