@@ -61,7 +61,7 @@ const AppCreator = () => {
     const previewImageUrl = generatedData?.previewImageUrl;
 
     return (
-        <Card className="shadow-lg animate-fade-in border-0">
+        <Card className="shadow-lg animate-fade-in border-0" dir="ltr">
             <CardHeader>
                 <CardTitle>AI Application Creator</CardTitle>
                 <CardDescription>
@@ -92,8 +92,8 @@ const AppCreator = () => {
 
             {generatedData && (
                 <CardContent className="space-y-4">
-                    <CardHeader className="p-0">
-                        <div className="flex justify-between items-center">
+                    <div className="border-t pt-4">
+                        <div className="flex justify-between items-center mb-2">
                             <CardTitle>Your Application Files</CardTitle>
                             <Button variant="outline" onClick={handleDownloadAll} disabled>
                                 <Download className="mr-2 h-4 w-4" />
@@ -101,18 +101,18 @@ const AppCreator = () => {
                             </Button>
                         </div>
                         <CardDescription>Review the generated files and preview below.</CardDescription>
-                    </CardHeader>
+                    </div>
                     
                     <Tabs defaultValue="preview" className="w-full">
-                        <TabsList className="grid w-full grid-cols-5">
+                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
                              <TabsTrigger value="preview">
                                 <ImageIcon className="mr-2 h-4 w-4" />
                                 Preview
                             </TabsTrigger>
                             {generatedFiles && Object.keys(generatedFiles).map(filename => (
-                                <TabsTrigger key={filename} value={filename}>
-                                    <FileCode className="mr-2 h-4 w-4" />
-                                    {filename.split('/').pop()}
+                                <TabsTrigger key={filename} value={filename} className="truncate">
+                                    <FileCode className="mr-2 h-4 w-4 flex-shrink-0" />
+                                    <span className="truncate">{filename.split('/').pop()}</span>
                                 </TabsTrigger>
                             ))}
                         </TabsList>
