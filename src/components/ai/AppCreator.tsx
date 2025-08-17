@@ -1,10 +1,8 @@
-
 "use client";
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bot, Download, FileCode, Image as ImageIcon, Menu, X, Trash2, Save, Share2, Copy, RefreshCw, Upload, Code2, Eye, ChevronRight } from 'lucide-react';
+import { Loader2, Bot, Download, FileCode, Image as ImageIcon, Menu, Trash2, Save, Share2, Copy, RefreshCw, Upload, Code2, Eye, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateApp, AppCreatorResponse } from '@/ai/flows/app-creator-flow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -173,7 +171,7 @@ const AppCreator = () => {
             {/* Bottom Bar */}
             <footer className="p-3 border-t border-slate-700 bg-slate-800">
                 <div className="flex items-center justify-center gap-2">
-                    <Dialog onOpenChange={(isOpen) => !isOpen && handleSubmit()}>
+                    <Dialog onOpenChange={(isOpen) => { if(!isOpen && prompt) handleSubmit() }}>
                         <DialogTrigger asChild>
                             <Button variant="secondary" size="lg" className="flex-1 max-w-sm">
                                 <Bot className="mr-2"/>
