@@ -33,10 +33,17 @@ const VideoGenerator = () => {
             setVideoUrl(response.videoUrl);
         } catch (error: any) {
             console.error('Video generation failed:', error);
+            const errorMessage = error.message || 'An unknown error occurred.';
+            let toastDescription = 'Failed to generate the video. Please try again.';
+
+            if (errorMessage.includes('billing enabled')) {
+                toastDescription = "Video generation with Veo requires a Google Cloud project with billing enabled. Please enable billing in your GCP project to use this feature.";
+            }
+
             toast({
                 variant: 'destructive',
                 title: 'An error occurred',
-                description: error.message || 'Failed to generate the video. Please try again.',
+                description: toastDescription,
                 duration: 9000,
             });
         } finally {
