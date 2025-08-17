@@ -42,7 +42,7 @@ const getPromptForTask = (task: CodeProcessingInput['task']) => {
 
 const codeProcessingPrompt = ai.definePrompt({
   name: 'codeProcessingPrompt',
-  model: 'googleai/gemini-1.5-flash-preview',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: CodeProcessingInputSchema.extend({ systemPrompt: z.string() }) },
   output: { schema: CodeProcessingOutputSchema },
   prompt: `{{{systemPrompt}}}
