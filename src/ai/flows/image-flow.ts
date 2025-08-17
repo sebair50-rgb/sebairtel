@@ -37,7 +37,7 @@ const generateImageFlow = ai.defineFlow(
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `Generate a high-quality, artistic image based on the following description: ${prompt}`,
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 

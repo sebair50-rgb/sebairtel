@@ -37,7 +37,7 @@ const generateAvatarFlow = ai.defineFlow(
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `Generate a high-quality, artistic, square avatar portrait. The avatar should be a headshot or bust-up view. Style it based on the following description: ${prompt}`,
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
         // You might add specific config for square aspect ratio if the model supports it,
         // otherwise, we handle it on the frontend.
       },

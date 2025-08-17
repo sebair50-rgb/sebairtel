@@ -37,7 +37,7 @@ const generateStickerFlow = ai.defineFlow(
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: `Generate a cartoon-style sticker of: ${prompt}. The sticker should have a thick white or black border, a die-cut style, and a transparent background (PNG). The main subject should be clear and vibrant.`,
       config: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
