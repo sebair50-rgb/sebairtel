@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Video, Mic, BookOpen, Brush, LayoutTemplate, Bot } from 'lucide-react';
 import CodeAnalyzer from './CodeAnalyzer';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import TextToSpeech from './TextToSpeech';
 import VideoGenerator from './VideoGenerator';
 import AutomatedTutor from './AutomatedTutor';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
 
@@ -59,6 +60,13 @@ const ToolSection = ({ title, children }: { title: string, children: React.React
 
 const AIView = () => {
     const [activeTool, setActiveTool] = useState<AITool>('image');
+    const toolRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (toolRef.current) {
+            toolRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [activeTool]);
 
     const renderActiveTool = () => {
         switch (activeTool) {
@@ -143,8 +151,18 @@ const AIView = () => {
                     </ToolSection>
                 </div>
                 
-                <div className="max-w-4xl mx-auto mt-10">
-                    {renderActiveTool()}
+                <div ref={toolRef} className="max-w-4xl mx-auto mt-12 pt-4">
+                     <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTool}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            {renderActiveTool()}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
              </div>
         </div>
