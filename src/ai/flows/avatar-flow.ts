@@ -43,7 +43,7 @@ const generateAvatarFlow = ai.defineFlow(
       },
     });
 
-    if (!media.url) {
+    if (!media || !media.url) {
       throw new Error('Avatar generation failed to produce an image.');
     }
 

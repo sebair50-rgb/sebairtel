@@ -41,7 +41,7 @@ const generateStickerFlow = ai.defineFlow(
       },
     });
 
-    if (!media.url) {
+    if (!media || !media.url) {
       throw new Error('Sticker generation failed to produce an image.');
     }
 
