@@ -85,7 +85,7 @@ const agenticAppCreatorFlow = ai.defineFlow(
     
     let generatedFiles: Files | undefined = undefined;
 
-    if (toolCalls.length > 0) {
+    if (toolCalls && toolCalls.length > 0) {
       const toolCall = toolCalls[0];
       if (toolCall.tool.name === 'appCreatorTool') {
         generatedFiles = (toolCall.tool.input as { files: Files }).files;
