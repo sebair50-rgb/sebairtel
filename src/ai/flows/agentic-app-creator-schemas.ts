@@ -16,10 +16,8 @@ export const FilesSchema = z.object({
 export type Files = z.infer<typeof FilesSchema>;
 
 export const AgenticRequestSchema = z.object({
-  history: z.array(z.object({
-    role: z.enum(['user', 'model']),
-    content: z.string(),
-  })).describe("The history of the conversation between the user and the AI agent."),
+  history: z.array(z.any()).describe("The history of the conversation between the user and the AI agent."),
+  model: z.string().optional().describe("The AI model to use for the generation."),
 });
 
 export type AgenticRequest = z.infer<typeof AgenticRequestSchema>;

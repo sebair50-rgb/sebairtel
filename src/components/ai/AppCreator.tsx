@@ -10,7 +10,7 @@ import { generateAgenticResponse } from '@/ai/flows/agentic-app-creator-flow';
 import type { AgenticRequest } from '@/ai/flows/agentic-app-creator-flow';
 import type { Files } from '@/ai/flows/agentic-app-creator-schemas';
 import { 
-    Bot, Download, Share2, CodeXml, Eye, Github, RefreshCw, Wand2, Loader2, Send, Split, PanelLeft, X
+    Bot, Download, Share2, CodeXml, Eye, Github, RefreshCw, Wand2, Loader2, Send, Split, PanelLeft, X, BrainCircuit
 } from 'lucide-react';
 import Image from 'next/image';
 import CodeBlock from '../chat/CodeBlock';
@@ -20,6 +20,13 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import useIsMobile from '@/hooks/use-is-mobile';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 type ViewMode = 'preview' | 'code' | 'split';
 type MobileView = 'chat' | 'output';
@@ -34,6 +41,7 @@ const AppCreator = () => {
     const [generatedFiles, setGeneratedFiles] = useState<Files | null>(null);
     const [previewContent, setPreviewContent] = useState<string>('');
     const [activeFile, setActiveFile] = useState<string>('src/app/page.tsx');
+    const [model, setModel] = useState('googleai/gemini-1.5-flash');
     
     const [viewMode, setViewMode] = useState<ViewMode>('preview');
     const [mobileView, setMobileView] = useState<MobileView>('chat');
@@ -88,7 +96,7 @@ const AppCreator = () => {
         setIsLoading(true);
 
         try {
-            const response = await generateAgenticResponse({ history: newHistory });
+            const response = await generateAgenticResponse({ history: newHistory, model });
             setConversation(response.history);
             if (response.files) {
                 setGeneratedFiles(response.files);
@@ -195,9 +203,21 @@ const AppCreator = () => {
                         <CardDescription>Chat with the AI to build or modify your app.</CardDescription>
                     </div>
                 </div>
-                 <Button variant="ghost" size="icon" onClick={handleReset} disabled={isLoading}>
-                    <RefreshCw className="h-5 w-5" />
-                </Button>
+                 <div className="flex items-center gap-2">
+                     <Select value={model} onValueChange={setModel}>
+                        <SelectTrigger className="w-[180px]">
+                            <BrainCircuit className="w-4 h-4 mr-2" />
+                            <SelectValue placeholder="Select a model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="googleai/gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                            <SelectItem value="googleai/gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button variant="ghost" size="icon" onClick={handleReset} disabled={isLoading}>
+                        <RefreshCw className="h-5 w-5" />
+                    </Button>
+                 </div>
             </CardHeader>
             <CardContent ref={chatContainerRef} className="flex-1 overflow-y-auto">
                 <AnimatePresence>

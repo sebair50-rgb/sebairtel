@@ -12,8 +12,6 @@ import { z } from 'genkit';
 import { FilesSchema, Files, AgenticRequestSchema, AgenticRequest } from './agentic-app-creator-schemas';
 import type {Part} from 'genkit';
 
-const model = 'googleai/gemini-1.5-flash';
-
 const appCreatorTool = ai.defineTool(
   {
     name: 'appCreatorTool',
@@ -51,10 +49,10 @@ AI (response to user): "Done! I've changed the button color to red."
 `;
 
 export async function generateAgenticResponse(input: AgenticRequest) {
-  const { history } = input;
+  const { history, model } = input;
 
   const { output } = await ai.generate({
-    model,
+    model: model || 'googleai/gemini-1.5-flash',
     tools: [appCreatorTool],
     system: systemPrompt,
     history,
