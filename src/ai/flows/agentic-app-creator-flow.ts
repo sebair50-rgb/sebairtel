@@ -67,15 +67,17 @@ export async function generateAgenticResponse(input: AgenticRequest) {
   let generatedFiles: Files | undefined = undefined;
   
   // Construct the new history array correctly.
-  const newHistory: Part[] = [...history, { role: 'model', content: output.text || '' }];
+  const newHistory: Part[] = [...history];
+
+  // Add the model's text response and any tool calls to the history.
+  newHistory.push({ role: 'model', content: output.content });
 
   if (toolCalls && toolCalls.length > 0) {
     const toolCall = toolCalls[0];
     if (toolCall.tool.name === 'appCreatorTool') {
         generatedFiles = toolCall.tool.input;
-        // Add the tool call request and a placeholder response to the history
-        newHistory.push({ role: 'model', content: [{ toolRequest: toolCall }] });
-        newHistory.push({ role: 'tool', content: [{ toolResponse: { name: 'appCreatorTool', output: undefined } }] });
+        // Add a placeholder tool response to the history.
+        newHistory.push({ role: 'tool', content: [{ name: 'appCreatorTool', output: undefined }] });
     }
   }
 
