@@ -75,7 +75,7 @@ export async function generateAgenticResponse(input: AgenticRequest) {
     if (toolCall.tool.name === 'appCreatorTool') {
         generatedFiles = toolCall.tool.input;
         // Add a placeholder tool response to the history.
-        newHistory.push({ role: 'tool', content: [{ name: 'appCreatorTool', output: undefined }] });
+        newHistory.push({ role: 'tool', content: { name: 'appCreatorTool', output: undefined } });
     }
   }
 
