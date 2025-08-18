@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { generateAgenticResponse, AgenticRequest } from '@/ai/flows/agentic-app-creator-flow';
+import { generateAgenticResponse } from '@/ai/flows/agentic-app-creator-flow';
+import type { AgenticRequest } from '@/ai/flows/agentic-app-creator-flow';
 import type { Files } from '@/ai/flows/agentic-app-creator-schemas';
 import { 
     Bot, Download, Share2, CodeXml, Eye, Github, RefreshCw, Wand2, Loader2, Send, Split, PanelLeft, X
@@ -202,7 +203,7 @@ const AppCreator = () => {
                 <AnimatePresence>
                     {conversation.map((msg, index) => (
                         <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                            <ChatMessage role={msg.role} content={msg.content} />
+                            <ChatMessage role={msg.role} content={msg.content as string} />
                         </motion.div>
                     ))}
                 </AnimatePresence>
