@@ -24,7 +24,7 @@ const SocialFeed = () => {
         { value: 'business', label: 'Business', icon: Briefcase },
         { value: 'market', label: 'Market', icon: Store },
         { value: 'live', label: 'Live', icon: Video },
-        { value: 'feed', label: 'Feed', icon: Notebook },
+        { value: 'feed', label: 'Posts', icon: Notebook },
     ];
     
     return (
