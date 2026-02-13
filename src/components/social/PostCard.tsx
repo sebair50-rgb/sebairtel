@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from '@/store/LanguageContext';
 import CodeBlock from '../chat/CodeBlock';
+import { Textarea } from '../ui/textarea';
+import { formatDistanceToNow } from 'date-fns';
 
 const ThumbsUpIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
@@ -46,14 +48,30 @@ interface PostCardProps {
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { t, language } = useTranslation();
   const { toast } = useToast();
-  const { updatePost, currentUser, createNotification, deletePost, startEditPost } = useAppContext();
+  const { updatePost, currentUser, createNotification, deletePost, startEditPost, addComment } = useAppContext();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const router = useRouter();
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
 
   if (!currentUser) return null;
 
   const myReaction = post.reactions?.find(r => r.userId === currentUser.id);
   const isOwnPost = post.userId === currentUser.id;
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+        await addComment(post.id, newComment);
+        setNewComment('');
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: "Failed to post comment."
+        });
+    }
+  };
 
   const handleReaction = (emoji: string) => {
     let newReactions = post.reactions ? [...post.reactions] : [];
@@ -224,7 +242,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <span className="text-sm">Like</span>
           </Button>
 
-          <Button variant="ghost" size="lg" className="w-full flex items-center gap-2">
+          <Button variant="ghost" size="lg" className="w-full flex items-center gap-2" onClick={() => setShowComments(!showComments)}>
               <MessageCircle size={20} />
               <span className="text-sm">Comment</span>
           </Button>
@@ -234,6 +252,52 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <span className="text-sm">Share</span>
           </Button>
       </div>
+
+       {showComments && (
+        <CardContent className="p-4 border-t bg-slate-50 dark:bg-black/20">
+            <div className="flex items-start gap-3 mb-4">
+                <Avatar className="h-9 w-9">
+                    <AvatarImage src={currentUser.avatar} />
+                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="w-full flex items-start gap-2">
+                    <Textarea 
+                        placeholder="Write a comment..." 
+                        value={newComment} 
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="bg-background"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAddComment();
+                            }
+                        }}
+                    />
+                    <Button onClick={handleAddComment} disabled={!newComment.trim()}>Post</Button>
+                </div>
+            </div>
+            <div className="space-y-4">
+                {[...(post.comments || [])].sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()).map((comment, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                        <Avatar className="h-9 w-9">
+                            <AvatarImage src={comment.avatar} />
+                            <AvatarFallback>{comment.user.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="bg-background border p-3 rounded-lg w-full">
+                            <div className="flex justify-between items-center">
+                                <p className="font-semibold text-sm">{comment.user}</p>
+                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(comment.timestamp.toDate(), { addSuffix: true })}</p>
+                            </div>
+                            <p className="text-sm mt-1">{comment.text}</p>
+                        </div>
+                    </div>
+                ))}
+                {(!post.comments || post.comments.length === 0) && (
+                    <p className="text-muted-foreground text-center text-sm py-4">No comments yet. Be the first to comment!</p>
+                )}
+            </div>
+        </CardContent>
+      )}
     </Card>
 
      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
