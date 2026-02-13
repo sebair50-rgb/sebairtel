@@ -166,7 +166,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         
         <div className="flex items-center">
-            <Button variant="link" className="text-primary font-bold px-2">Follow</Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -201,49 +200,49 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="px-4 pb-2">
         {isCodePost ? (
-            <div className="px-4 pb-2">
-                <CodeBlock code={post.content} />
-            </div>
+            <CodeBlock code={post.content} />
         ) : (
-            <>
-                <p className="whitespace-pre-wrap px-4 pb-2">{post.content}</p>
-                {post.mediaSrc && (
-                    <div className="bg-black flex items-center justify-center">
-                        {post.mediaType === 'image' ? (
-                            <Image src={post.mediaSrc} alt="Post media" width={600} height={600} className="w-full h-auto max-h-[70vh] object-contain" />
-                        ) : (
-                            <video src={post.mediaSrc} controls className="w-full h-auto max-h-[70vh]" />
-                        )}
-                    </div>
-                )}
-            </>
+            <p className="whitespace-pre-wrap">{post.content}</p>
         )}
       </CardContent>
 
-      <div className="flex justify-between items-center px-4 py-2 text-sm text-gray-500">
+      {post.mediaSrc && !isCodePost && (
+        <CardContent className="p-0">
+            <div className="bg-black flex items-center justify-center">
+                {post.mediaType === 'image' ? (
+                    <Image src={post.mediaSrc} alt="Post media" width={600} height={600} className="w-full h-auto max-h-[70vh] object-contain" />
+                ) : (
+                    <video src={post.mediaSrc} controls className="w-full h-auto max-h-[70vh]" />
+                )}
+            </div>
+        </CardContent>
+      )}
+
+
+      <div className="flex justify-between items-center px-4 py-2 text-sm text-muted-foreground">
         {getReactionSummary()}
         <div className="flex gap-4">
-            <span>{post.comments?.length || 0} Comments</span>
-            <span>{Math.floor(Math.random() * 50)} Shares</span>
+            <button className="hover:underline" onClick={() => setShowComments(!showComments)}>{post.comments?.length || 0} Comments</button>
+            <button className="hover:underline">{Math.floor(Math.random() * 50)} Shares</button>
         </div>
       </div>
       
-      <div className="flex justify-around items-center text-muted-foreground border-t p-1">
-          <Button variant="ghost" size="lg" className={cn("w-full flex items-center gap-2", myReaction?.emoji === '👍' && 'text-blue-600 font-bold')} onClick={() => handleReaction('👍')}>
-              <ThumbsUp />
-              <span className="text-sm">Like</span>
+      <div className="flex justify-around items-center text-muted-foreground border-t mx-4">
+          <Button variant="ghost" className={cn("w-full flex items-center gap-2", myReaction?.emoji === '👍' && 'text-blue-600 font-bold')} onClick={() => handleReaction('👍')}>
+              <ThumbsUp size={18}/>
+              <span className="font-medium text-sm">Like</span>
           </Button>
 
-          <Button variant="ghost" size="lg" className="w-full flex items-center gap-2" onClick={() => setShowComments(!showComments)}>
-              <MessageCircle />
-              <span className="text-sm">Comment</span>
+          <Button variant="ghost" className="w-full flex items-center gap-2" onClick={() => setShowComments(!showComments)}>
+              <MessageCircle size={18}/>
+              <span className="font-medium text-sm">Comment</span>
           </Button>
           
-          <Button variant="ghost" size="lg" className="w-full flex items-center gap-2" onClick={handleShare}>
-              <Share2 />
-              <span className="text-sm">Share</span>
+          <Button variant="ghost" className="w-full flex items-center gap-2" onClick={handleShare}>
+              <Share2 size={18}/>
+              <span className="font-medium text-sm">Share</span>
           </Button>
       </div>
 

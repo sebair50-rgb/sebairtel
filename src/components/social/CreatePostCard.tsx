@@ -117,10 +117,10 @@ const CreatePostCard = () => {
             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
-            placeholder="What's on your mind?"
+            placeholder={`What's on your mind, ${currentUser.name}?`}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0 text-base"
+            className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0 text-base min-h-[80px]"
           />
         </div>
         {media && (
@@ -135,35 +135,37 @@ const CreatePostCard = () => {
                 </Button>
             </div>
         )}
+        <div className="flex justify-end gap-2 pt-2">
+            {isEditing && (
+                <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
+            )}
+            <Button onClick={handlePost} disabled={(!content.trim() && !media)} className="w-full">
+                {isEditing ? 'Update Post' : 'Post'}
+            </Button>
+        </div>
         </CardContent>
         <Separator/>
-         <div className="p-2 flex justify-between items-center">
-             <div className='flex'>
-                <input
-                    type="file"
-                    accept="image/*,video/*"
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    className="hidden"
-                />
-                <Button variant="ghost" className="text-muted-foreground" onClick={() => fileInputRef.current?.click()}>
-                    <ImageIcon className="text-green-500" />
-                    <span className="ml-2">Photo/Video</span>
-                </Button>
-                 <Button variant="ghost" className="text-muted-foreground" onClick={() => toast({description: "Coming soon!"})}>
-                    <Code className="text-blue-500" />
-                    <span className="ml-2">Code</span>
-                </Button>
-             </div>
-            <div className="flex gap-2">
-                {isEditing && (
-                    <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
-                )}
-                <Button onClick={handlePost} disabled={(!content.trim() && !media) || false}>
-                    {isEditing ? 'Update Post' : 'Post'}
-                </Button>
-            </div>
-        </div>
+         <div className="p-1 flex justify-around items-center">
+            <input
+                type="file"
+                accept="image/*,video/*"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden"
+            />
+            <Button variant="ghost" className="text-muted-foreground w-full flex-1" onClick={() => toast({description: "Coming soon!"})}>
+                <Video className="text-red-500" />
+                <span className="ml-2 hidden sm:inline">Live Video</span>
+            </Button>
+            <Button variant="ghost" className="text-muted-foreground w-full flex-1" onClick={() => fileInputRef.current?.click()}>
+                <ImageIcon className="text-green-500" />
+                <span className="ml-2 hidden sm:inline">Photo/Video</span>
+            </Button>
+            <Button variant="ghost" className="text-muted-foreground w-full flex-1" onClick={() => toast({description: "Coming soon!"})}>
+                <Code className="text-blue-500" />
+                <span className="ml-2 hidden sm:inline">Code</span>
+            </Button>
+         </div>
     </Card>
   );
 };
