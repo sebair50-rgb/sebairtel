@@ -6,11 +6,12 @@ import { useAppContext } from '@/store/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Send, X, Code } from 'lucide-react';
+import { Image as ImageIcon, Send, X, Code, Video } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Separator } from '../ui/separator';
 
 const CreatePostCard = () => {
   const { addPost, updatePost, currentUser, editingPost, cancelEditPost } = useAppContext();
@@ -33,11 +34,9 @@ const CreatePostCard = () => {
         } else {
             setMedia(null);
         }
-        // Scroll to the top to make the editing card visible
         cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     } else {
-        // Reset form when not editing
         setContent('');
         setMedia(null);
         setIsCodeMode(false);
@@ -46,7 +45,14 @@ const CreatePostCard = () => {
 
 
   const handlePost = async () => {
-    if (!content.trim()) return;
+    if (!content.trim() && !media) {
+        toast({
+            variant: "destructive",
+            title: "Post is empty",
+            description: "Please write something or add media to your post.",
+        });
+        return
+    };
 
     let postData: any = { content };
     if (isCodeMode) {
@@ -96,75 +102,68 @@ const CreatePostCard = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  const toggleCodeMode = () => {
-      setIsCodeMode(!isCodeMode);
-      setMedia(null);
-  }
   
   if (!currentUser) return null;
 
   return (
-    <Card ref={cardRef} className={isEditing ? 'ring-2 ring-primary border-primary' : ''}>
-      <CardContent className="p-4 space-y-4">
+    <Card ref={cardRef} className={cn("overflow-hidden", isEditing ? 'ring-2 ring-primary border-primary' : '')}>
+      <CardContent className="p-4 space-y-3">
         {isEditing && (
-            <div className="text-sm font-semibold text-primary">Editing post...</div>
+            <div className="text-sm font-semibold text-primary px-2">Editing post...</div>
         )}
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <Avatar>
             <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
             <AvatarFallback>{currentUser?.name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <Textarea
-            placeholder={isCodeMode ? "Share your code snippet..." : "What's on your mind, my friend?"}
+            placeholder="What's on your mind?"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className={cn(
-                "flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0",
-                isCodeMode && "font-code text-sm"
-            )}
-            dir={isCodeMode ? "ltr" : undefined}
+            className="flex-1 bg-muted border-none focus-visible:ring-1 focus-visible:ring-offset-0 text-base"
           />
         </div>
         {media && (
-            <div className="ml-16 relative w-full max-w-sm">
+            <div className="ml-14 relative w-full max-w-md rounded-lg overflow-hidden border">
                 {media.type === 'image' ? (
-                     <Image src={media.src} alt="Preview" width={400} height={400} className="rounded-lg object-cover w-full h-auto"/>
+                     <Image src={media.src} alt="Preview" width={400} height={400} className="object-cover w-full h-auto"/>
                 ) : (
-                    <video src={media.src} controls className="rounded-lg w-full" />
+                    <video src={media.src} controls className="w-full" />
                 )}
-                 <button onClick={() => setMedia(null)} className="absolute -top-2 -right-2 bg-background rounded-full p-0.5 border">
+                 <Button variant="destructive" size="icon" onClick={() => setMedia(null)} className="absolute top-2 right-2 h-7 w-7">
                     <X size={16} />
-                </button>
+                </Button>
             </div>
         )}
-        <div className="flex justify-between items-center ml-16">
-          <div className="flex items-center gap-1">
-             <input
-                type="file"
-                accept="image/*,video/*"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                className="hidden"
-            />
-            <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} disabled={isCodeMode}>
-                <ImageIcon className={cn("text-primary", isCodeMode && "text-muted-foreground")} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={toggleCodeMode}>
-                <Code className={cn(isCodeMode && "text-primary")} />
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            {isEditing && (
-                 <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
-            )}
-            <Button onClick={handlePost} disabled={!content.trim()}>
-                <Send className="mr-2" />
-                {isEditing ? 'Update' : 'Post'}
-            </Button>
-          </div>
+        </CardContent>
+        <Separator/>
+         <div className="p-2 flex justify-between items-center">
+             <div className='flex'>
+                <input
+                    type="file"
+                    accept="image/*,video/*"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                />
+                <Button variant="ghost" className="text-muted-foreground" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon className="text-green-500" />
+                    <span className="ml-2">Photo/Video</span>
+                </Button>
+                 <Button variant="ghost" className="text-muted-foreground" onClick={() => toast({description: "Coming soon!"})}>
+                    <Code className="text-blue-500" />
+                    <span className="ml-2">Code</span>
+                </Button>
+             </div>
+            <div className="flex gap-2">
+                {isEditing && (
+                    <Button variant="outline" onClick={cancelEditPost}>Cancel</Button>
+                )}
+                <Button onClick={handlePost} disabled={(!content.trim() && !media) || false}>
+                    {isEditing ? 'Update Post' : 'Post'}
+                </Button>
+            </div>
         </div>
-      </CardContent>
     </Card>
   );
 };

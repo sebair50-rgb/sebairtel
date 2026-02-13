@@ -6,7 +6,7 @@ import type { Post } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit, Flag, Globe } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Edit, Flag, Globe, ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -33,12 +33,6 @@ import { useTranslation } from '@/store/LanguageContext';
 import CodeBlock from '../chat/CodeBlock';
 import { Textarea } from '../ui/textarea';
 import { formatDistanceToNow } from 'date-fns';
-
-const ThumbsUpIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-blue-600">
-        <path d="M21.3,10.21,16.83,5.74a2,2,0,0,0-2.83,0l-1.4,1.4a1,1,0,0,1-1.41,0l-1-1a1,1,0,0,0-1.41,0l-1,1a1,1,0,0,1-1.41,0L6,5.41a2,2,0,0,0-2.83,0L2.7,5.87A1,1,0,0,0,2.7,7.3L4,8.59l-.29.29a1,1,0,0,0,0,1.41l1.41,1.41a1,1,0,0,0,1.41,0l.29-.29,1.41,1.41a1,1,0,0,0,1.41,0l1-1a1,1,0,0,1,1.41,0l1,1a1,1,0,0,0,1.41,0l.29-.29,1.41,1.41a1,1,0,0,0,1.41,0l1.41-1.41,2.83-2.83A1,1,0,0,0,21.3,10.21ZM5.83,18.59a2,2,0,0,0,2.83,0l1.41-1.41,1.41,1.41a2,2,0,0,0,2.83,0l1.41-1.41,1.41,1.41a2,2,0,0,0,2.83,0l1.41-1.41,1-1.2-7.5-7.5L5.12,17.39Z" />
-    </svg>
-);
 
 
 interface PostCardProps {
@@ -131,49 +125,48 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
   
   const getReactionSummary = () => {
-    if (!post.reactions || post.reactions.length === 0) return null;
-
-    const reactionCounts: { [key: string]: number } = {};
-    post.reactions.forEach(r => {
-        reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
-    });
-
-    const total = post.reactions.length;
+    const total = post.reactions?.length || 0;
+    if (total === 0) return null;
 
     return (
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-             <div className="flex items-center">
-                <Heart width={16} height={16} className="text-red-500 fill-current" />
-                <div className="ml-1 text-sm text-gray-500">
-                    {total.toLocaleString()}
-                </div>
+            <div className="flex items-center -space-x-1">
+                 <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary border-2 border-background">
+                    <ThumbsUp size={12} className="text-white"/>
+                 </div>
+                 <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-background">
+                    <Heart size={12} className="text-white fill-white"/>
+                 </div>
             </div>
+            <span className="text-sm">{total.toLocaleString()}</span>
         </div>
     );
   }
 
   const isCodePost = post.mediaType === 'code' || (post.content.includes('```') && !post.mediaSrc);
+  const timeAgo = post.timestamp ? formatDistanceToNow(post.timestamp.toDate(), { addSuffix: true }) : post.time;
+
 
   return (
     <>
     <Card className="overflow-hidden bg-card shadow-sm border rounded-lg">
-      <CardHeader className="flex flex-row-reverse items-center justify-between gap-4 p-4">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 p-4">
         <div className="flex items-center gap-3 cursor-pointer" onClick={handleNavigateToProfile}>
-             <div className="flex-1 text-right">
-                <p className="font-bold">{post.user}</p>
-                <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                    <span>{post.time}</span>
-                    <Globe size={12} />
-                </div>
-            </div>
             <Avatar>
                 <AvatarImage src={post.avatar} alt={post.user} />
                 <AvatarFallback>{post.user?.charAt(0)}</AvatarFallback>
             </Avatar>
+             <div className="flex-1 text-left">
+                <p className="font-bold">{post.user}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{timeAgo}</span>
+                    <Globe size={12} />
+                </div>
+            </div>
         </div>
         
         <div className="flex items-center">
-            <Button variant="ghost" className="text-primary font-bold">Follow</Button>
+            <Button variant="link" className="text-primary font-bold px-2">Follow</Button>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -181,7 +174,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    {isOwnPost && (
+                    {isOwnPost ? (
                         <>
                             <DropdownMenuItem onClick={handleEdit}>
                                 <Edit className="mr-2 h-4 w-4" />
@@ -193,14 +186,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                         </>
+                    ) : (
+                         <DropdownMenuItem onClick={handleReport}>
+                            <Flag className="mr-2 h-4 w-4" />
+                            <span>Report Post</span>
+                        </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={handleShare}>
+                     <DropdownMenuItem onClick={handleShare}>
                         <Share2 className="mr-2 h-4 w-4" />
                         <span>Share</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleReport}>
-                        <Flag className="mr-2 h-4 w-4" />
-                        <span>Report Post</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -237,18 +231,18 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </div>
       
       <div className="flex justify-around items-center text-muted-foreground border-t p-1">
-          <Button variant="ghost" size="lg" className={cn("w-full flex items-center gap-2", myReaction && 'text-blue-600 font-bold')} onClick={() => handleReaction('like')}>
-              <ThumbsUpIcon />
+          <Button variant="ghost" size="lg" className={cn("w-full flex items-center gap-2", myReaction?.emoji === '👍' && 'text-blue-600 font-bold')} onClick={() => handleReaction('👍')}>
+              <ThumbsUp />
               <span className="text-sm">Like</span>
           </Button>
 
           <Button variant="ghost" size="lg" className="w-full flex items-center gap-2" onClick={() => setShowComments(!showComments)}>
-              <MessageCircle size={20} />
+              <MessageCircle />
               <span className="text-sm">Comment</span>
           </Button>
           
           <Button variant="ghost" size="lg" className="w-full flex items-center gap-2" onClick={handleShare}>
-              <Share2 size={20} />
+              <Share2 />
               <span className="text-sm">Share</span>
           </Button>
       </div>
