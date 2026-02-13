@@ -1,7 +1,7 @@
+
 "use client";
 
 import React, { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Video, Briefcase, Store, Globe, Notebook, Home } from 'lucide-react';
 
@@ -43,28 +43,26 @@ const SocialFeed = () => {
                     </div>
                 </div>
             
-                <div className="flex-1 overflow-y-auto">
-                    <TabsContent value="posts" className="mt-0">
-                        <div className="max-w-2xl mx-auto p-4 space-y-4">
-                            <CreatePostCard />
-                            {posts.map(post => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="live" className="mt-0 p-4 md:p-6">
-                        <LiveFeed />
-                    </TabsContent>
-                    <TabsContent value="news" className="mt-0 p-4 md:p-6">
-                        <NewsView />
-                    </TabsContent>
-                    <TabsContent value="business" className="mt-0 p-4 md:p-6">
-                        <MarketView />
-                    </TabsContent>
-                    <TabsContent value="market" className="mt-0 p-4 md:p-6">
-                        <StoreView />
-                    </TabsContent>
-                </div>
+                <TabsContent value="posts" className="flex-1 overflow-y-auto mt-0">
+                    <div className="max-w-2xl mx-auto p-4 space-y-4">
+                        <CreatePostCard />
+                        {posts.map(post => (
+                            <PostCard key={post.id} post={post} />
+                        ))}
+                    </div>
+                </TabsContent>
+                <TabsContent value="live" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <LiveFeed />
+                </TabsContent>
+                <TabsContent value="news" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <NewsView />
+                </TabsContent>
+                <TabsContent value="business" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <MarketView />
+                </TabsContent>
+                <TabsContent value="market" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <StoreView />
+                </TabsContent>
              </Tabs>
         </div>
     );
