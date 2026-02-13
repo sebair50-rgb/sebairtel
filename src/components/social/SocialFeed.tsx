@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -17,14 +16,14 @@ import AppHeader from '../layout/AppHeader';
 
 const SocialFeed = () => {
     const { posts } = useAppContext();
-    const [activeSocialTab, setActiveSocialTab] = useState('feed');
+    const [activeSocialTab, setActiveSocialTab] = useState('posts');
 
     const socialTabs = [
         { value: 'news', label: 'News', icon: Globe },
         { value: 'business', label: 'Business', icon: Briefcase },
         { value: 'market', label: 'Market', icon: Store },
         { value: 'live', label: 'Live', icon: Video },
-        { value: 'feed', label: 'Posts', icon: Notebook },
+        { value: 'posts', label: 'Posts', icon: Notebook },
     ];
     
     return (
@@ -45,28 +44,26 @@ const SocialFeed = () => {
                 </div>
             
                 <div className="flex-1 overflow-y-auto">
-                    <TabsContent value="feed" className="mt-0">
-                        <div className="max-w-2xl mx-auto py-4 space-y-4">
+                    <TabsContent value="posts" className="mt-0">
+                        <div className="max-w-2xl mx-auto p-4 space-y-4">
                             <CreatePostCard />
                             {posts.map(post => (
                                 <PostCard key={post.id} post={post} />
                             ))}
                         </div>
                     </TabsContent>
-                    <div className="p-4 md:p-6">
-                        <TabsContent value="live" className="mt-0">
-                            <LiveFeed />
-                        </TabsContent>
-                         <TabsContent value="news" className="mt-0">
-                            <NewsView />
-                        </TabsContent>
-                        <TabsContent value="business" className="mt-0">
-                            <MarketView />
-                        </TabsContent>
-                        <TabsContent value="market" className="mt-0">
-                            <StoreView />
-                        </TabsContent>
-                    </div>
+                    <TabsContent value="live" className="mt-0 p-4 md:p-6">
+                        <LiveFeed />
+                    </TabsContent>
+                    <TabsContent value="news" className="mt-0 p-4 md:p-6">
+                        <NewsView />
+                    </TabsContent>
+                    <TabsContent value="business" className="mt-0 p-4 md:p-6">
+                        <MarketView />
+                    </TabsContent>
+                    <TabsContent value="market" className="mt-0 p-4 md:p-6">
+                        <StoreView />
+                    </TabsContent>
                 </div>
              </Tabs>
         </div>
