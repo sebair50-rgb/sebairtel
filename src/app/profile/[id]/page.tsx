@@ -7,7 +7,7 @@ import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info, FileText, Mail, Phone, GraduationCap, Briefcase, Download, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, UserPlus, MessageSquare, MoreHorizontal, UserX, Share2, UserMinus, Home, MapPin, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -19,28 +19,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PostCard from '@/components/social/PostCard';
-import { Separator } from '@/components/ui/separator';
 
 
 const UserProfilePage = () => {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { users, currentUser, friends, createChat, setSelectedChatId, setActiveTab, unfriendUser, posts } = useAppContext();
+    const { users, currentUser, friends, createChat, setSelectedChatId, setActiveTab, unfriendUser } = useAppContext();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
-    const [userPosts, setUserPosts] = useState<typeof posts>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const userId = params.id as string;
@@ -52,12 +41,10 @@ const UserProfilePage = () => {
             
             if (foundUser) {
                 setProfileUser(foundUser);
-                const postsForUser = posts.filter(p => p.userId === foundUser.id);
-                setUserPosts(postsForUser);
             }
             setIsLoading(false);
         }
-    }, [userId, users, currentUser, isOwnProfile, posts]);
+    }, [userId, users, currentUser, isOwnProfile]);
 
     const handleMessage = async () => {
         if (!profileUser) return;
@@ -204,55 +191,46 @@ const UserProfilePage = () => {
                     )}
                     
                     <div className="mt-4 border-t px-4">
-                        <Tabs defaultValue="posts" className="w-full">
+                        <Tabs defaultValue="about" className="w-full">
                             <TabsList className="grid w-full grid-cols-2 bg-transparent mt-2">
-                                <TabsTrigger value="posts">المنشورات</TabsTrigger>
-                                <TabsTrigger value="photos">الصور</TabsTrigger>
+                                <TabsTrigger value="about">About</TabsTrigger>
+                                <TabsTrigger value="photos">Photos</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="posts" className="mt-4">
-                                <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-4">
-                                    <div className="space-y-4">
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle>التفاصيل</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="space-y-4">
-                                                {profileUser.city && (
-                                                    <div className="flex items-center gap-3 text-muted-foreground">
-                                                        <Home className="w-5 h-5" />
-                                                        <span>Lives in {profileUser.city}</span>
-                                                    </div>
-                                                )}
-                                                {profileUser.from && (
-                                                    <div className="flex items-center gap-3 text-muted-foreground">
-                                                        <MapPin className="w-5 h-5" />
-                                                        <span>From {profileUser.from}</span>
-                                                    </div>
-                                                )}
-                                                {(!profileUser.city && !profileUser.from) && (
-                                                    <div className="flex items-center gap-3 text-muted-foreground">
-                                                        <Info className="w-5 h-5" />
-                                                        <span>No location details available.</span>
-                                                    </div>
-                                                )}
-                                                {profileUser.bio && (
-                                                    <div className="flex items-start gap-3 text-muted-foreground pt-2 border-t">
-                                                        <p>{profileUser.bio}</p>
-                                                    </div>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <h3 className="font-bold text-xl">منشورات {profileUser.name}</h3>
-                                        {userPosts.length > 0 ? (
-                                            userPosts.map(post => <PostCard key={post.id} post={post} />)
-                                        ) : (
-                                            <Card className="p-8 text-center text-muted-foreground">
-                                                <p>No posts yet.</p>
-                                            </Card>
-                                        )}
-                                    </div>
+                            <TabsContent value="about" className="mt-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Details</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {profileUser.city && (
+                                                <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <Home className="w-5 h-5" />
+                                                    <span>Lives in {profileUser.city}</span>
+                                                </div>
+                                            )}
+                                            {profileUser.from && (
+                                                <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <MapPin className="w-5 h-5" />
+                                                    <span>From {profileUser.from}</span>
+                                                </div>
+                                            )}
+                                            {(!profileUser.city && !profileUser.from) && (
+                                                <div className="flex items-center gap-3 text-muted-foreground">
+                                                    <Info className="w-5 h-5" />
+                                                    <span>No location details available.</span>
+                                                </div>
+                                            )}
+                                            {profileUser.bio && (
+                                                <div className="flex items-start gap-3 text-muted-foreground pt-2 border-t">
+                                                    <p>{profileUser.bio}</p>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                    <Card className="p-8 text-center text-muted-foreground">
+                                        <p>Friends list will be shown here.</p>
+                                    </Card>
                                 </div>
                             </TabsContent>
                             <TabsContent value="photos" className="mt-4">

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import MainSidebar from '@/components/layout/MainSidebar';
-import SocialFeed from '@/components/social/SocialFeed';
+import CommunityPosts from '@/components/social/CommunityPosts';
 import SettingsView from '@/components/settings/SettingsView';
 import AIView from '../ai/AIView';
 import AppsView from '../apps/AppsView';
@@ -29,7 +29,7 @@ const AppShell = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'social':
-        return <SocialFeed />;
+        return <CommunityPosts />;
       case 'settings':
         return <SettingsView onLogout={handleLogout} />;
       case 'ai':
