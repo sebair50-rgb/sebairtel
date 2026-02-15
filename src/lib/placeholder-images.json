@@ -1,0 +1,127 @@
+{
+  "profile": {
+    "cover": {
+      "src": "https://picsum.photos/seed/prof-cover/1000/400",
+      "hint": "mountain landscape"
+    },
+    "gallery": [
+      {
+        "id": 1,
+        "src": "https://picsum.photos/seed/gal1/500/500",
+        "hint": "city architecture"
+      },
+      {
+        "id": 2,
+        "src": "https://picsum.photos/seed/gal2/500/500",
+        "hint": "nature forest"
+      },
+      {
+        "id": 3,
+        "src": "https://picsum.photos/seed/gal3/500/500",
+        "hint": "ocean wave"
+      },
+      {
+        "id": 4,
+        "src": "https://picsum.photos/seed/gal4/500/500",
+        "hint": "abstract art"
+      },
+      {
+        "id": 5,
+        "src": "https://picsum.photos/seed/gal5/500/500",
+        "hint": "night sky"
+      },
+      {
+        "id": 6,
+        "src": "https://picsum.photos/seed/gal6/500/500",
+        "hint": "desert dune"
+      }
+    ]
+  },
+  "news": [
+    {
+      "id": 1,
+      "src": "https://picsum.photos/seed/news1/600/400",
+      "hint": "artificial intelligence"
+    },
+    {
+      "id": 2,
+      "src": "https://picsum.photos/seed/news2/600/400",
+      "hint": "financial markets"
+    },
+    {
+      "id": 3,
+      "src": "https://picsum.photos/seed/news3/600/400",
+      "hint": "exoplanet space"
+    },
+    {
+      "id": 4,
+      "src": "https://picsum.photos/seed/news4/600/400",
+      "hint": "sports stadium"
+    }
+  ],
+  "live": {
+    "streams": [
+      {
+        "id": 1,
+        "src": "https://picsum.photos/seed/live1/600/400",
+        "hint": "person streaming"
+      },
+      {
+        "id": 2,
+        "src": "https://picsum.photos/seed/live2/600/400",
+        "hint": "live concert"
+      },
+      {
+        "id": 3,
+        "src": "https://picsum.photos/seed/live3/600/400",
+        "hint": "gaming setup"
+      }
+    ],
+    "past": [
+      {
+        "id": 1,
+        "src": "https://picsum.photos/seed/past1/600/400",
+        "hint": "presentation conference"
+      },
+      {
+        "id": 2,
+        "src": "https://picsum.photos/seed/past2/600/400",
+        "hint": "cooking show"
+      },
+      {
+        "id": 3,
+        "src": "https://picsum.photos/seed/past3/600/400",
+        "hint": "artist painting"
+      },
+      {
+        "id": 4,
+        "src": "https://picsum.photos/seed/past4/600/400",
+        "hint": "travel vlog"
+      }
+    ],
+    "placeholder": {
+      "src": "https://picsum.photos/seed/live-ph/1280/720",
+      "hint": "live stream broadcast"
+    }
+  },
+  "avatar": {
+    "generator": {
+      "src": "https://picsum.photos/seed/avatar-gen/600/400",
+      "hint": "avatar creation"
+    }
+  },
+  "call": {
+    "background": {
+      "src": "https://picsum.photos/seed/call-bg/800/1200",
+      "hint": "abstract background"
+    },
+    "remote": {
+      "src": "https://picsum.photos/seed/remote-call/800/1200",
+      "hint": "person talking"
+    },
+    "local": {
+      "src": "https://picsum.photos/seed/local-call/200/300",
+      "hint": "person selfie"
+    }
+  }
+}
