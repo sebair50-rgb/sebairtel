@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { Phone, Users, UserCog } from 'lucide-react';
+import { Phone, Users, UserCog, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CallsList from './CallsList';
 import ChatInterface from '../chat/ChatInterface';
@@ -16,7 +16,7 @@ interface CallsViewProps {
 }
 
 const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
-    const { selectedChatId, initialContactTab, setInitialContactTab } = useAppContext();
+    const { selectedChatId, initialContactTab, setInitialContactTab, friendRequests } = useAppContext();
     const [activeSubTab, setActiveSubTab] = React.useState(initialContactTab);
 
     useEffect(() => {
@@ -37,7 +37,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
     }
     
     const handleTabChange = (value: string) => {
-        const tab = value as 'chats' | 'friends';
+        const tab = value as 'chats' | 'friends' | 'requests';
         setActiveSubTab(tab);
         setInitialContactTab(tab);
     }

@@ -30,12 +30,16 @@ const UserProfilePage = () => {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { users, currentUser, friends, createChat, setSelectedChatId, setActiveTab, unfriendUser, sendFriendRequest } = useAppContext();
+    const { 
+        users, currentUser, createChat, setSelectedChatId, setActiveTab, 
+        unfriendUser, sendFriendRequest, acceptFriendRequest 
+    } = useAppContext();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isFriend, setIsFriend] = useState(false);
     const [requestSent, setRequestSent] = useState(false);
+    const [requestReceived, setRequestReceived] = useState(false);
 
     const userId = params.id as string;
     const isOwnProfile = userId === currentUser?.id;
@@ -46,12 +50,13 @@ const UserProfilePage = () => {
             
             if (foundUser) {
                 setProfileUser(foundUser);
-                setIsFriend(friends.some(f => f.id === foundUser.id));
-                setRequestSent(foundUser.requestSent || false);
+                setIsFriend(currentUser.friends?.includes(foundUser.id) || false);
+                setRequestSent(currentUser.friendRequestsSent?.includes(foundUser.id) || false);
+                setRequestReceived(currentUser.friendRequestsReceived?.includes(foundUser.id) || false);
             }
             setIsLoading(false);
         }
-    }, [userId, users, currentUser, isOwnProfile, friends]);
+    }, [userId, users, currentUser, isOwnProfile]);
 
     const handleMessage = async () => {
         if (!profileUser) return;
@@ -78,6 +83,12 @@ const UserProfilePage = () => {
                 description: error.message || "Could not send friend request."
             })
         }
+    }
+    
+    const handleAcceptFriend = async () => {
+        if (!profileUser) return;
+        await acceptFriendRequest(profileUser);
+        toast({ title: `You are now friends with ${profileUser.name}` });
     }
 
     const handleShareProfile = () => {
@@ -175,10 +186,20 @@ const UserProfilePage = () => {
                                     <MessageSquare size={20} className="mr-2" />
                                     Message
                                 </Button>
+                             ) : requestReceived ? (
+                                <Button className="flex-1 max-w-xs" onClick={handleAcceptFriend}>
+                                    <UserPlus size={20} className="mr-2" />
+                                    Accept Request
+                                </Button>
+                            ) : requestSent ? (
+                                <Button className="flex-1 max-w-xs" disabled>
+                                    <Check size={20} className="mr-2" />
+                                    Request Sent
+                                </Button>
                              ) : (
-                                <Button className="flex-1 max-w-xs" onClick={handleAddFriend} disabled={requestSent}>
-                                    {requestSent ? <Check size={20} className="mr-2" /> : <UserPlus size={20} className="mr-2" />}
-                                    {requestSent ? 'Request Sent' : 'Add Friend'}
+                                <Button className="flex-1 max-w-xs" onClick={handleAddFriend}>
+                                    <UserPlus size={20} className="mr-2" />
+                                    Add Friend
                                 </Button>
                              )}
                             

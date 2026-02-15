@@ -20,8 +20,6 @@ export interface User {
   id: string; // Changed to string for Firestore UID
   name: string;
   avatar: string; // Now represents photoURL
-  isFriend?: boolean;
-  requestSent?: boolean;
   email?: string;
   dob?: string;
   bio?: string;
@@ -29,6 +27,8 @@ export interface User {
   city?: string;
   from?: string;
   friends?: string[];
+  friendRequestsReceived?: string[];
+  friendRequestsSent?: string[];
   isOnline?: boolean;
   lastSeen?: Timestamp;
   settings?: any; // To store user-specific settings

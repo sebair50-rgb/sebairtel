@@ -7,7 +7,7 @@ import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, Timestamp
+  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, arrayRemove, Timestamp
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
@@ -65,16 +65,18 @@ interface AppContextType {
   setSelectedChatId: (id: string | null) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  initialContactTab: 'chats' | 'friends';
-  setInitialContactTab: (tab: 'chats' | 'friends') => void;
+  initialContactTab: 'chats' | 'friends' | 'requests';
+  setInitialContactTab: (tab: 'chats' | 'friends' | 'requests') => void;
   addMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp' | 'time'>) => Promise<void>;
   deleteMessage: (chatId: string, messageId: string) => Promise<void>;
   updateMessage: (chatId: string, messageId: string, updatedMessage: Partial<Message>) => Promise<void>;
   users: User[];
   friends: User[];
   suggestedUsers: User[];
-  setSuggestedUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  sendFriendRequest: (friend: User) => Promise<void>;
+  friendRequests: User[];
+  sendFriendRequest: (targetUser: User) => Promise<void>;
+  acceptFriendRequest: (requestingUser: User) => Promise<void>;
+  declineFriendRequest: (requestingUser: User) => Promise<void>;
   createChat: (friend: User) => Promise<Chat | null>;
   unfriendUser: (friendId: string) => Promise<void>;
   callState: CallState;
@@ -136,12 +138,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState('social');
   
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends'>('friends');
+  const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends' | 'requests'>('friends');
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 
   const [users, setUsers] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+  const [friendRequests, setFriendRequests] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -283,6 +286,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 name: authUser.displayName || 'New User',
                 email: authUser.email!,
                 avatar: authUser.photoURL || `https://placehold.co/128x128/E6E6FA/333333.png?text=${(authUser.displayName || 'N').charAt(0)}`,
+                friends: [],
+                friendRequestsReceived: [],
+                friendRequestsSent: [],
                 isOnline: true,
                 lastSeen: serverTimestamp() as any,
                 settings: defaultSettings,
@@ -418,27 +424,36 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-      if (!currentUser || users.length === 0) return;
+      if (!currentUser || users.length === 0) {
+          setFriends([]);
+          setFriendRequests([]);
+          setSuggestedUsers([]);
+          return;
+      }
 
-      const chatPartnerIds = new Set(
-          chats.flatMap(chat => chat.users).filter(userId => userId !== currentUser.id)
-      );
-
+      const friendIds = new Set(currentUser.friends || []);
+      const sentRequestIds = new Set(currentUser.friendRequestsSent || []);
+      const receivedRequestIds = new Set(currentUser.friendRequestsReceived || []);
+      
       const friendsList: User[] = [];
+      const requestsList: User[] = [];
       const suggestionsList: User[] = [];
 
       users.forEach(user => {
-          if (chatPartnerIds.has(user.id)) {
+          if (friendIds.has(user.id)) {
               friendsList.push(user);
-          } else {
+          } else if (receivedRequestIds.has(user.id)) {
+              requestsList.push(user);
+          } else if (user.id !== currentUser.id && !sentRequestIds.has(user.id)) {
               suggestionsList.push(user);
           }
       });
       
       setFriends(friendsList);
+      setFriendRequests(requestsList);
       setSuggestedUsers(suggestionsList);
 
-  }, [users, chats, currentUser]);
+  }, [users, currentUser]);
   
   const getMessageDescription = (msg: Message): string => {
     switch (msg.type) {
@@ -589,20 +604,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const unfriendUser = async (friendId: string) => {
         if (!currentUser) return;
-        
-        // Find the chat document where the 'users' array contains both UIDs
-        const q = query(
-            collection(db, 'chats'),
-            where('users', 'array-contains', currentUser.id)
-        );
+        const currentUserRef = doc(db, 'users', currentUser.id);
+        const friendRef = doc(db, 'users', friendId);
+
+        const batch = writeBatch(db);
+        batch.update(currentUserRef, { friends: arrayRemove(friendId) });
+        batch.update(friendRef, { friends: arrayRemove(currentUser.id) });
+        await batch.commit();
+
+        const q = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
         const querySnapshot = await getDocs(q);
         const chatDoc = querySnapshot.docs.find(doc => doc.data().users.includes(friendId));
-
         if (chatDoc) {
             await deleteDoc(doc(db, 'chats', chatDoc.id));
-            setChats(prev => prev.filter(c => c.id !== chatDoc.id));
-        } else {
-             console.warn("No chat found to delete between these users.");
         }
     };
 
@@ -674,19 +688,54 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
   };
 
-  const sendFriendRequest = async (friend: User) => {
+  const sendFriendRequest = async (targetUser: User) => {
     if (!currentUser) return;
-    // Create a notification for the other user
-    await createNotification(friend.id, {
+    const currentUserRef = doc(db, 'users', currentUser.id);
+    const targetUserRef = doc(db, 'users', targetUser.id);
+
+    const batch = writeBatch(db);
+    batch.update(currentUserRef, { friendRequestsSent: arrayUnion(targetUser.id) });
+    batch.update(targetUserRef, { friendRequestsReceived: arrayUnion(currentUser.id) });
+    await batch.commit();
+
+    await createNotification(targetUser.id, {
         type: 'friend_request',
         message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
         fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
-        link: `/users` // or a dedicated friend requests page
+        link: `/contact`
     });
 
-    // Update the state of the suggested user to show "Request Sent"
-    setSuggestedUsers(prev => prev.map(u => u.id === friend.id ? {...u, requestSent: true} : u));
-  }
+    setCurrentUser(prev => ({...prev!, friendRequestsSent: [...(prev?.friendRequestsSent || []), targetUser.id]}));
+  };
+
+  const acceptFriendRequest = async (requestingUser: User) => {
+    if (!currentUser) return;
+    const currentUserRef = doc(db, 'users', currentUser.id);
+    const requestingUserRef = doc(db, 'users', requestingUser.id);
+    
+    const batch = writeBatch(db);
+    batch.update(currentUserRef, { friends: arrayUnion(requestingUser.id), friendRequestsReceived: arrayRemove(requestingUser.id) });
+    batch.update(requestingUserRef, { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
+    await batch.commit();
+    
+    await createNotification(requestingUser.id, {
+        type: 'new_friend',
+        message: `You and <strong>${currentUser.name}</strong> are now friends.`,
+        fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
+        link: `/profile/${currentUser.id}`
+    });
+  };
+
+  const declineFriendRequest = async (requestingUser: User) => {
+      if (!currentUser) return;
+      const currentUserRef = doc(db, 'users', currentUser.id);
+      const requestingUserRef = doc(db, 'users', requestingUser.id);
+      
+      const batch = writeBatch(db);
+      batch.update(currentUserRef, { friendRequestsReceived: arrayRemove(requestingUser.id) });
+      batch.update(requestingUserRef, { friendRequestsSent: arrayRemove(currentUser.id) });
+      await batch.commit();
+  };
   
   const markNotificationsAsRead = async () => {
     if (!currentUser || unreadNotificationCount === 0) return;
@@ -963,8 +1012,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     users,
     friends,
     suggestedUsers,
-    setSuggestedUsers,
+    friendRequests,
     sendFriendRequest,
+    acceptFriendRequest,
+    declineFriendRequest,
     createChat,
     unfriendUser,
     callState,
