@@ -36,20 +36,26 @@ const CommunityPosts = () => {
                     </div>
                 </div>
             
-                <div className="flex-1 overflow-y-auto">
-                    <TabsContent value="live" className="mt-0 p-4 md:p-6">
+                <TabsContent value="live" className="flex-1 overflow-y-auto mt-0">
+                    <div className="p-4 md:p-6">
                         <LiveFeed />
-                    </TabsContent>
-                    <TabsContent value="news" className="mt-0 p-4 md:p-6">
+                    </div>
+                </TabsContent>
+                <TabsContent value="news" className="flex-1 overflow-y-auto mt-0">
+                    <div className="p-4 md:p-6">
                         <NewsView />
-                    </TabsContent>
-                    <TabsContent value="business" className="mt-0 p-4 md:p-6">
+                    </div>
+                </TabsContent>
+                <TabsContent value="business" className="flex-1 overflow-y-auto mt-0">
+                    <div className="p-4 md:p-6">
                         <MarketView />
-                    </TabsContent>
-                    <TabsContent value="market" className="mt-0 p-4 md:p-6">
+                    </div>
+                </TabsContent>
+                <TabsContent value="market" className="flex-1 overflow-y-auto mt-0">
+                    <div className="p-4 md:p-6">
                         <StoreView />
-                    </TabsContent>
-                </div>
+                    </div>
+                </TabsContent>
              </Tabs>
         </div>
     );
