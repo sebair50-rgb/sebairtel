@@ -252,21 +252,27 @@
   },
   "usersView": {
     "friends": "Friends",
-    "searchPlaceholder": "Search for friends...",
+    "searchPlaceholder": "Search for people...",
     "suggestions": "Suggestions",
+    "requests": "Requests",
     "yourFriends": "Your Friends",
     "yourFriendsCount": "Your Friends ({count})",
     "suggestionsCount": "People You May Know ({count})",
+    "requestsCount": "Friend Requests ({count})",
     "add": "Add",
-    "sent": "Sent",
     "message": "Message",
     "noResults": "No results found for \"{searchTerm}\"",
-    "noFriends": "You don't have any friends yet.",
-    "noFriendsDesc": "Add friends to start communicating!",
+    "noFriends": "You haven't added any friends yet.",
+    "noFriendsDesc": "Find people in the \"Suggestions\" tab!",
+    "noRequests": "You have no pending friend requests.",
     "noSuggestions": "No new suggestions at this time.",
     "noSuggestionsDesc": "Check back later.",
     "requestSent": "Request Sent!",
     "requestSentDesc": "A friend request has been sent to {name}.",
+    "friendAddedTitle": "Friend Added",
+    "friendAddedDesc": "You and {name} are now friends.",
+    "requestDeclinedTitle": "Request Declined",
+    "requestDeclinedDesc": "You have declined the friend request from {name}.",
     "requestError": "An error occurred",
     "requestErrorDesc": "We couldn't send the friend request. Please try again."
   },
@@ -525,5 +531,3 @@
     "noNotificationsDesc": "Notifications about new interactions will appear here."
   }
 }
-
-    

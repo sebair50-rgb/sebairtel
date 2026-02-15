@@ -10,6 +10,7 @@ import UsersView from '../users/UsersView';
 import { useAppContext } from '@/store/AppContext';
 import { MessageSquare } from 'lucide-react';
 import AppHeader from '../layout/AppHeader';
+import { useTranslation } from '@/store/LanguageContext';
 
 interface CallsViewProps {
   setActiveTab: (tab: string) => void;
@@ -18,6 +19,7 @@ interface CallsViewProps {
 const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
     const { selectedChatId, initialContactTab, setInitialContactTab, friendRequests } = useAppContext();
     const [activeSubTab, setActiveSubTab] = React.useState(initialContactTab);
+    const { t } = useTranslation();
 
     useEffect(() => {
         setActiveSubTab(initialContactTab);
@@ -27,7 +29,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
         <div className="flex flex-col items-center justify-center h-full text-center p-8 mt-16">
             <Icon size={64} className="text-muted-foreground mb-4" />
             <h2 className="text-2xl font-bold">{title}</h2>
-            <p className="text-muted-foreground mt-2">This feature will be available soon!</p>
+            <p className="text-muted-foreground mt-2">{t('callsView.comingSoon')}</p>
         </div>
     );
 
@@ -44,25 +46,25 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-100">
-             <AppHeader title="Contact" icon={Phone} />
+             <AppHeader title={t('callsView.contact')} icon={Phone} />
              <Tabs value={activeSubTab} onValueChange={handleTabChange} className="w-full flex flex-col flex-1">
                 <div className="px-4 md:px-6 pt-4 bg-background border-b">
                     <TabsList className="grid w-full grid-cols-4 sm:grid-cols-4 gap-2 h-auto bg-amber-100 dark:bg-stone-900 p-2">
                          <TabsTrigger value="chats" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <MessageSquare className="mr-1 sm:mr-2" />
-                            My Chats
+                            {t('callsView.myChats')}
                         </TabsTrigger>
                          <TabsTrigger value="friends" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Users className="mr-1 sm:mr-2" />
-                            My Friends
+                            {t('callsView.myFriends')}
                         </TabsTrigger>
                          <TabsTrigger value="calls" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <Phone className="mr-1 sm:mr-2" />
-                            My Calls
+                            {t('callsView.myCalls')}
                         </TabsTrigger>
                         <TabsTrigger value="groups" className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
                             <UserCog className="mr-1 sm:mr-2" />
-                            My Groups
+                            {t('callsView.myGroups')}
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -76,7 +78,7 @@ const CallsView: React.FC<CallsViewProps> = ({ setActiveTab }) => {
                     <CallsList />
                 </TabsContent>
                  <TabsContent value="groups" className="flex-1 bg-white">
-                    <ComingSoonContent title="Groups" icon={UserCog} />
+                    <ComingSoonContent title={t('callsView.myGroups')} icon={UserCog} />
                 </TabsContent>
             </Tabs>
         </div>

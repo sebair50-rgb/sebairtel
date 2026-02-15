@@ -13,6 +13,7 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/store/LanguageContext';
 
 const CallIcon = ({ type }: { type: Call['type'] }) => {
     switch (type) {
@@ -33,6 +34,7 @@ const CallsList = () => {
     const [filter, setFilter] = React.useState<'all' | 'missed'>('all');
     const { toast } = useToast();
     const router = useRouter();
+    const { t } = useTranslation();
 
     const filteredCalls = filter === 'missed' ? calls.filter(call => call.type === 'missed') : calls;
 
@@ -45,7 +47,7 @@ const CallsList = () => {
         if (user) {
             initiateCall(user, 'audio');
         } else {
-            toast({ variant: 'destructive', description: "User not found to start the call." });
+            toast({ variant: 'destructive', description: t('callsList.userNotFound') });
         }
     }
 
@@ -62,9 +64,18 @@ const CallsList = () => {
         const userForMissedCall = suggestedUsers[0];
         if (userForMissedCall) {
             addMissedCall(userForMissedCall);
-            toast({ description: `Added a missed call from ${userForMissedCall.name}`});
+            toast({ description: t('callsList.addedMissedCall', { name: userForMissedCall.name })});
         } else {
-            toast({ variant: 'destructive', description: "No available users to add a missed call." });
+            toast({ variant: 'destructive', description: t('callsList.noUserForMissed') });
+        }
+    }
+    
+    const getCallTypeText = (type: Call['type']) => {
+        switch (type) {
+            case 'incoming': return t('callsList.incomingCall');
+            case 'outgoing': return t('callsList.outgoingCall');
+            case 'missed': return t('callsList.missedCall');
+            default: return '';
         }
     }
 
@@ -73,12 +84,12 @@ const CallsList = () => {
             <div className="px-4 md:px-0">
                 <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setFilter(value as any)}>
                     <TabsList className="grid w-full grid-cols-2 gap-1 bg-slate-200">
-                        <TabsTrigger value="all">All Calls</TabsTrigger>
-                        <TabsTrigger value="missed">Missed</TabsTrigger>
+                        <TabsTrigger value="all">{t('callsList.all')}</TabsTrigger>
+                        <TabsTrigger value="missed">{t('callsList.missed')}</TabsTrigger>
                     </TabsList>
                 </Tabs>
                 <Button onClick={handleAddMissedCall} variant="outline" className="w-full mt-2">
-                    Add Missed Call (Demo)
+                    {t('callsList.addMissedCall')}
                 </Button>
             </div>
             <ScrollArea className="flex-1 mt-4">
@@ -95,7 +106,7 @@ const CallsList = () => {
                                         <p className={cn("font-semibold", call.type === 'missed' && 'text-destructive')}>{call.user}</p>
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <CallIcon type={call.type} />
-                                            <span>{call.type === 'incoming' ? 'Incoming call' : call.type === 'outgoing' ? 'Outgoing call' : 'Missed call'}</span>
+                                            <span>{getCallTypeText(call.type)}</span>
                                             <span>&middot;</span>
                                             <span>{call.time}</span>
                                         </div>
@@ -110,9 +121,9 @@ const CallsList = () => {
                 ) : (
                     <div className="text-center text-muted-foreground pt-16">
                         <PhoneMissed size={48} className="mx-auto mb-4" />
-                        <p className="font-semibold">No Calls</p>
+                        <p className="font-semibold">{t('callsList.noCalls')}</p>
                         <p className="text-sm">
-                            {filter === 'missed' ? 'You have no missed calls.' : 'You haven\'t made or received any calls yet.'}
+                            {filter === 'missed' ? t('callsList.noMissedCallsDesc') : t('callsList.noCallsDesc')}
                         </p>
                     </div>
                 )}

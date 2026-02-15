@@ -255,18 +255,24 @@
     "searchPlaceholder": "ابحث عن أصدقاء...",
     "suggestions": "اقتراحات",
     "yourFriends": "أصدقاؤك",
+    "requests": "الطلبات",
     "yourFriendsCount": "أصدقاؤك ({count})",
     "suggestionsCount": "أشخاص قد تعرفهم ({count})",
+    "requestsCount": "طلبات الصداقة ({count})",
     "add": "إضافة",
-    "sent": "أُرسل",
     "message": "مراسلة",
     "noResults": "لم يتم العثور على نتائج لـ \"{searchTerm}\"",
     "noFriends": "ليس لديك أصدقاء بعد.",
-    "noFriendsDesc": "أضف أصدقاء لبدء التواصل!",
+    "noFriendsDesc": "ابحث عن أشخاص في علامة التبويب \"اقتراحات\"!",
+    "noRequests": "ليس لديك طلبات صداقة معلقة.",
     "noSuggestions": "لا توجد اقتراحات جديدة في الوقت الحالي.",
     "noSuggestionsDesc": "تحقق مرة أخرى لاحقًا.",
     "requestSent": "تم إرسال الطلب!",
     "requestSentDesc": "تم إرسال طلب صداقة إلى {name}.",
+    "friendAddedTitle": "تمت إضافة الصديق",
+    "friendAddedDesc": "أنت و {name} الآن أصدقاء.",
+    "requestDeclinedTitle": "تم رفض الطلب",
+    "requestDeclinedDesc": "لقد رفضت طلب الصداقة من {name}.",
     "requestError": "حدث خطأ",
     "requestErrorDesc": "لم نتمكن من إرسال طلب الصداقة. يرجى المحاولة مرة أخرى."
   },
@@ -525,5 +531,3 @@
     "noNotificationsDesc": "ستظهر هنا الإشعارات حول التفاعلات الجديدة."
   }
 }
-
-    

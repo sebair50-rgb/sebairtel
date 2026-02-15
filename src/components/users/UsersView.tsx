@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
+import { useTranslation } from '@/store/LanguageContext';
 
 interface UsersViewProps {
   setActiveTab: (tab: string) => void;
@@ -30,20 +31,21 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const { toast } = useToast();
     const [activeList, setActiveList] = useState<'friends' | 'suggestions' | 'requests'>('friends');
     const router = useRouter();
+    const { t } = useTranslation();
 
     const handleAddFriend = async (user: UserType) => {
         try {
             await sendFriendRequest(user);
             toast({
-                title: "Request Sent!",
-                description: `A friend request has been sent to ${user.name}.`,
+                title: t('usersView.requestSent'),
+                description: t('usersView.requestSentDesc', { name: user.name }),
             });
         } catch (error) {
             console.error(error);
             toast({
                 variant: 'destructive',
-                title: "An error occurred",
-                description: "We couldn't send the friend request. Please try again.",
+                title: t('usersView.requestError'),
+                description: t('usersView.requestErrorDesc'),
             });
         }
     };
@@ -58,16 +60,16 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const handleAccept = async (user: UserType) => {
         await acceptFriendRequest(user);
         toast({
-            title: 'Friend Added',
-            description: `You and ${user.name} are now friends.`
+            title: t('usersView.friendAddedTitle'),
+            description: t('usersView.friendAddedDesc', { name: user.name })
         });
     };
     
     const handleDecline = async (user: UserType) => {
         await declineFriendRequest(user);
         toast({
-            title: 'Request Declined',
-            description: `You have declined the friend request from ${user.name}.`
+            title: t('usersView.requestDeclinedTitle'),
+            description: t('usersView.requestDeclinedDesc', { name: user.name })
         });
     }
 
@@ -82,17 +84,17 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     switch (activeList) {
         case 'friends':
             listToShow = filteredFriends;
-            title = `Your Friends (${filteredFriends.length})`;
+            title = t('usersView.yourFriendsCount', { count: filteredFriends.length });
             actionType = 'message';
             break;
         case 'suggestions':
             listToShow = filteredSuggestedUsers;
-            title = `People You May Know (${filteredSuggestedUsers.length})`;
+            title = t('usersView.suggestionsCount', { count: filteredSuggestedUsers.length });
             actionType = 'add';
             break;
         case 'requests':
             listToShow = filteredFriendRequests;
-            title = `Friend Requests (${filteredFriendRequests.length})`;
+            title = t('usersView.requestsCount', { count: filteredFriendRequests.length });
             actionType = 'request';
             break;
     }
@@ -127,17 +129,17 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                     disabled={user.friendRequestsSent?.includes(user.id)}
                 >
                     <UserPlus size={16} className="mr-1" />
-                    Add
+                    {t('usersView.add')}
                 </Button>
             ) : action === 'message' ? (
                 <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
                     <MessageSquare size={16} className="mr-1" />
-                    Message
+                    {t('usersView.message')}
                 </Button>
             ) : (
                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={(e) => {e.stopPropagation(); handleDecline(user)}}>Decline</Button>
-                    <Button size="sm" onClick={(e) => {e.stopPropagation(); handleAccept(user)}}>Accept</Button>
+                    <Button variant="outline" size="sm" onClick={(e) => {e.stopPropagation(); handleDecline(user)}}>{t('liveStreamPage.decline')}</Button>
+                    <Button size="sm" onClick={(e) => {e.stopPropagation(); handleAccept(user)}}>{t('liveStreamPage.accept')}</Button>
                 </div>
             )}
         </motion.div>
@@ -147,7 +149,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
         <div className="w-full flex flex-col h-full bg-white">
             <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Friends</h1>
+                    <h1 className="text-2xl font-bold">{t('usersView.friends')}</h1>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowSearch(!showSearch)}>
                         <Search />
                     </Button>
@@ -163,7 +165,7 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search for people..."
+                                placeholder={t('usersView.searchPlaceholder')}
                                 className="w-full rounded-full bg-slate-100 h-12 pl-12 text-base border-slate-200 focus:border-primary"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -178,21 +180,21 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         className="rounded-full"
                         onClick={() => setActiveList('friends')}
                     >
-                        Your Friends
+                        {t('usersView.yourFriends')}
                     </Button>
                     <Button 
                         variant={activeList === 'suggestions' ? 'secondary' : 'ghost'} 
                         className="rounded-full"
                         onClick={() => setActiveList('suggestions')}
                     >
-                        Suggestions
+                        {t('usersView.suggestions')}
                     </Button>
                      <Button 
                         variant={activeList === 'requests' ? 'secondary' : 'ghost'} 
                         className="rounded-full relative"
                         onClick={() => setActiveList('requests')}
                     >
-                        Requests
+                        {t('usersView.requests')}
                         {friendRequests.length > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{friendRequests.length}</Badge>}
                     </Button>
                 </div>
@@ -217,18 +219,18 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                         <div className="text-center text-muted-foreground pt-16">
                             <p className="font-semibold">
                                 {searchTerm 
-                                    ? `No results found for "${searchTerm}"`
+                                    ? t('usersView.noResults', { searchTerm })
                                     : (activeList === 'friends' 
-                                        ? 'You haven\'t added any friends yet.'
+                                        ? t('usersView.noFriends')
                                         : activeList === 'requests'
-                                        ? 'You have no pending friend requests.'
-                                        : 'No new suggestions at this time.')
+                                        ? t('usersView.noRequests')
+                                        : t('usersView.noSuggestions'))
                                 }
                             </p>
                             <p className="text-sm">
                                 {activeList === 'friends' && !searchTerm
-                                    ? 'Find people in the "Suggestions" tab!'
-                                    : !searchTerm && 'Check back later.'
+                                    ? t('usersView.noFriendsDesc')
+                                    : !searchTerm && t('usersView.noSuggestionsDesc')
                                 }
                             </p>
                         </div>

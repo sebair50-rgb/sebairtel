@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -7,10 +8,12 @@ import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { MessageSquare } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from '@/store/LanguageContext';
 
 const ChatInterface = () => {
   const { chats, selectedChatId, setSelectedChatId } = useAppContext();
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   const selectedChat = chats.find(c => c.id === selectedChatId);
 
@@ -53,8 +56,8 @@ const ChatInterface = () => {
         ) : (
           <div className="hidden md:flex flex-col items-center justify-center h-full text-center text-muted-foreground bg-slate-100">
             <MessageSquare size={64} className="mb-4" />
-            <h2 className="text-2xl font-bold">Select a Conversation</h2>
-            <p>Choose a conversation from the list to start chatting.</p>
+            <h2 className="text-2xl font-bold">{t('chatInterface.selectConversation')}</h2>
+            <p>{t('chatInterface.selectConversationDesc')}</p>
           </div>
         )}
       </div>
