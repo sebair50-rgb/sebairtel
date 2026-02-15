@@ -22,10 +22,14 @@ const nextConfig: NextConfig = {
         hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
       }
     ],
-  },
-  experimental: {
   },
   allowedDevOrigins: [
       "https://6000-firebase-studio-1753797036016.cluster-cbeiita7rbe7iuwhvjs5zww2i4.cloudworkstations.dev",

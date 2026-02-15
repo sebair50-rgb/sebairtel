@@ -16,6 +16,7 @@ export interface LiveStream {
     };
     title: string;
     thumbnail: string;
+    thumbnailHint?: string;
     viewers: number;
 }
 
@@ -36,7 +37,7 @@ const LiveStreamCard: React.FC<LiveStreamCardProps> = ({ stream }) => {
             onClick={handleCardClick}
         >
             <div className="relative aspect-[16/9]">
-                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" data-ai-hint="person streaming" />
+                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" data-ai-hint={stream.thumbnailHint || 'person streaming'} />
                 <div className="absolute top-2 right-2 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-md text-sm font-bold">
                     <Radio className="w-4 h-4 animate-pulse" />
                     <span>Live</span>

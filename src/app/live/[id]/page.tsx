@@ -29,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import placeholderImages from '@/lib/placeholder-images.json';
 
 
 const CoHostVideo = ({ user, onRemove, isMyStream }: { user: User, onRemove: (user: User) => void, isMyStream: boolean }) => (
@@ -383,7 +384,7 @@ const LiveStreamPage = () => {
 
         return (
              <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900">
-                <Image src="https://placehold.co/1280x720/18171F/FFFFFF.png?text=Live+Stream" data-ai-hint="live stream broadcast" alt="Live stream placeholder" width={1280} height={720} className="w-full h-full object-cover" />
+                <Image src={placeholderImages.live.placeholder.src} data-ai-hint={placeholderImages.live.placeholder.hint} alt="Live stream placeholder" width={1280} height={720} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <p className="text-2xl font-bold text-white/80 backdrop-blur-sm p-4 rounded-lg">
                         {`You are watching ${streamer?.name || 'a user'}'s stream`}

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '../ui/card';
 import PastStreamCard, { type PastStream } from './PastStreamCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import placeholderImages from '@/lib/placeholder-images.json';
 
 const LiveFeed = () => {
     const { users } = useAppContext();
@@ -19,12 +20,12 @@ const LiveFeed = () => {
         router.push('/live/me');
     };
 
-    // Placeholder data for live streams
     const streams: LiveStream[] = users.slice(0, 3).map((user, index) => ({
         id: `live_${user.id}`,
         user: { name: user.name, avatar: user.avatar },
         title: `Live stream about programming with ${user.name}`,
-        thumbnail: `https://placehold.co/600x400/18171F/FFFFFF.png?text=Live+${index + 1}`,
+        thumbnail: placeholderImages.live.streams[index]?.src || `https://picsum.photos/seed/live${index}/600/400`,
+        thumbnailHint: placeholderImages.live.streams[index]?.hint,
         viewers: Math.floor(Math.random() * 2000) + 50,
     }));
     
@@ -32,7 +33,8 @@ const LiveFeed = () => {
         id: `past_live_${user.id}`,
         user: { name: user.name, avatar: user.avatar },
         title: `How to build a great UI - by ${user.name}`,
-        thumbnail: `https://placehold.co/600x400/4c566a/e5e9f0.png?text=Past+Stream+${index + 1}`,
+        thumbnail: placeholderImages.live.past[index]?.src || `https://picsum.photos/seed/past${index}/600/400`,
+        thumbnailHint: placeholderImages.live.past[index]?.hint,
         duration: `${Math.floor(Math.random() * 50) + 10}:${Math.floor(Math.random() * 59).toString().padStart(2, '0')}`,
         endedAt: `${Math.floor(Math.random() * 6) + 2} hours ago`
     }));

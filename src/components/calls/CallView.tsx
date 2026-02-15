@@ -9,6 +9,8 @@ import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize, UserPlus, Mess
 import { Card } from '../ui/card';
 import type { CallStatus, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import placeholderImages from '@/lib/placeholder-images.json';
+import Image from 'next/image';
 
 interface CallViewProps {
   status: CallStatus;
@@ -95,20 +97,23 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
         exit={{ opacity: 0, scale: 0.9 }}
         className="fixed inset-0 bg-gray-900/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     >
-        <Card className={cn(
-            "w-full h-full max-w-4xl max-h-[800px] bg-cover bg-center rounded-2xl shadow-2xl flex flex-col justify-between p-8 text-white relative",
-            "bg-[url('https://placehold.co/800x1200/222/666.png?text=BG')] data-ai-hint='abstract background'"
-            )}>
+        <Card 
+            className={cn(
+                "w-full h-full max-w-4xl max-h-[800px] bg-cover bg-center rounded-2xl shadow-2xl flex flex-col justify-between p-8 text-white relative"
+            )}
+            style={{backgroundImage: `url(${placeholderImages.call.background.src})`}}
+        >
+            <div data-ai-hint={placeholderImages.call.background.hint} />
             
             <div className="absolute inset-0 bg-black/50 rounded-2xl"></div>
 
             {type === 'video' && status === 'connected' && (
                 <>
                 <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                    {!isVideoOff && <img src="https://placehold.co/800x1200/333/777.png?text=Remote" className="w-full h-full object-cover" data-ai-hint="person talking" />}
+                    {!isVideoOff && <Image src={placeholderImages.call.remote.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.remote.hint} />}
                 </div>
                 <div className="absolute top-4 left-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/50">
-                     <img src="https://placehold.co/200x300/444/888.png?text=Local" className="w-full h-full object-cover" data-ai-hint="person selfie" />
+                     <Image src={placeholderImages.call.local.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.local.hint} />
                 </div>
                 </>
             )}

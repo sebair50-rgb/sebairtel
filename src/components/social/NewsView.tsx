@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Newspaper, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 const newsItems = [
     {
@@ -13,8 +14,8 @@ const newsItems = [
         title: 'New technology promises a revolution in the world of AI',
         category: 'Technology',
         time: '2 hours ago',
-        image: 'https://placehold.co/600x400/5e81ac/ffffff.png',
-        'data-ai-hint': 'artificial intelligence',
+        image: placeholderImages.news[0].src,
+        'data-ai-hint': placeholderImages.news[0].hint,
         description: 'A team of researchers has unveiled a new AI model that can learn from smaller amounts of data, opening new horizons for applications in various fields.',
         link: '#'
     },
@@ -23,8 +24,8 @@ const newsItems = [
         title: 'Financial markets experience volatility after new economic decisions',
         category: 'Economy',
         time: '5 hours ago',
-        image: 'https://placehold.co/600x400/a3be8c/ffffff.png',
-        'data-ai-hint': 'financial markets',
+        image: placeholderImages.news[1].src,
+        'data-ai-hint': placeholderImages.news[1].hint,
         description: 'Global stock markets reacted mixedly to the recently announced economic measures, amid a state of uncertainty among investors.',
         link: '#'
     },
@@ -33,8 +34,8 @@ const newsItems = [
         title: 'Discovery of a new planet that could be habitable',
         category: 'Science & Space',
         time: '1 day ago',
-        image: 'https://placehold.co/600x400/b48ead/ffffff.png',
-        'data-ai-hint': 'exoplanet space',
+        image: placeholderImages.news[2].src,
+        'data-ai-hint': placeholderImages.news[2].hint,
         description: 'Astronomers have announced the discovery of an exoplanet located in the habitable zone, increasing the likelihood of liquid water on its surface.',
         link: '#'
     },
@@ -43,8 +44,8 @@ const newsItems = [
         title: 'Thrilling sports final holds breaths and ends with an unexpected result',
         category: 'Sports',
         time: '3 days ago',
-        image: 'https://placehold.co/600x400/ebcb8b/000000.png',
-        'data-ai-hint': 'sports stadium',
+        image: placeholderImages.news[3].src,
+        'data-ai-hint': placeholderImages.news[3].hint,
         description: 'In a marathon match, the visiting team managed to achieve a dramatic victory in the final minutes, winning the title for the first time in its history.',
         link: '#'
     }

@@ -16,6 +16,7 @@ export interface PastStream {
     };
     title: string;
     thumbnail: string;
+    thumbnailHint?: string;
     duration: string;
     endedAt: string;
 }
@@ -38,7 +39,7 @@ const PastStreamCard: React.FC<PastStreamCardProps> = ({ stream }) => {
             onClick={handleCardClick}
         >
             <div className="relative aspect-video">
-                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" />
+                <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="group-hover:brightness-90 transition-all" data-ai-hint={stream.thumbnailHint || 'past stream'} />
                 <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded-md text-xs font-bold">
                     <Clock className="w-3 h-3" />
                     <span>{stream.duration}</span>

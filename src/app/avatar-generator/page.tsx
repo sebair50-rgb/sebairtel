@@ -12,6 +12,7 @@ import { useAppContext } from '@/store/AppContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 const AvatarGeneratorPage = () => {
     const { updateUserProfile, currentUser } = useAppContext();
@@ -87,7 +88,7 @@ const AvatarGeneratorPage = () => {
                 <X className="h-5 w-5" />
             </Button>
             <div className="w-full h-1/2 relative">
-                 <Image src="https://placehold.co/600x400/c4b5fd/3730a3.png" data-ai-hint="avatar creation" layout="fill" objectFit="cover" alt="Avatar creation" />
+                 <Image src={placeholderImages.avatar.generator.src} data-ai-hint={placeholderImages.avatar.generator.hint} layout="fill" objectFit="cover" alt="Avatar creation" />
             </div>
             <div className="flex-1 bg-background p-6 flex flex-col justify-between rounded-t-3xl -mt-8 z-10">
                 <div className="text-center">
