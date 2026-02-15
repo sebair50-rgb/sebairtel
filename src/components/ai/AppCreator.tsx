@@ -19,7 +19,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import useMobile from '@/hooks/use-mobile';
+import useIsMobile from '@/hooks/use-is-mobile';
 import {
   Select,
   SelectContent,
@@ -33,7 +33,7 @@ type MobileView = 'chat' | 'output';
 
 const AppCreator = () => {
     const { toast } = useToast();
-    const isMobile = useMobile();
+    const isMobile = useIsMobile();
 
     const [conversation, setConversation] = useState<AgenticRequest['history']>([]);
     const [currentPrompt, setCurrentPrompt] = useState('');

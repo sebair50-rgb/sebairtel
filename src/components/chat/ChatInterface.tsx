@@ -7,7 +7,7 @@ import ChatView from './ChatView';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { MessageSquare } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import useIsMobile from '@/hooks/use-is-mobile';
 import { useTranslation } from '@/store/LanguageContext';
 
 const ChatInterface = () => {
