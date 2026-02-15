@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -7,7 +6,7 @@ import ChatView from './ChatView';
 import { useAppContext } from '@/store/AppContext';
 import { cn } from '@/lib/utils';
 import { MessageSquare } from 'lucide-react';
-import useIsMobile from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const ChatInterface = () => {
   const { chats, selectedChatId, setSelectedChatId } = useAppContext();

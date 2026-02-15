@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
@@ -13,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import useIsMobile from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Logo from '../shared/Logo';
 import { Badge } from '../ui/badge';
 

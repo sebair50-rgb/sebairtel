@@ -1,9 +1,8 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
-import useIsMobile from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import ProfileSettings from './ProfileSettings';
