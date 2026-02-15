@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Video, Briefcase, Store, Globe, Home } from 'lucide-react';
-import { useAppContext } from '@/store/AppContext';
 import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
@@ -11,7 +10,6 @@ import NewsView from './NewsView';
 import AppHeader from '../layout/AppHeader';
 
 const CommunityPosts = () => {
-    const { posts } = useAppContext();
     const [activeSocialTab, setActiveSocialTab] = useState('news');
 
     const socialTabs = [

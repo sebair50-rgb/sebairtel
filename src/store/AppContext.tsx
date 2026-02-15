@@ -261,10 +261,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const userDocRef = doc(db, 'users', authUser.uid);
-    const unsubscribeUser = onSnapshot(userDocRef, (doc) => {
-        if(doc.exists()) {
-            const userData = doc.data() as User;
-            setCurrentUser({ id: doc.id, ...userData });
+    const unsubscribeUser = onSnapshot(userDocRef, async (userDoc) => {
+        if (userDoc.exists()) {
+            const userData = userDoc.data() as User;
+            setCurrentUser({ id: userDoc.id, ...userData });
             // Load user-specific settings from Firestore
             if (userData.settings) {
                  setSettings(prevSettings => ({
@@ -275,6 +275,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     sounds: { ...defaultSettings.sounds, ...userData.settings.sounds },
                     interface: { ...defaultSettings.interface, ...userData.settings.interface },
                 }));
+            }
+        } else {
+            // Document doesn't exist, let's create it.
+            console.warn("User document not found for authenticated user, creating one...");
+            const newUser: Omit<User, 'id'> = {
+                name: authUser.displayName || 'New User',
+                email: authUser.email!,
+                avatar: authUser.photoURL || `https://placehold.co/128x128/E6E6FA/333333.png?text=${(authUser.displayName || 'N').charAt(0)}`,
+                isOnline: true,
+                lastSeen: serverTimestamp() as any,
+                settings: defaultSettings,
+            };
+            try {
+                await setDoc(userDocRef, newUser);
+                // The onSnapshot listener will automatically pick up the new document and set the currentUser state.
+            } catch (error) {
+                console.error("Error creating user document:", error);
             }
         }
     });
@@ -852,7 +869,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
 
-            const history = messages.reverse().map(m => `${m.user}: ${getMessageDescription(m)}`).join('\n');
+            const history = messages.reverse().map(m => `${getMessageDescription(m)}`).join('\n');
             const response = await smartReplySuggestions({ history });
             setSmartReplies(response.suggestions);
 
