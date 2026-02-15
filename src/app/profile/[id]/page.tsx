@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppContext } from '@/store/AppContext';
 import type { User } from '@/lib/types';
@@ -45,6 +45,10 @@ const UserProfilePage = () => {
     const userId = params.id as string;
     const isOwnProfile = userId === currentUser?.id;
 
+    const friendIds = JSON.stringify(currentUser?.friends);
+    const sentRequestIds = JSON.stringify(currentUser?.friendRequestsSent);
+    const receivedRequestIds = JSON.stringify(currentUser?.friendRequestsReceived);
+
     useEffect(() => {
         if (users.length > 0 && currentUser) {
             const foundUser = users.find(u => u.id === userId) || (isOwnProfile ? currentUser : null);
@@ -54,10 +58,28 @@ const UserProfilePage = () => {
                 setIsFriend(currentUser.friends?.includes(foundUser.id) || false);
                 setRequestSent(currentUser.friendRequestsSent?.includes(foundUser.id) || false);
                 setRequestReceived(currentUser.friendRequestsReceived?.includes(foundUser.id) || false);
+                 setIsLoading(false);
+            } else {
+                 // If user not found in the initial 'users' list, maybe they are the current user
+                if (isOwnProfile) {
+                     setProfileUser(currentUser);
+                     setIsLoading(false);
+                } else {
+                    // Handle case where user ID is invalid
+                    setIsLoading(false);
+                    setProfileUser(null);
+                }
             }
+        } else if (!currentUser && users.length === 0) {
+             // Still waiting for data from context
+            setIsLoading(true);
+        } else {
+            // Data is loaded, but user not found
             setIsLoading(false);
         }
-    }, [userId, users, currentUser, isOwnProfile]);
+
+    }, [userId, users, currentUser, isOwnProfile, friendIds, sentRequestIds, receivedRequestIds]);
+
 
     const handleMessage = async () => {
         if (!profileUser) return;
@@ -363,3 +385,5 @@ const ProfileSkeleton = () => (
 
 
 export default UserProfilePage;
+
+    
