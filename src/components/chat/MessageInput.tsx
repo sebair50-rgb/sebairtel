@@ -15,6 +15,8 @@ interface MessageInputProps {
     onSendMessage: (text: string, options: { type: Message['type'], media?: any }) => void;
     editingMessage: Message | null;
     onCancelEdit: () => void;
+    replyingToMessage: Message | null;
+    onCancelReply: () => void;
 }
 
 export interface MessageInputHandles {
@@ -22,7 +24,7 @@ export interface MessageInputHandles {
   focus: () => void;
 }
 
-const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSendMessage, editingMessage, onCancelEdit }, ref) => {
+const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSendMessage, editingMessage, onCancelEdit, replyingToMessage, onCancelReply }, ref) => {
     const [text, setText] = useState('');
     const [isCodeMode, setIsCodeMode] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -49,10 +51,10 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
         if (editingMessage) {
             setText(editingMessage.text || '');
             textareaRef.current?.focus();
-        } else {
+        } else if (!replyingToMessage) { // Don't clear text when starting a reply
             setText('');
         }
-    }, [editingMessage]);
+    }, [editingMessage, replyingToMessage]);
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -171,6 +173,23 @@ const MessageInput = forwardRef<MessageInputHandles, MessageInputProps>(({ onSen
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
+            )}
+            {replyingToMessage && !editingMessage && (
+                <motion.div 
+                    layout
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-2 mb-2 bg-muted/70 backdrop-blur-sm rounded-lg text-sm flex justify-between items-center border-l-4 border-primary"
+                >
+                    <div>
+                        <p className="font-bold text-primary">Replying to {replyingToMessage.user}</p>
+                        <p className="text-muted-foreground truncate max-w-xs">{replyingToMessage.text || 'Attachment'}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={onCancelReply}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </motion.div>
             )}
             
             <AnimatePresence>

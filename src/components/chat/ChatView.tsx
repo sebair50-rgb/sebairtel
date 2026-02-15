@@ -30,6 +30,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
   const [isBlocked, setIsBlocked] = useState(chat.isBlocked || false);
   const [showConfirmation, setShowConfirmation] = useState<{ show: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
   const messageInputRef = React.useRef<MessageInputHandles>(null);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
             text,
             status: 'sent',
             type: options.type,
+            replyTo: replyingToMessage ? replyingToMessage.id : null,
         };
 
         // Conditionally add media fields to avoid sending `undefined` to Firestore
@@ -61,19 +63,21 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
         }
 
         await addMessage(chat.id, newMessageData);
+        setReplyingToMessage(null);
     }
-  }, [addMessage, currentUser, chat.id, editingMessage, updateMessage]);
+  }, [addMessage, currentUser, chat.id, editingMessage, updateMessage, replyingToMessage]);
 
   const handleEditMessage = (message: Message) => {
+    setReplyingToMessage(null);
     setEditingMessage(message);
     messageInputRef.current?.setText(message.text || '');
     messageInputRef.current?.focus();
   }
   
   const handleReplyMessage = (message: Message) => {
-    // For now, we'll just log this. A full reply UI would be more complex.
-    console.log("Replying to:", message);
-    toast({ description: "The reply feature will be activated soon."});
+    setEditingMessage(null);
+    setReplyingToMessage(message);
+    messageInputRef.current?.focus();
   }
 
   const handleMenuAction = (action: 'clear' | 'block') => {
@@ -118,6 +122,8 @@ const ChatView: React.FC<ChatViewProps> = ({ chat, onBack }) => {
                 onSendMessage={handleSendMessage}
                 editingMessage={editingMessage}
                 onCancelEdit={() => setEditingMessage(null)}
+                replyingToMessage={replyingToMessage}
+                onCancelReply={() => setReplyingToMessage(null)}
              />
         </>
       )}

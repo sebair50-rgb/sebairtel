@@ -59,6 +59,17 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
   const repliedToMessage = message.replyTo ? allMessages.find(m => m.id === message.replyTo) : null;
   const isLiked = message.likedBy?.includes(currentUser.id) || false;
 
+  const handleReplyClick = (messageId: string) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('animate-pulse', 'bg-primary/20');
+        setTimeout(() => {
+            element.classList.remove('animate-pulse', 'bg-primary/20');
+        }, 2000);
+    }
+  }
+
   return (
     <div className={cn(
         "flex w-full group", 
@@ -87,10 +98,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, isOwnMessage, onDele
            )}
         >
           {repliedToMessage && (
-            <a href={`#message-${repliedToMessage.id}`} className="block p-2 mb-2 border-l-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10">
+            <div 
+                onClick={() => handleReplyClick(repliedToMessage.id)}
+                className="block p-2 mb-2 border-l-2 border-primary/50 bg-black/5 dark:bg-black/20 rounded-lg text-sm transition-colors hover:bg-black/10 cursor-pointer"
+            >
                 <p className="font-semibold text-xs text-primary">{repliedToMessage.user}</p>
                 <p className="opacity-80 truncate max-w-[200px]">{repliedToMessage.text?.substring(0, 50) || 'Attachment'}</p>
-            </a>
+            </div>
           )}
 
           <MessageContent message={message} isOwnMessage={isOwnMessage} />
