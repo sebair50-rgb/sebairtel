@@ -294,9 +294,6 @@
     "selectConversation": "Select a Conversation",
     "selectConversationDesc": "Choose a conversation from the list to start chatting."
   },
-  "chatList": {
-    "searchPlaceholder": "Search in conversations..."
-  },
   "chatHeader": {
     "searchInConvo": "Search in Conversation",
     "searchComingSoon": "Search will be activated soon",

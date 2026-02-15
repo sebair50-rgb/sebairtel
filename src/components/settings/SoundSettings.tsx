@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef } from 'react';
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAppContext } from '@/store/AppContext';
 import { Music, Bell, Phone, FolderUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/store/LanguageContext';
 
 type SoundKey = 'messageTone' | 'notificationTone' | 'callRingtone';
 
@@ -54,6 +54,7 @@ const playSound = (soundValue: string) => {
 
 const SoundSettings = () => {
     const { settings, setSettings } = useAppContext();
+    const { t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const currentSoundKey = useRef<SoundKey | null>(null);
     const { toast } = useToast();
@@ -63,7 +64,7 @@ const SoundSettings = () => {
         if (!file || !currentSoundKey.current) return;
 
         if (!file.type.startsWith('audio/')) {
-            toast({ variant: 'destructive', title: 'Invalid File', description: 'Please select an audio file.' });
+            toast({ variant: 'destructive', title: t('settings.invalidFile'), description: t('settings.invalidFileDesc') });
             return;
         }
 
@@ -76,18 +77,17 @@ const SoundSettings = () => {
                 sounds: { ...s.sounds, [key]: dataUrl }
             }));
             playSound(dataUrl);
-            toast({ title: 'Success', description: `Custom tone set for: ${getLabelForKey(key)}` });
+            toast({ title: t('settings.updateSuccess'), description: t('settings.customToneSet', { label: getLabelForKey(key) }) });
         };
         reader.readAsDataURL(file);
     };
     
     const getLabelForKey = (key: SoundKey) => {
-        if (key === 'messageTone') return "Messages";
-        if (key === 'notificationTone') return "Notifications";
-        if (key === 'callRingtone') return "Calls";
+        if (key === 'messageTone') return t('settings.messageTone');
+        if (key === 'notificationTone') return t('settings.notifTone');
+        if (key === 'callRingtone') return t('settings.callRingtone');
         return "";
     }
-
 
     const handleSoundChange = (key: SoundKey, value: string) => {
         if (value === 'custom') {
@@ -110,8 +110,8 @@ const SoundSettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Tones & Sounds</CardTitle>
-                <CardDescription>Customize alert sounds for messages, calls, and other notifications.</CardDescription>
+                <CardTitle>{t('settings.sounds')}</CardTitle>
+                <CardDescription>{t('settings.soundsDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <input
@@ -123,19 +123,19 @@ const SoundSettings = () => {
                 />
                 <SoundOption
                     icon={Music}
-                    label="Message Tone"
+                    label={t('settings.messageTone')}
                     value={getDisplayValue(settings.sounds.messageTone)}
                     onValueChange={(value) => handleSoundChange('messageTone', value)}
                 />
                  <SoundOption
                     icon={Bell}
-                    label="General Notification Tone"
+                    label={t('settings.notifTone')}
                     value={getDisplayValue(settings.sounds.notificationTone)}
                     onValueChange={(value) => handleSoundChange('notificationTone', value)}
                 />
                  <SoundOption
                     icon={Phone}
-                    label="Call Ringtone"
+                    label={t('settings.callRingtone')}
                     value={getDisplayValue(settings.sounds.callRingtone)}
                     onValueChange={(value) => handleSoundChange('callRingtone', value)}
                 />
@@ -149,28 +149,41 @@ const SoundOption = ({ icon: Icon, label, value, onValueChange }: {
     label: string;
     value: string;
     onValueChange: (value: string) => void;
-}) => (
-    <div className="flex items-center justify-between p-4 rounded-lg border bg-background">
-        <div className="flex items-center gap-3">
-            <Icon className="w-5 h-5 text-muted-foreground" />
-            <Label className="text-base font-medium">{label}</Label>
+}) => {
+    const { t } = useTranslation();
+    
+    const translatedSoundOptions = [
+        { value: 'default', label: t('settings.defaultTone'), freq: 440 },
+        { value: 'chime', label: t('settings.chimeTone'), freq: 523.25 },
+        { value: 'signal', label: t('settings.signalTone'), freq: 659.25 },
+        { value: 'alert', label: t('settings.alertTone'), freq: 783.99 },
+        { value: 'vibrate', label: t('settings.vibrate'), freq: 0 },
+        { value: 'custom', label: t('settings.chooseFile'), icon: FolderUp },
+    ];
+    
+    return (
+        <div className="flex items-center justify-between p-4 rounded-lg border bg-background">
+            <div className="flex items-center gap-3">
+                <Icon className="w-5 h-5 text-muted-foreground" />
+                <Label className="text-base font-medium">{label}</Label>
+            </div>
+            <Select value={value} onValueChange={onValueChange}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder={t('settings.selectTone')} />
+                </SelectTrigger>
+                <SelectContent>
+                    {translatedSoundOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                                {option.icon && <option.icon className="w-4 h-4" />}
+                                {option.label}
+                            </div>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
-        <Select value={value} onValueChange={onValueChange}>
-            <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a tone" />
-            </SelectTrigger>
-            <SelectContent>
-                {soundOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                        <div className="flex items-center gap-2">
-                             {option.icon && <option.icon className="w-4 h-4" />}
-                             {option.label}
-                        </div>
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    </div>
-);
+    );
+};
 
 export default SoundSettings;

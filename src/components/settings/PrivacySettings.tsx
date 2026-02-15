@@ -1,15 +1,15 @@
-
 "use client";
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useAppContext } from '@/store/AppContext';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { useTranslation } from '@/store/LanguageContext';
 
 const PrivacySettings = () => {
     const { settings, setSettings } = useAppContext();
+    const { t } = useTranslation();
     
     type PrivacyKey = keyof typeof settings.privacy;
     type PrivacyValue<K extends PrivacyKey> = typeof settings.privacy[K];
@@ -27,11 +27,11 @@ const PrivacySettings = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Privacy</CardTitle>
-                <CardDescription>Control how your information appears and who can interact with you.</CardDescription>
+                <CardTitle>{t('settings.privacy')}</CardTitle>
+                <CardDescription>{t('settings.privacyDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-                <SettingOption title="Presence (Online / Last Seen)">
+                <SettingOption title={t('settings.presence')}>
                     <RadioGroup 
                         value={settings.privacy.lastSeen} 
                         onValueChange={(value) => handleSettingChange('lastSeen', value as any)}
@@ -39,20 +39,20 @@ const PrivacySettings = () => {
                     >
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="everyone" id="lastseen-everyone" />
-                            <Label htmlFor="lastseen-everyone">Everyone</Label>
+                            <Label htmlFor="lastseen-everyone">{t('settings.everyone')}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="friends" id="lastseen-friends" />
-                            <Label htmlFor="lastseen-friends">Friends Only</Label>
+                            <Label htmlFor="lastseen-friends">{t('settings.friendsOnly')}</Label>
                         </div>
                          <div className="flex items-center space-x-2">
                             <RadioGroupItem value="nobody" id="lastseen-nobody" />
-                            <Label htmlFor="lastseen-nobody">Nobody</Label>
+                            <Label htmlFor="lastseen-nobody">{t('settings.nobody')}</Label>
                         </div>
                     </RadioGroup>
                 </SettingOption>
 
-                 <SettingOption title="Profile Photo">
+                 <SettingOption title={t('settings.profilePhoto')}>
                     <RadioGroup 
                         value={settings.privacy.profilePhoto} 
                         onValueChange={(value) => handleSettingChange('profilePhoto', value as any)}
@@ -60,16 +60,16 @@ const PrivacySettings = () => {
                     >
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="everyone" id="photo-everyone" />
-                            <Label htmlFor="photo-everyone">Everyone</Label>
+                            <Label htmlFor="photo-everyone">{t('settings.everyone')}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="friends" id="photo-friends" />
-                            <Label htmlFor="photo-friends">Friends Only</Label>
+                            <Label htmlFor="photo-friends">{t('settings.friendsOnly')}</Label>
                         </div>
                     </RadioGroup>
                 </SettingOption>
                 
-                 <SettingOption title="Who can add me as a friend?">
+                 <SettingOption title={t('settings.whoCanAdd')}>
                     <RadioGroup 
                         value={settings.privacy.friendRequests} 
                         onValueChange={(value) => handleSettingChange('friendRequests', value as any)}
@@ -77,18 +77,18 @@ const PrivacySettings = () => {
                     >
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="everyone" id="requests-everyone" />
-                            <Label htmlFor="requests-everyone">Everyone</Label>
+                            <Label htmlFor="requests-everyone">{t('settings.everyone')}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="friends_of_friends" id="requests-fof" />
-                            <Label htmlFor="requests-fof">Friends of Friends</Label>
+                            <Label htmlFor="requests-fof">{t('settings.friendsOfFriends')}</Label>
                         </div>
                     </RadioGroup>
                 </SettingOption>
                  <div className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
                     <div className="space-y-1">
-                        <Label className="text-base font-medium">Blocked Contacts</Label>
-                         <p className="text-sm text-muted-foreground">Manage the users you have blocked.</p>
+                        <Label className="text-base font-medium">{t('settings.blockedContacts')}</Label>
+                         <p className="text-sm text-muted-foreground">{t('settings.blockedContactsDesc')}</p>
                     </div>
                      <p className="text-muted-foreground"> (0) </p>
                 </div>

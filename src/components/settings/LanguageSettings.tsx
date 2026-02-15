@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -12,7 +11,7 @@ import { useTranslation } from '@/store/LanguageContext';
 
 const LanguageSettings = () => {
     const { settings, setSettings } = useAppContext();
-    const { t, setLanguage, language } = useTranslation();
+    const { t, setLanguage } = useTranslation();
     const { toast } = useToast();
 
     const handleSave = () => {
@@ -65,7 +64,7 @@ const LanguageSettings = () => {
                         <RadioGroupItem value="ar" id="lang-ar" />
                         <Label htmlFor="lang-ar" className="text-base font-medium w-full">
                             {t('settings.arabic')}
-                             <p className="text-sm font-normal text-muted-foreground" dir="ltr">{t('settings.arabicDesc')}</p>
+                             <p className="text-sm font-normal text-muted-foreground">{t('settings.arabicDesc')}</p>
                         </Label>
                     </div>
                 </RadioGroup>

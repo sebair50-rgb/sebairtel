@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import useIsMobile from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import ProfileSettings from './ProfileSettings';
@@ -15,6 +15,7 @@ import SoundSettings from './SoundSettings';
 import InterfaceSettings from './InterfaceSettings';
 import AppHeader from '../layout/AppHeader';
 import LanguageSettings from './LanguageSettings';
+import { useTranslation } from '@/store/LanguageContext';
 
 interface SettingsViewProps {
     onLogout: () => void;
@@ -22,21 +23,22 @@ interface SettingsViewProps {
 
 type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'sounds' | 'privacy' | 'account' | 'interface' | 'language' | 'help';
 
-const settingsSections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'interface', label: 'Customize Interface', icon: LayoutDashboard },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'sounds', label: 'Tones & Sounds', icon: Music },
-    { id: 'privacy', label: 'Privacy', icon: Lock },
-    { id: 'account', label: 'Account & Security', icon: Shield },
-    { id: 'language', label: 'Language', icon: Languages },
-    { id: 'help', label: 'Help', icon: HelpCircle },
-];
-
 const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
     const isMobile = useIsMobile();
+    const { t } = useTranslation();
     const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
+
+    const settingsSections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
+        { id: 'profile', label: t('settings.settingsTab.profile'), icon: User },
+        { id: 'appearance', label: t('settings.settingsTab.appearance'), icon: Palette },
+        { id: 'interface', label: t('settings.settingsTab.customizeUi'), icon: LayoutDashboard },
+        { id: 'notifications', label: t('settings.settingsTab.notifications'), icon: Bell },
+        { id: 'sounds', label: t('settings.settingsTab.sounds'), icon: Music },
+        { id: 'privacy', label: t('settings.settingsTab.privacy'), icon: Lock },
+        { id: 'account', label: t('settings.settingsTab.account'), icon: Shield },
+        { id: 'language', label: t('settings.settingsTab.language'), icon: Languages },
+        { id: 'help', label: t('settings.settingsTab.help'), icon: HelpCircle },
+    ];
 
     const renderSection = () => {
         switch (activeSection) {
@@ -57,13 +59,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
             case 'language':
                 return <LanguageSettings />;
             default:
-                return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">This feature will be activated soon.</p></div>;
+                return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">{t('settings.featureSoon')}</p></div>;
         }
     };
 
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black/90">
-            <AppHeader title="Settings" icon={SettingsIcon} />
+            <AppHeader title={t('settings.title')} icon={SettingsIcon} />
 
             <div className="flex-1 md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6 overflow-hidden">
                 
@@ -87,7 +89,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                     </nav>
                      <Button variant="ghost" onClick={onLogout} className="justify-start gap-3 px-4 py-3 text-base mt-auto text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg">
                         <LogOut className="w-5 h-5" />
-                        Sign Out
+                        {t('sidebar.signOut')}
                     </Button>
                 </aside>
 
@@ -124,7 +126,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
                             <div className="mt-6 px-4 pb-4">
                                  <Button variant="destructive" className="w-full" onClick={onLogout}>
                                     <LogOut className="mr-2" />
-                                    Sign Out
+                                    {t('sidebar.signOut')}
                                 </Button>
                             </div>
                         )}

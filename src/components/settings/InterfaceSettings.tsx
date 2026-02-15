@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -8,9 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { useAppContext, defaultSettings } from '@/store/AppContext';
 import { Home, Brain, AppWindow, RotateCcw, Phone } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useTranslation } from '@/store/LanguageContext';
 
 const InterfaceSettings = () => {
     const { settings, setSettings } = useAppContext();
+    const { t } = useTranslation();
 
     const handleToggle = (key: keyof typeof settings.interface, value: boolean) => {
         setSettings(s => ({
@@ -34,44 +35,44 @@ const InterfaceSettings = () => {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle>Customize Interface</CardTitle>
-                        <CardDescription>Control which sections appear in the navigation bar.</CardDescription>
+                        <CardTitle>{t('settings.customizeUi')}</CardTitle>
+                        <CardDescription>{t('settings.customizeUiDesc')}</CardDescription>
                     </div>
                     <Button variant="outline" onClick={handleReset}>
                         <RotateCcw className="mr-2 h-4 w-4" />
-                        Reset
+                        {t('settings.reset')}
                     </Button>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
                 <SettingToggle
                     id="contactTab"
-                    label="Show Contact Tab"
-                    description="View conversations, friends, and calls."
+                    label={t('settings.showContact')}
+                    description={t('settings.showContactDesc')}
                     icon={Phone}
                     checked={settings.interface.showContactTab}
                     onCheckedChange={(checked) => handleToggle('showContactTab', checked)}
                 />
                 <SettingToggle
                     id="socialTab"
-                    label="Show Community Tab"
-                    description="View public posts, news, and live streams."
+                    label={t('settings.showCommunity')}
+                    description={t('settings.showCommunityDesc')}
                     icon={Home}
                     checked={settings.interface.showSocialTab}
                     onCheckedChange={(checked) => handleToggle('showSocialTab', checked)}
                 />
                 <SettingToggle
                     id="aiTab"
-                    label="Show AI Tab"
-                    description="Access creative AI tools."
+                    label={t('settings.showAi')}
+                    description={t('settings.showAiDesc')}
                     icon={Brain}
                     checked={settings.interface.showAiTab}
                     onCheckedChange={(checked) => handleToggle('showAiTab', checked)}
                 />
                 <SettingToggle
                     id="appsTab"
-                    label="Show Apps Tab"
-                    description="View a list of mini-apps and services."
+                    label={t('settings.showApps')}
+                    description={t('settings.showAppsDesc')}
                     icon={AppWindow}
                     checked={settings.interface.showAppsTab}
                     onCheckedChange={(checked) => handleToggle('showAppsTab', checked)}

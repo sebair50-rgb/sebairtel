@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useIsMobile } from '@/hooks/use-mobile';
+import useIsMobile from '@/hooks/use-is-mobile';
 import Logo from '../shared/Logo';
 import { Badge } from '../ui/badge';
 
@@ -35,9 +35,9 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ activeTab, setActiveTab, onLo
   }, [setActiveTab, setSelectedChatId]);
 
   const allNavItems = useMemo(() => [
-    { name: 'ai', icon: Brain, label: 'AI', isVisible: settings.interface.showAiTab },
-    { name: 'contact', icon: Phone, label: 'Contact', isVisible: settings.interface.showContactTab },
     { name: 'social', icon: Home, label: 'Community', isVisible: settings.interface.showSocialTab },
+    { name: 'contact', icon: Phone, label: 'Contact', isVisible: settings.interface.showContactTab },
+    { name: 'ai', icon: Brain, label: 'AI', isVisible: settings.interface.showAiTab },
     { name: 'apps', icon: AppWindow, label: 'Apps', isVisible: settings.interface.showAppsTab },
     { name: 'settings', icon: Settings, label: 'Settings', isVisible: true }, // Always visible
   ], [settings.interface]);
