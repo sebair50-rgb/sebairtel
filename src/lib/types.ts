@@ -105,6 +105,7 @@ export interface Post {
 export interface Call {
     id: string;
     user: string;
+    userId: string;
     avatar: string; // photoURL
     type: 'incoming' | 'outgoing' | 'missed';
     time: string;

@@ -249,6 +249,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   }, [authUser]);
 
+  // Main listener for all data related to the authenticated user
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
@@ -302,13 +303,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     });
     
-    const usersQuery = query(collection(db, 'users'));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-        const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        const otherUsers = allUsers.filter(u => u.id !== authUser.uid);
-        setUsers(otherUsers);
-    });
-
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
       const postsData = snapshot.docs.map(doc => {
@@ -390,13 +384,67 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       unsubscribeUser();
-      unsubscribeUsers();
       unsubscribePosts();
       unsubscribeChats();
       unsubscribeCalls();
       unsubscribeNotifications();
     };
   }, [authUser, authLoading]);
+
+  // This new effect will handle fetching the dynamic user lists (friends, suggestions)
+  useEffect(() => {
+    if (!currentUser || !authUser) return;
+
+    const fetchUsersInBatches = async (ids: string[]): Promise<User[]> => {
+        if (ids.length === 0) return [];
+        const idBatches: string[][] = [];
+        for (let i = 0; i < ids.length; i += 30) {
+            idBatches.push(ids.slice(i, i + 30));
+        }
+
+        const userPromises = idBatches.map(batch => 
+            getDocs(query(collection(db, 'users'), where('__name__', 'in', batch)))
+        );
+
+        const userSnapshots = await Promise.all(userPromises);
+        const users = userSnapshots.flatMap(snapshot => 
+            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))
+        );
+        return users;
+    };
+
+    const fetchRelatedUsers = async () => {
+        try {
+            const friendIds = currentUser.friends || [];
+            const requestIds = currentUser.friendRequestsReceived || [];
+            const sentRequestIds = currentUser.friendRequestsSent || [];
+
+            const allKnownIds = new Set([...friendIds, ...requestIds, ...sentRequestIds, currentUser.id]);
+
+            // Fetch friends and requests in one go
+            const relatedUserIds = [...new Set([...friendIds, ...requestIds])];
+            const relatedUsers = await fetchUsersInBatches(relatedUserIds);
+            
+            // Fetch suggestions
+            const suggestionsQuery = query(collection(db, 'users'), limit(30));
+            const suggestionsSnapshot = await getDocs(suggestionsQuery);
+            const suggestionDocs = suggestionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+
+            // Combine and deduplicate all fetched users
+            const allFetchedUsers = [...relatedUsers, ...suggestionDocs];
+            const uniqueUsers = Array.from(new Map(allFetchedUsers.map(u => [u.id, u])).values());
+            
+            // Filter out the current user
+            const otherUsers = uniqueUsers.filter(u => u.id !== authUser.uid);
+            setUsers(otherUsers);
+
+        } catch (error) {
+            console.error("Error fetching related users:", error);
+        }
+    };
+
+    fetchRelatedUsers();
+  }, [currentUser, authUser]);
 
   // Persist settings to Firestore whenever they change
   useEffect(() => {
@@ -767,6 +815,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     const callData: Omit<Call, 'id' | 'time'> = {
         user: user.name,
+        userId: user.id,
         avatar: user.avatar,
         type: type,
         timestamp: serverTimestamp() as any,
@@ -778,6 +827,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const otherUserCallType = type === 'outgoing' ? 'incoming' : 'outgoing';
         const otherUserCallData: Omit<Call, 'id'| 'time'> = {
             user: currentUser.name,
+            userId: currentUser.id,
             avatar: currentUser.avatar,
             type: otherUserCallType,
             timestamp: serverTimestamp() as any,
