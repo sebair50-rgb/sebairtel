@@ -1,15 +1,13 @@
-
 "use client";
 
 import React, { useState } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Video, Briefcase, Store, Globe, Notebook, Home } from 'lucide-react';
 
 import PostCard from './PostCard';
 import CreatePostCard from './CreatePostCard';
 import { useAppContext } from '@/store/AppContext';
-import LivePosts from './LivePosts';
+import LiveFeed from './LiveFeed';
 import MarketView from './MarketView';
 import StoreView from './StoreView';
 import NewsView from './NewsView';
@@ -20,11 +18,11 @@ const CommunityPosts = () => {
     const [activeSocialTab, setActiveSocialTab] = useState('posts');
 
     const socialTabs = [
+        { value: 'posts', label: 'Posts', icon: Notebook },
+        { value: 'live', label: 'Live', icon: Video },
         { value: 'news', label: 'News', icon: Globe },
         { value: 'business', label: 'Business', icon: Briefcase },
         { value: 'market', label: 'Market', icon: Store },
-        { value: 'live', label: 'Live', icon: Video },
-        { value: 'posts', label: 'Posts', icon: Notebook },
     ];
     
     return (
@@ -44,30 +42,26 @@ const CommunityPosts = () => {
                     </div>
                 </div>
             
-                <div className="flex-1 overflow-y-auto">
-                    <TabsContent value="posts" className="mt-0">
-                        <div className="max-w-2xl mx-auto py-4 space-y-4">
-                            <CreatePostCard />
-                            {posts.map(post => (
-                                <PostCard key={post.id} post={post} />
-                            ))}
-                        </div>
-                    </TabsContent>
-                    <div className="p-4 md:p-6">
-                        <TabsContent value="live" className="mt-0">
-                            <LivePosts />
-                        </TabsContent>
-                         <TabsContent value="news" className="mt-0">
-                            <NewsView />
-                        </TabsContent>
-                        <TabsContent value="business" className="mt-0">
-                            <MarketView />
-                        </TabsContent>
-                        <TabsContent value="market" className="mt-0">
-                            <StoreView />
-                        </TabsContent>
+                <TabsContent value="posts" className="flex-1 overflow-y-auto mt-0">
+                    <div className="max-w-2xl mx-auto py-4 px-4 space-y-4">
+                        <CreatePostCard />
+                        {posts.map(post => (
+                            <PostCard key={post.id} post={post} />
+                        ))}
                     </div>
-                </div>
+                </TabsContent>
+                <TabsContent value="live" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <LiveFeed />
+                </TabsContent>
+                <TabsContent value="news" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <NewsView />
+                </TabsContent>
+                <TabsContent value="business" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <MarketView />
+                </TabsContent>
+                <TabsContent value="market" className="flex-1 overflow-y-auto mt-0 p-4 md:p-6">
+                    <StoreView />
+                </TabsContent>
              </Tabs>
         </div>
     );
