@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, FileText, UploadCloud, Image as ImageIcon, Sparkles, X } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, UploadCloud, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -25,6 +25,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
+  DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
 import { useRouter } from 'next/navigation';
@@ -54,10 +55,6 @@ const ProfileSettings = () => {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-    const [newLink, setNewLink] = useState({ title: '', url: '' });
-    const [newWork, setNewWork] = useState({ title: '', company: '' });
-    const [newEdu, setNewEdu] = useState({ school: '', degree: '' });
-
     const [isPending, startTransition] = useTransition();
 
      useEffect(() => {
@@ -85,12 +82,8 @@ const ProfileSettings = () => {
     const hasChanges = useMemo(() => {
         const mainFormChanged = JSON.stringify(formState) !== JSON.stringify(initialState);
         const filesChanged = !!avatarFile;
-        const newInputsHaveText = newLink.title.trim() !== '' || newLink.url.trim() !== '' ||
-                                 newWork.title.trim() !== '' || newWork.company.trim() !== '' ||
-                                 newEdu.school.trim() !== '' || newEdu.degree.trim() !== '';
-
-        return mainFormChanged || filesChanged || newInputsHaveText;
-    }, [formState, initialState, avatarFile, newLink, newWork, newEdu]);
+        return mainFormChanged || filesChanged;
+    }, [formState, initialState, avatarFile]);
 
 
     const handleFieldChange = (field: keyof User, value: any) => {
@@ -111,18 +104,10 @@ const ProfileSettings = () => {
     
     const addToList = <T extends UserLink | WorkExperience | Education>(
         field: 'links' | 'workExperience' | 'education', 
-        newItemState: T,
-        setNewItemState: React.Dispatch<React.SetStateAction<any>>,
-        validation: () => boolean,
-        errorToast: { title: string, description: string, variant?: 'destructive' }
+        newItem: T
     ) => {
-        if (validation()) {
-            const currentList = (formState[field] as T[] | undefined) || [];
-            handleFieldChange(field, [...currentList, newItemState]);
-            setNewItemState({ title: '', company: '', school: '', degree: '', url: '' });
-        } else {
-            toast(errorToast);
-        }
+        const currentList = (formState[field] as T[] | undefined) || [];
+        handleFieldChange(field, [...currentList, newItem]);
     };
 
     const removeFromList = (field: 'links' | 'workExperience' | 'education', index: number) => {
@@ -131,43 +116,28 @@ const ProfileSettings = () => {
     };
 
     const handleSaveChanges = () => {
-        if (!currentUser) return;
-        
-        let finalFormState = { ...formState };
-
-        if (newLink.title.trim() && newLink.url.trim()) {
-            finalFormState.links = [...(finalFormState.links || []), newLink];
-            setNewLink({ title: '', url: '' });
-        }
-        if (newWork.title.trim() && newWork.company.trim()) {
-            finalFormState.workExperience = [...(finalFormState.workExperience || []), newWork];
-            setNewWork({ title: '', company: '' });
-        }
-        if (newEdu.school.trim() && newEdu.degree.trim()) {
-            finalFormState.education = [...(finalFormState.education || []), newEdu];
-            setNewEdu({ school: '', degree: '' });
-        }
-
-        let updatePayload: Partial<User> = {};
-        (Object.keys(finalFormState) as Array<keyof typeof finalFormState>).forEach(key => {
-            if (JSON.stringify(finalFormState[key]) !== JSON.stringify(initialState[key])) {
-                (updatePayload as any)[key] = finalFormState[key];
-            }
-        });
-        
-        const filesToUpload: { avatar?: File } = {};
-        if (avatarFile) filesToUpload.avatar = avatarFile;
-
-        if (Object.keys(updatePayload).length === 0 && Object.keys(filesToUpload).length === 0) {
-             toast({ description: "No changes to save." });
-             return;
-        }
+        if (!currentUser || !hasChanges) return;
 
         startTransition(async () => {
             try {
+                let updatePayload: Partial<User> = {};
+                (Object.keys(formState) as Array<keyof typeof formState>).forEach(key => {
+                    if (JSON.stringify(formState[key]) !== JSON.stringify(initialState[key])) {
+                        (updatePayload as any)[key] = formState[key];
+                    }
+                });
+
+                const filesToUpload: { avatar?: File } = {};
+                if (avatarFile) filesToUpload.avatar = avatarFile;
+                
                 await updateUserProfile(updatePayload, filesToUpload);
+                
                 toast({ title: "Success!", description: "Your profile has been updated." });
+                
+                // Reset initial state to reflect saved changes
+                setInitialState(formState);
                 setAvatarFile(null);
+
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
                 const description = error.message || "An unexpected error occurred.";
@@ -260,63 +230,58 @@ const ProfileSettings = () => {
                 <Separator />
                 
                 <div className="space-y-6">
-                    <DetailSection title="Portfolio" icon={Briefcase}>
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>External Links (Portfolio, LinkedIn, etc.)</Label>
-                                {formState.links?.map((link, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <Input value={link.title} disabled className="bg-muted" />
-                                        <Input value={link.url} disabled className="bg-muted"/>
-                                        <Button variant="ghost" size="icon" onClick={() => removeFromList('links', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                    <DetailSection title="Portfolio" icon={LinkIcon}>
+                        <div className="space-y-2">
+                            {formState.links?.map((link, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
+                                    <LinkIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <div className="flex-1 overflow-hidden">
+                                        <a href={link.url} target="_blank" rel="noreferrer" className="font-semibold text-primary truncate hover:underline">{link.title}</a>
+                                        <p className="text-xs text-muted-foreground truncate">{link.url}</p>
                                     </div>
-                                ))}
-                                <div className="flex items-center gap-2">
-                                    <Input value={newLink.title} onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))} placeholder="Link Title (e.g., Portfolio)" />
-                                    <Input value={newLink.url} onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))} placeholder="https://..." />
-                                    <Button variant="ghost" size="icon" onClick={() => addToList('links', newLink, setNewLink, () => !!(newLink.title && newLink.url), {variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('links', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
-                            </div>
+                            ))}
                         </div>
+                        <AddDialog type="link" onAdd={(item) => addToList('links', item as UserLink)} />
                     </DetailSection>
 
                     <DetailSection title="Work Experience" icon={Briefcase}>
                          <div className="space-y-2">
                             {formState.workExperience?.map((work, index) => (
-                                <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
-                                    <p className="flex-1 text-sm"><span className="font-semibold">{work.title}</span> at {work.company}</p>
+                                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                                     <Briefcase className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                     <div className="flex-1 overflow-hidden">
+                                        <p className="font-semibold">{work.title}</p>
+                                        <p className="text-sm text-muted-foreground">{work.company}</p>
+                                    </div>
                                     <Button variant="ghost" size="icon" onClick={() => removeFromList('workExperience', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
-                            <div className="flex items-center gap-2">
-                                <Input value={newWork.title} onChange={(e) => setNewWork(prev => ({ ...prev, title: e.target.value }))} placeholder="Job Title" />
-                                <Input value={newWork.company} onChange={(e) => setNewWork(prev => ({ ...prev, company: e.target.value }))} placeholder="Company Name" />
-                                <Button variant="ghost" size="icon" onClick={() => addToList('workExperience', newWork, setNewWork, () => !!(newWork.title && newWork.company), {variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
-                            </div>
                         </div>
+                        <AddDialog type="work" onAdd={(item) => addToList('workExperience', item as WorkExperience)} />
                     </DetailSection>
                     
                     <DetailSection title="Education" icon={GraduationCap}>
                         <div className="space-y-2">
                             {formState.education?.map((edu, index) => (
-                                <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
-                                    <p className="flex-1 text-sm"><span className="font-semibold">{edu.degree}</span> from {edu.school}</p>
+                                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                                    <GraduationCap className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="font-semibold">{edu.degree}</p>
+                                        <p className="text-sm text-muted-foreground">{edu.school}</p>
+                                    </div>
                                     <Button variant="ghost" size="icon" onClick={() => removeFromList('education', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
                             ))}
-                            <div className="flex items-center gap-2">
-                                <Input value={newEdu.school} onChange={(e) => setNewEdu(prev => ({ ...prev, school: e.target.value }))} placeholder="School/University" />
-                                <Input value={newEdu.degree} onChange={(e) => setNewEdu(prev => ({ ...prev, degree: e.target.value }))} placeholder="Degree/Certificate" />
-                                <Button variant="ghost" size="icon" onClick={() => addToList('education', newEdu, setNewEdu, () => !!(newEdu.school && newEdu.degree), {variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree."})}><PlusCircle className="w-5 h-5 text-primary"/></Button>
-                            </div>
                         </div>
+                         <AddDialog type="education" onAdd={(item) => addToList('education', item as Education)} />
                     </DetailSection>
                     
                     <DetailSection title="Current City" icon={Home}><Input id="city" value={formState.city || ''} onChange={(e) => handleFieldChange('city', e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
                     <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={formState.from || ''} onChange={(e) => handleFieldChange('from', e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
                     <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={formState.relationshipStatus || ''} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
                 </div>
-
 
                 <div className="flex justify-end mt-8">
                     <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges} className="w-full md:w-auto">
@@ -328,5 +293,72 @@ const ProfileSettings = () => {
         </Card>
     );
 };
+
+const AddDialog = ({ type, onAdd }: { type: 'link' | 'work' | 'education', onAdd: (item: any) => void }) => {
+    const [title, setTitle] = useState('');
+    const [subtitle, setSubtitle] = useState('');
+    const { toast } = useToast();
+
+    const handleAdd = () => {
+        if (type === 'link' && (!title || !subtitle)) {
+            toast({ variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL." });
+            return;
+        }
+         if (type === 'work' && (!title || !subtitle)) {
+            toast({ variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company." });
+            return;
+        }
+        if (type === 'education' && (!title || !subtitle)) {
+            toast({ variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree." });
+            return;
+        }
+
+        const item = type === 'link' ? { title, url: subtitle } :
+                     type === 'work' ? { title, company: subtitle } :
+                     { school: title, degree: subtitle };
+        onAdd(item);
+        setTitle('');
+        setSubtitle('');
+    };
+    
+    const config = {
+        link: { title: 'Add New Link', titleLabel: 'Link Title', subtitleLabel: 'URL', titlePlaceholder: 'e.g., My Portfolio', subtitlePlaceholder: 'https://...' },
+        work: { title: 'Add Work Experience', titleLabel: 'Job Title', subtitleLabel: 'Company Name', titlePlaceholder: 'e.g., Software Engineer', subtitlePlaceholder: 'e.g., Google' },
+        education: { title: 'Add Education', titleLabel: 'School / University', subtitleLabel: 'Degree / Certificate', titlePlaceholder: 'e.g., MIT', subtitlePlaceholder: 'e.g., B.S. in Computer Science' },
+    }[type];
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="w-full md:w-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add {type.charAt(0).toUpperCase() + type.slice(1)}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{config.title}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title">{config.titleLabel}</Label>
+                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={config.titlePlaceholder}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="subtitle">{config.subtitleLabel}</Label>
+                        <Input id="subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={config.subtitlePlaceholder} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                     <DialogClose asChild>
+                        <Button onClick={handleAdd}>Add Item</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default ProfileSettings;
