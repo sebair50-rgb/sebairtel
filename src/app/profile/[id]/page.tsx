@@ -24,12 +24,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import placeholderImages from '@/lib/placeholder-images.json';
 import { cn } from '@/lib/utils';
-
+import { useTranslation } from '@/store/LanguageContext';
 
 const UserProfilePage = () => {
     const params = useParams();
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useTranslation();
     const { 
         users, currentUser, createChat, setSelectedChatId, setActiveTab, 
         unfriendUser, sendFriendRequest, acceptFriendRequest 
@@ -74,7 +75,8 @@ const UserProfilePage = () => {
             await sendFriendRequest(profileUser);
             setRequestSent(true);
             toast({
-                title: `Friend request sent to ${profileUser.name}`,
+                title: t('usersView.requestSent'),
+                description: t('usersView.requestSentDesc', { name: profileUser.name }),
             });
         } catch (error: any) {
             toast({
@@ -88,14 +90,14 @@ const UserProfilePage = () => {
     const handleAcceptFriend = async () => {
         if (!profileUser) return;
         await acceptFriendRequest(profileUser);
-        toast({ title: `You are now friends with ${profileUser.name}` });
+        toast({ title: t('usersView.friendAddedTitle'), description: t('usersView.friendAddedDesc', { name: profileUser.name }) });
     }
 
     const handleShareProfile = () => {
         navigator.clipboard.writeText(window.location.href);
         toast({
-            title: "Link Copied",
-            description: "You can now share their profile.",
+            title: t('profilePage.linkCopied'),
+            description: t('profilePage.linkCopiedDesc'),
         });
     };
 
@@ -103,8 +105,8 @@ const UserProfilePage = () => {
         if(!profileUser) return;
         toast({
             variant: "destructive",
-            title: `${profileUser.name} has been blocked`,
-            description: "(Feature in development)",
+            title: t('profilePage.userBlocked', { name: profileUser.name }),
+            description: t('profilePage.userBlockedDesc'),
         });
     };
     
@@ -114,12 +116,12 @@ const UserProfilePage = () => {
             await unfriendUser(profileUser.id);
             setIsFriend(false);
             toast({
-                title: `Removed ${profileUser.name} from friends`,
+                title: t('profilePage.friendRemoved', { name: profileUser.name }),
             });
         } catch (error) {
             toast({
                 variant: 'destructive',
-                title: 'Failed to remove friend'
+                title: t('profilePage.removeFriendFailed')
             });
         }
     };
@@ -131,9 +133,9 @@ const UserProfilePage = () => {
     if (!profileUser) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 dark:bg-black">
-                <h2 className="text-2xl font-bold">User Not Found</h2>
-                <p className="text-muted-foreground mt-2">The link may be incorrect or the user may have been deleted.</p>
-                <Button onClick={() => router.back()} className="mt-4">Go Back</Button>
+                <h2 className="text-2xl font-bold">{t('profilePage.userNotFound')}</h2>
+                <p className="text-muted-foreground mt-2">{t('profilePage.userNotFoundDesc')}</p>
+                <Button onClick={() => router.back()} className="mt-4">{t('profilePage.goBack')}</Button>
             </div>
         );
     }
@@ -163,6 +165,7 @@ const UserProfilePage = () => {
                             objectFit="cover" 
                             className="bg-muted"
                         />
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     </div>
                     
                     <div className="px-4 -mt-20">
@@ -176,7 +179,7 @@ const UserProfilePage = () => {
 
                     <div className="text-center mt-4 px-4">
                         <h1 className="text-3xl font-bold">{profileUser.name}</h1>
-                        <p className="text-muted-foreground">{profileFriends.length} Friends</p>
+                        <p className="text-muted-foreground">{t('profilePage.friendsCount', { count: profileFriends.length })}</p>
                     </div>
                     
                     {!isOwnProfile && (
@@ -184,22 +187,22 @@ const UserProfilePage = () => {
                              {isFriend ? (
                                 <Button className="flex-1 max-w-xs" variant="secondary" onClick={handleMessage}>
                                     <MessageSquare size={20} className="mr-2" />
-                                    Message
+                                    {t('profilePage.message')}
                                 </Button>
                              ) : requestReceived ? (
                                 <Button className="flex-1 max-w-xs" onClick={handleAcceptFriend}>
                                     <UserPlus size={20} className="mr-2" />
-                                    Accept Request
+                                    {t('profilePage.acceptRequest')}
                                 </Button>
                             ) : requestSent ? (
                                 <Button className="flex-1 max-w-xs" disabled>
                                     <Check size={20} className="mr-2" />
-                                    Request Sent
+                                    {t('profilePage.requestSent')}
                                 </Button>
                              ) : (
                                 <Button className="flex-1 max-w-xs" onClick={handleAddFriend}>
                                     <UserPlus size={20} className="mr-2" />
-                                    Add Friend
+                                    {t('profilePage.addFriend')}
                                 </Button>
                              )}
                             
@@ -212,18 +215,18 @@ const UserProfilePage = () => {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onClick={handleShareProfile}>
                                         <Share2 className="mr-2 h-4 w-4" />
-                                        <span>Share Profile</span>
+                                        <span>{t('profilePage.shareProfile')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     {isFriend && (
                                         <DropdownMenuItem onClick={handleRemoveFriend} className="text-destructive focus:text-destructive">
                                             <UserMinus className="mr-2 h-4 w-4" />
-                                            <span>Remove Friend</span>
+                                            <span>{t('profilePage.removeFriend')}</span>
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuItem onClick={handleBlockUser} className="text-destructive focus:text-destructive">
                                         <UserX className="mr-2 h-4 w-4" />
-                                        <span>Block User</span>
+                                        <span>{t('profilePage.blockUser')}</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -233,37 +236,37 @@ const UserProfilePage = () => {
                     <div className="mt-8 px-4">
                         <Tabs defaultValue="about" className="w-full max-w-3xl mx-auto">
                             <TabsList className="grid w-full grid-cols-3 bg-slate-200 dark:bg-slate-800">
-                                <TabsTrigger value="about">About</TabsTrigger>
-                                <TabsTrigger value="friends">Friends</TabsTrigger>
-                                <TabsTrigger value="photos">Photos</TabsTrigger>
+                                <TabsTrigger value="about">{t('profilePage.about')}</TabsTrigger>
+                                <TabsTrigger value="friends">{t('profilePage.friends')}</TabsTrigger>
+                                <TabsTrigger value="photos">{t('profilePage.photos')}</TabsTrigger>
                             </TabsList>
                             <TabsContent value="about" className="mt-4">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Details</CardTitle>
+                                        <CardTitle>{t('profilePage.details')}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         {profileUser.bio && (
-                                            <div className="text-center text-lg text-muted-foreground pt-2 pb-4">
+                                            <div className="text-center text-lg text-muted-foreground pt-2 pb-4 border-b">
                                                 <p>{profileUser.bio}</p>
                                             </div>
                                         )}
                                         {profileUser.city && (
                                             <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Home className="w-5 h-5" />
-                                                <span>Lives in <strong>{profileUser.city}</strong></span>
+                                                <Home className="w-5 h-5 text-primary" />
+                                                <span>{t('profilePage.livesIn')} <strong>{profileUser.city}</strong></span>
                                             </div>
                                         )}
                                         {profileUser.from && (
                                             <div className="flex items-center gap-3 text-muted-foreground">
-                                                <MapPin className="w-5 h-5" />
-                                                <span>From <strong>{profileUser.from}</strong></span>
+                                                <MapPin className="w-5 h-5 text-primary" />
+                                                <span>{t('profilePage.from')} <strong>{profileUser.from}</strong></span>
                                             </div>
                                         )}
                                         {(!profileUser.city && !profileUser.from && !profileUser.bio) && (
                                             <div className="flex items-center gap-3 text-muted-foreground">
                                                 <Info className="w-5 h-5" />
-                                                <span>No details available.</span>
+                                                <span>{t('profilePage.noDetails')}</span>
                                             </div>
                                         )}
                                     </CardContent>
@@ -272,7 +275,7 @@ const UserProfilePage = () => {
                             <TabsContent value="friends" className="mt-4">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Friends ({profileFriends.length})</CardTitle>
+                                        <CardTitle>{t('profilePage.friendsCount', { count: profileFriends.length })}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         {profileFriends.length > 0 ? (
@@ -290,7 +293,7 @@ const UserProfilePage = () => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-muted-foreground text-center py-8">This user has no friends to show.</p>
+                                            <p className="text-muted-foreground text-center py-8">{t('profilePage.noFriends')}</p>
                                         )}
                                     </CardContent>
                                 </Card>
@@ -298,7 +301,7 @@ const UserProfilePage = () => {
                             <TabsContent value="photos" className="mt-4">
                                <Card>
                                     <CardHeader>
-                                        <CardTitle>Photos</CardTitle>
+                                        <CardTitle>{t('profilePage.photos')}</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -351,6 +354,9 @@ const ProfileSkeleton = () => (
                  <Skeleton className="h-8 w-24" />
                  <Skeleton className="h-8 w-24" />
             </div>
+             <div className="mt-4">
+                <Skeleton className="w-full h-48 rounded-lg" />
+             </div>
         </div>
     </div>
 );
