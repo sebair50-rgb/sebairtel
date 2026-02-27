@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Video, Smile, Loader2, X } from 'lucide-react';
+import { Image as ImageIcon, Video, Smile, Loader2, X, Globe } from 'lucide-react';
 import { useAppContext } from '@/store/AppContext';
 import { useTranslation } from '@/store/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +43,7 @@ const CreatePost = () => {
             let mediaType: 'image' | 'video' | 'text' = 'text';
 
             if (mediaFile) {
-                // Convert to base64 for demo purposes as storage logic is handled in addPost normally
+                // Convert to base64 for demo purposes
                 const reader = new FileReader();
                 const base64 = await new Promise<string>((resolve) => {
                     reader.onload = (e) => resolve(e.target?.result as string);
