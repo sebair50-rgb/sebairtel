@@ -13,7 +13,6 @@ import {
   type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { User } from '@/lib/types';
 
 interface AuthContextType {
   authUser: FirebaseUser | null;
@@ -42,13 +41,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name });
-        await sendEmailVerification(cred.user);
-        await setDoc(doc(db, 'users', cred.user.uid), {
-            name, email, avatar: `https://placehold.co/128x128/6366f1/ffffff?text=${name.charAt(0)}`,
-            friends: [], friendRequestsReceived: [], friendRequestsSent: [], isOnline: true, lastSeen: serverTimestamp()
+        
+        // Update Firebase Auth profile
+        await updateProfile(cred.user, { 
+            displayName: name,
+            photoURL: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`
         });
+        
+        // Send verification email
+        await sendEmailVerification(cred.user);
+        
+        // Create Firestore user document
+        await setDoc(doc(db, 'users', cred.user.uid), {
+            name, 
+            email, 
+            avatar: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`,
+            friends: [], 
+            friendRequestsReceived: [], 
+            friendRequestsSent: [], 
+            isOnline: true, 
+            lastSeen: serverTimestamp(),
+            createdAt: serverTimestamp()
+        });
+
+        // Crucial: Sign out after signup so the user must verify before entering the app
+        await signOut(auth);
+        
         return cred;
+      } catch (error) {
+          console.error("Signup process failed:", error);
+          throw error;
       } finally {
         setLoading(false);
       }
@@ -71,7 +93,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const logout = async () => await signOut(auth);
-  const resendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
+  const resendVerificationEmail = async () => { 
+      if (auth.currentUser) {
+          await sendEmailVerification(auth.currentUser); 
+      }
+  };
 
   return <AuthContext.Provider value={{ authUser, loading, login, signup, logout, resendVerificationEmail }}>{children}</AuthContext.Provider>;
 };

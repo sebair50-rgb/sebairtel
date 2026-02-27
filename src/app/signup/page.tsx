@@ -24,6 +24,16 @@ export default function SignupPage() {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (password.length < 6) {
+            toast({
+                variant: "destructive",
+                title: "Weak Password",
+                description: "Password should be at least 6 characters long.",
+            });
+            return;
+        }
+
         if (password !== confirmPassword) {
             toast({
                 variant: "destructive",
@@ -35,13 +45,26 @@ export default function SignupPage() {
 
         try {
             await signup(email, password, name);
-            // Redirect to a verification page
+            // After signup, the user is signed out in AuthContext to force verification
             router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error: any) {
+            console.error("Signup Error:", error);
+            let description = 'An unexpected error occurred, please try again.';
+            
+            if (error.code === 'auth/email-already-in-use') {
+                description = 'This email is already in use.';
+            } else if (error.code === 'auth/invalid-email') {
+                description = 'The email address is badly formatted.';
+            } else if (error.code === 'auth/weak-password') {
+                description = 'The password is too weak.';
+            } else if (error.message) {
+                description = error.message;
+            }
+
              toast({
                 variant: "destructive",
                 title: "Signup Failed",
-                description: error.code === 'auth/email-already-in-use' ? 'This email is already in use.' : 'An unexpected error occurred, please try again.',
+                description: description,
             });
         }
     };
