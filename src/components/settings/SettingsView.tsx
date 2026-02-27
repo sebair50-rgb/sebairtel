@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState } from 'react';
-import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
+import { LogOut, User, Palette, Bell, Shield, Languages, HelpCircle, Lock, Music, LayoutDashboard, Settings as SettingsIcon, ChevronRight } from 'lucide-react';
 import useIsMobile from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -16,6 +17,9 @@ import InterfaceSettings from './InterfaceSettings';
 import AppHeader from '../layout/AppHeader';
 import LanguageSettings from './LanguageSettings';
 import { useTranslation } from '@/store/LanguageContext';
+import { useAppContext } from '@/store/AppContext';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Card } from '../ui/card';
 
 interface SettingsViewProps {
     onLogout: () => void;
@@ -26,6 +30,7 @@ type SettingsSection = 'profile' | 'appearance' | 'notifications' | 'sounds' | '
 const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
     const isMobile = useIsMobile();
     const { t } = useTranslation();
+    const { currentUser } = useAppContext();
     const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
 
     const settingsSections: { id: SettingsSection; label: string; icon: React.ElementType }[] = [
@@ -59,73 +64,110 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onLogout }) => {
             case 'language':
                 return <LanguageSettings />;
             default:
-                return <div className="p-6 bg-card rounded-lg shadow-sm"><h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3><p className="mt-4 text-muted-foreground">{t('settings.featureSoon')}</p></div>;
+                return (
+                    <Card className="p-12 text-center border-dashed">
+                        <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-muted-foreground">
+                            {React.createElement(settingsSections.find(s => s.id === activeSection)?.icon || HelpCircle, { size: 32 })}
+                        </div>
+                        <h3 className="text-xl font-semibold">{settingsSections.find(s => s.id === activeSection)?.label}</h3>
+                        <p className="mt-2 text-muted-foreground">{t('settings.featureSoon')}</p>
+                    </Card>
+                );
         }
     };
 
     return (
-        <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black/90">
+        <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-slate-950">
             <AppHeader title={t('settings.title')} icon={SettingsIcon} />
 
-            <div className="flex-1 md:grid md:grid-cols-[280px_1fr] md:gap-8 md:p-6 overflow-hidden">
+            <div className="flex-1 md:grid md:grid-cols-[300px_1fr] md:gap-0 overflow-hidden">
                 
                 {/* Desktop Sidebar */}
-                <aside className="hidden md:flex flex-col gap-2 bg-amber-100 dark:bg-stone-900 p-4 rounded-xl border">
-                    <nav className="flex flex-col gap-1">
+                <aside className="hidden md:flex flex-col bg-background border-r p-6 overflow-y-auto">
+                    {currentUser && (
+                        <div className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center gap-4">
+                            <Avatar className="h-12 w-12 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                                <AvatarFallback>{currentUser.name?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="overflow-hidden">
+                                <p className="font-bold text-sm truncate">{currentUser.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <nav className="flex flex-col gap-1.5 flex-1">
                         {settingsSections.map(section => (
                             <Button
                                 key={section.id}
                                 variant="ghost"
                                 onClick={() => setActiveSection(section.id)}
                                 className={cn(
-                                    "justify-start gap-3 px-4 py-3 text-base rounded-lg",
-                                    activeSection === section.id && "bg-primary/10 text-primary font-bold"
+                                    "justify-between px-4 py-6 text-base rounded-xl transition-all duration-200 group",
+                                    activeSection === section.id 
+                                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90" 
+                                        : "hover:bg-primary/10 hover:text-primary"
                                 )}
                             >
-                                <section.icon className="w-5 h-5" />
-                                {section.label}
+                                <div className="flex items-center gap-3">
+                                    <section.icon className={cn("w-5 h-5", activeSection === section.id ? "text-white" : "text-muted-foreground group-hover:text-primary")} />
+                                    <span className="font-medium">{section.label}</span>
+                                </div>
+                                {activeSection === section.id && <ChevronRight className="w-4 h-4" />}
                             </Button>
                         ))}
                     </nav>
-                     <Button variant="ghost" onClick={onLogout} className="justify-start gap-3 px-4 py-3 text-base mt-auto text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg">
-                        <LogOut className="w-5 h-5" />
-                        {t('sidebar.signOut')}
-                    </Button>
+
+                    <div className="mt-8 pt-6 border-t">
+                        <Button 
+                            variant="ghost" 
+                            onClick={onLogout} 
+                            className="w-full justify-start gap-3 px-4 py-6 text-base text-destructive hover:bg-destructive/10 hover:text-destructive rounded-xl"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            {t('sidebar.signOut')}
+                        </Button>
+                    </div>
                 </aside>
 
                  {/* Mobile Navigation & Content Area */}
                 <div className="flex flex-col h-full overflow-hidden">
                      {isMobile && (
-                        <div className="p-2">
+                        <div className="px-4 py-3 bg-background border-b shadow-sm sticky top-0 z-20">
                              <div className="relative">
-                                 <ScrollArea className="w-full whitespace-nowrap rounded-lg border bg-amber-100 dark:bg-stone-900">
-                                    <div className="flex w-max space-x-2 p-2">
+                                 <ScrollArea className="w-full whitespace-nowrap">
+                                    <div className="flex space-x-2 pb-1">
                                         {settingsSections.map(section => (
                                              <Button
                                                 key={section.id}
-                                                variant={activeSection === section.id ? 'secondary' : 'ghost'}
+                                                variant={activeSection === section.id ? 'default' : 'secondary'}
                                                 onClick={() => setActiveSection(section.id)}
-                                                className="justify-start gap-2 px-4 py-2 text-sm h-auto rounded-full"
+                                                className={cn(
+                                                    "justify-start gap-2 px-5 py-2.5 text-sm h-auto rounded-full transition-all duration-300",
+                                                    activeSection === section.id && "shadow-md shadow-primary/20"
+                                                )}
                                             >
                                                 <section.icon className="w-4 h-4" />
                                                 {section.label}
                                             </Button>
                                         ))}
                                     </div>
-                                    <ScrollBar orientation="horizontal" />
+                                    <ScrollBar orientation="horizontal" className="hidden" />
                                 </ScrollArea>
-                                 <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-slate-50 dark:from-black/90"></div>
                              </div>
                         </div>
                     )}
                     <ScrollArea className="h-full">
-                        <div className="p-4 md:p-0">
-                            {renderSection()}
-                        </div>
+                        <main className="p-4 md:p-10 max-w-5xl mx-auto">
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {renderSection()}
+                            </div>
+                        </main>
                          {isMobile && (
-                            <div className="mt-6 px-4 pb-4">
-                                 <Button variant="destructive" className="w-full" onClick={onLogout}>
-                                    <LogOut className="mr-2" />
+                            <div className="mt-6 px-4 pb-8">
+                                 <Button variant="destructive" className="w-full h-14 rounded-xl font-bold shadow-lg shadow-destructive/10" onClick={onLogout}>
+                                    <LogOut className="mr-2 h-5 w-5" />
                                     {t('sidebar.signOut')}
                                 </Button>
                             </div>

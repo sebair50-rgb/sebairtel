@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, UploadCloud, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, UploadCloud, Image as ImageIcon, Sparkles, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -29,19 +29,25 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useRouter } from 'next/navigation';
+import { Progress } from '../ui/progress';
 
-
-const DetailSection = ({ title, children, icon: Icon }: { title: string, children: React.ReactNode, icon: React.ElementType }) => (
-    <div className="space-y-4">
-        <div className="flex items-center gap-2">
-            <Icon className="w-5 h-5 text-muted-foreground" />
-            <h3 className="font-semibold text-lg">{title}</h3>
+const DetailSection = ({ title, description, children, icon: Icon }: { title: string, description?: string, children: React.ReactNode, icon: React.ElementType }) => (
+    <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-500">
+        <div className="flex items-start gap-4">
+            <div className="bg-primary/10 p-3 rounded-xl">
+                <Icon className="w-6 h-6 text-primary" />
+            </div>
+            <div className="space-y-1">
+                <h3 className="font-bold text-xl tracking-tight">{title}</h3>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+            </div>
         </div>
-        {children}
-        <Separator className="mt-6" />
+        <div className="grid gap-6">
+            {children}
+        </div>
+        <Separator className="mt-10" />
     </div>
 );
-
 
 const ProfileSettings = () => {
     const { currentUser, updateUserProfile } = useAppContext();
@@ -85,6 +91,13 @@ const ProfileSettings = () => {
         return mainFormChanged || filesChanged;
     }, [formState, initialState, avatarFile]);
 
+    const profileCompletion = useMemo(() => {
+        if (!formState) return 0;
+        const fields = ['name', 'bio', 'phone', 'dob', 'city', 'from', 'relationshipStatus', 'avatar'];
+        const filledFields = fields.filter(f => !!(formState as any)[f]);
+        const hasLists = (formState.links?.length || 0) > 0 || (formState.workExperience?.length || 0) > 0 || (formState.education?.length || 0) > 0;
+        return Math.round(((filledFields.length + (hasLists ? 1 : 0)) / (fields.length + 1)) * 100);
+    }, [formState]);
 
     const handleFieldChange = (field: keyof User, value: any) => {
         setFormState(prev => ({ ...prev, [field]: value }));
@@ -93,7 +106,7 @@ const ProfileSettings = () => {
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1048576) { // 1MB limit
+            if (file.size > 1048576) {
                  toast({ variant: "destructive", title: "Image size is too large", description: "Please choose an image smaller than 1MB." });
                 return;
             }
@@ -132,162 +145,306 @@ const ProfileSettings = () => {
                 
                 await updateUserProfile(updatePayload, filesToUpload);
                 
-                toast({ title: "Success!", description: "Your profile has been updated." });
-                
-                // Reset initial state to reflect saved changes
+                toast({ title: "Profile updated!", description: "Your changes have been saved successfully." });
                 setInitialState(formState);
                 setAvatarFile(null);
 
             } catch (error: any) {
                 console.error("Failed to update profile:", error);
-                const description = error.message || "An unexpected error occurred.";
-                toast({ variant: "destructive", title: "An error occurred", description });
+                toast({ variant: "destructive", title: "Error", description: error.message || "Failed to save profile changes." });
             }
         });
     };
 
     if (!currentUser) {
         return (
-            <Card>
-                <CardHeader><CardTitle>Profile</CardTitle></CardHeader>
-                <CardContent><div className="flex items-center space-x-4"><Loader2 className="animate-spin" /><span>Loading...</span></div></CardContent>
-            </Card>
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            </div>
         )
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Profile</CardTitle>
-                <CardDescription>This is your public profile information.</CardDescription>
+        <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0 pt-0 pb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-1">
+                        <CardTitle className="text-3xl font-extrabold tracking-tight">Edit Profile</CardTitle>
+                        <CardDescription className="text-base">Manage your public information and digital identity.</CardDescription>
+                    </div>
+                    <div className="w-full md:w-64 space-y-2">
+                        <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            <span>Profile Strength</span>
+                            <span>{profileCompletion}%</span>
+                        </div>
+                        <Progress value={profileCompletion} className="h-2" />
+                    </div>
+                </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <input type="file" ref={avatarFileInputRef} onChange={handleAvatarSelect} className="hidden" accept="image/*" />
-                
-                <div className="flex items-center gap-6">
-                    <div className="relative">
-                         <Avatar className="w-24 h-24 text-4xl">
-                            <AvatarImage src={avatarPreview || undefined} alt={formState.name} />
-                            <AvatarFallback>{formState.name?.charAt(0) || '?'}</AvatarFallback>
-                        </Avatar>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                 <Button size="icon" className="absolute -bottom-2 -left-2 rounded-full w-8 h-8 border-2 border-card">
-                                    <Camera className="w-4 h-4"/><span className="sr-only">Change Picture</span>
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                    <DialogTitle>Update Profile Picture</DialogTitle>
-                                    <DialogDescription>
-                                        Choose how you would like to update your avatar.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                     <DialogClose asChild>
-                                        <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => avatarFileInputRef.current?.click()}>
-                                            <UploadCloud className="w-6 h-6 text-primary" />
-                                            <div>
-                                                <p className="font-semibold text-left">Upload from Device</p>
-                                                <p className="text-xs text-muted-foreground text-left">Select an image from your computer or phone</p>
-                                            </div>
-                                        </Button>
-                                    </DialogClose>
-                                     <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => toast({description: "This feature will be available soon."})}>
-                                        <ImageIcon className="w-6 h-6 text-primary" />
-                                        <div>
-                                                <p className="font-semibold text-left">Choose from Photos</p>
-                                                <p className="text-xs text-muted-foreground text-left">Use an image you have already uploaded</p>
-                                            </div>
+
+            <CardContent className="px-0 space-y-12">
+                {/* Avatar Section */}
+                <div className="bg-card border rounded-2xl p-8 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+                    <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                        <div className="relative group">
+                            <Avatar className="w-32 h-32 text-5xl ring-4 ring-primary/10 shadow-2xl transition-transform duration-300 group-hover:scale-105">
+                                <AvatarImage src={avatarPreview || undefined} alt={formState.name} />
+                                <AvatarFallback className="bg-slate-100">{formState.name?.charAt(0) || '?'}</AvatarFallback>
+                            </Avatar>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full w-10 h-10 border-4 border-card shadow-lg hover:scale-110 transition-all">
+                                        <Camera className="w-5 h-5"/>
                                     </Button>
-                                    <DialogClose asChild>
-                                        <Button variant="outline" className="w-full justify-start gap-4 p-6" onClick={() => router.push('/avatar-generator')}>
-                                            <Sparkles className="w-6 h-6 text-primary" />
-                                            <div>
-                                                    <p className="font-semibold text-left">Create with AI</p>
-                                                    <p className="text-xs text-muted-foreground text-left">Generate a unique avatar using AI</p>
-                                            </div>
-                                        </Button>
-                                    </DialogClose>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                     <div>
-                        <h2 className="text-2xl font-bold">{formState.name}</h2>
-                        <p className="text-muted-foreground">{currentUser.email}</p>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[450px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Update Profile Picture</DialogTitle>
+                                        <DialogDescription>Choose a source for your new avatar image.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-6">
+                                        <DialogClose asChild>
+                                            <Button variant="outline" className="w-full h-24 justify-start gap-6 p-6 rounded-2xl border-2 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => avatarFileInputRef.current?.click()}>
+                                                <div className="bg-primary/10 p-3 rounded-xl group-hover:bg-primary/20 transition-colors"><UploadCloud className="w-6 h-6 text-primary" /></div>
+                                                <div className="text-left">
+                                                    <p className="font-bold">Upload from Device</p>
+                                                    <p className="text-sm text-muted-foreground">JPG, PNG or WEBP. Max 1MB.</p>
+                                                </div>
+                                            </Button>
+                                        </DialogClose>
+                                        <DialogClose asChild>
+                                            <Button variant="outline" className="w-full h-24 justify-start gap-6 p-6 rounded-2xl border-2 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => router.push('/avatar-generator')}>
+                                                <div className="bg-primary/10 p-3 rounded-xl group-hover:bg-primary/20 transition-colors"><Sparkles className="w-6 h-6 text-primary" /></div>
+                                                <div className="text-left">
+                                                    <p className="font-bold">Generate with AI</p>
+                                                    <p className="text-sm text-muted-foreground">Create a unique persona using GenAI.</p>
+                                                </div>
+                                            </Button>
+                                        </DialogClose>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                        <div className="flex-1 text-center md:text-left space-y-2">
+                            <h2 className="text-2xl font-bold">{formState.name}</h2>
+                            <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                                Verified Member
+                            </p>
+                            <div className="pt-2">
+                                <input type="file" ref={avatarFileInputRef} onChange={handleAvatarSelect} className="hidden" accept="image/*" />
+                                <Button variant="secondary" size="sm" className="rounded-full px-6" onClick={() => avatarFileInputRef.current?.click()}>
+                                    Change Picture
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="space-y-2"><Label htmlFor="name">Full Name</Label><Input id="name" value={formState.name || ''} onChange={(e) => handleFieldChange('name', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="bio">About Me (Professional Summary)</Label><Textarea id="bio" placeholder="Write something about yourself..." value={formState.bio || ''} onChange={(e) => handleFieldChange('bio', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={currentUser.email || ''} disabled /></div>
-                    <div className="space-y-2"><Label htmlFor="phone">Phone Number</Label><Input id="phone" type="tel" value={formState.phone || ''} onChange={(e) => handleFieldChange('phone', e.target.value)} placeholder="e.g., +1234567890" /></div>
-                    <div className="space-y-2"><Label htmlFor="dob">Date of Birth</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!formState.dob && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Pick your date of birth</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} /></PopoverContent></Popover></div>
-                </div>
-
-                <Separator />
-                
-                <div className="space-y-6">
-                    <DetailSection title="Portfolio" icon={LinkIcon}>
+                {/* Personal Information */}
+                <DetailSection 
+                    title="Basic Information" 
+                    description="Your primary details that help people identify you."
+                    icon={UserIcon}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            {formState.links?.map((link, index) => (
-                                <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/50">
-                                    <LinkIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                    <div className="flex-1 overflow-hidden">
-                                        <a href={link.url} target="_blank" rel="noreferrer" className="font-semibold text-primary truncate hover:underline">{link.title}</a>
+                            <Label htmlFor="name" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                                Full Name <span className="text-destructive">*</span>
+                            </Label>
+                            <Input id="name" value={formState.name || ''} onChange={(e) => handleFieldChange('name', e.target.value)} className="h-12 rounded-xl bg-background border-2 focus:ring-primary" placeholder="Enter your full name" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="dob" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                                Date of Birth
+                            </Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant={"outline"} className={cn("w-full h-12 justify-start text-left font-normal rounded-xl border-2",!formState.dob && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {formState.dob ? format(new Date(formState.dob), "PPP", { locale: enUS }) : <span>Select date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl" align="start">
+                                    <Calendar 
+                                        mode="single" 
+                                        selected={formState.dob ? new Date(formState.dob) : undefined} 
+                                        onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} 
+                                        initialFocus 
+                                        captionLayout="dropdown-buttons" 
+                                        fromYear={1950} 
+                                        toYear={new Date().getFullYear()} 
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="bio" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                            Professional Bio
+                        </Label>
+                        <Textarea id="bio" placeholder="Tell the world about yourself..." value={formState.bio || ''} onChange={(e) => handleFieldChange('bio', e.target.value)} className="min-h-[120px] rounded-xl bg-background border-2 p-4 leading-relaxed" />
+                    </div>
+                </DetailSection>
+
+                {/* Contact & Location */}
+                <DetailSection 
+                    title="Contact & Location" 
+                    description="How others can reach you or where you're based."
+                    icon={Phone}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="phone" className="text-sm font-bold text-muted-foreground">Phone Number</Label>
+                            <div className="relative">
+                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input id="phone" type="tel" value={formState.phone || ''} onChange={(e) => handleFieldChange('phone', e.target.value)} className="pl-12 h-12 rounded-xl bg-background border-2" placeholder="+1 (555) 000-0000" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="city" className="text-sm font-bold text-muted-foreground">Current City</Label>
+                            <div className="relative">
+                                <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input id="city" value={formState.city || ''} onChange={(e) => handleFieldChange('city', e.target.value)} className="pl-12 h-12 rounded-xl bg-background border-2" placeholder="e.g. San Francisco, CA" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="from" className="text-sm font-bold text-muted-foreground">Hometown</Label>
+                            <div className="relative">
+                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input id="from" value={formState.from || ''} onChange={(e) => handleFieldChange('from', e.target.value)} className="pl-12 h-12 rounded-xl bg-background border-2" placeholder="e.g. Cairo, Egypt" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="relationship" className="text-sm font-bold text-muted-foreground">Relationship Status</Label>
+                            <div className="relative">
+                                <Heart className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input id="relationship" value={formState.relationshipStatus || ''} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} className="pl-12 h-12 rounded-xl bg-background border-2" placeholder="e.g. Single, Married..." />
+                            </div>
+                        </div>
+                    </div>
+                </DetailSection>
+
+                {/* Portfolio */}
+                <DetailSection 
+                    title="Portfolio & Social" 
+                    description="Link your external profiles or personal website."
+                    icon={LinkIcon}
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {formState.links?.map((link, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-background border-2 border-primary/10 hover:border-primary/30 transition-all group">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="bg-primary/5 p-2 rounded-lg"><LinkIcon className="w-4 h-4 text-primary" /></div>
+                                    <div className="overflow-hidden">
+                                        <p className="font-bold text-sm truncate">{link.title}</p>
                                         <p className="text-xs text-muted-foreground truncate">{link.url}</p>
                                     </div>
-                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('links', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
                                 </div>
-                            ))}
-                        </div>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeFromList('links', index)}>
+                                    <Trash2 className="w-4 h-4"/>
+                                </Button>
+                            </div>
+                        ))}
                         <AddDialog type="link" onAdd={(item) => addToList('links', item as UserLink)} />
-                    </DetailSection>
+                    </div>
+                </DetailSection>
 
-                    <DetailSection title="Work Experience" icon={Briefcase}>
-                         <div className="space-y-2">
-                            {formState.workExperience?.map((work, index) => (
-                                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-                                     <Briefcase className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                     <div className="flex-1 overflow-hidden">
-                                        <p className="font-semibold">{work.title}</p>
-                                        <p className="text-sm text-muted-foreground">{work.company}</p>
-                                    </div>
-                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('workExperience', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
-                                </div>
-                            ))}
+                {/* Background */}
+                <DetailSection 
+                    title="Experience & Education" 
+                    description="Highlight your career path and academic achievements."
+                    icon={Briefcase}
+                >
+                    <div className="space-y-8">
+                        {/* Work */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <Briefcase className="w-4 h-4" /> Work Experience
+                                </h4>
+                                <AddDialog type="work" onAdd={(item) => addToList('workExperience', item as WorkExperience)} />
+                            </div>
+                            <div className="grid gap-4">
+                                {formState.workExperience?.length === 0 && <p className="text-sm text-muted-foreground italic py-4">No work experience added yet.</p>}
+                                {formState.workExperience?.map((work, index) => (
+                                    <Card key={index} className="bg-background border-2 group relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                                        <CardContent className="p-5 flex items-center justify-between gap-4">
+                                            <div className="flex gap-4 items-center">
+                                                <div className="bg-muted p-3 rounded-xl"><Briefcase className="w-6 h-6 text-muted-foreground" /></div>
+                                                <div>
+                                                    <p className="font-extrabold text-lg">{work.title}</p>
+                                                    <p className="text-primary font-medium">{work.company}</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="text-destructive rounded-full hover:bg-destructive/5" onClick={() => removeFromList('workExperience', index)}>
+                                                <Trash2 className="w-5 h-5"/>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
                         </div>
-                        <AddDialog type="work" onAdd={(item) => addToList('workExperience', item as WorkExperience)} />
-                    </DetailSection>
-                    
-                    <DetailSection title="Education" icon={GraduationCap}>
-                        <div className="space-y-2">
-                            {formState.education?.map((edu, index) => (
-                                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-                                    <GraduationCap className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className="font-semibold">{edu.degree}</p>
-                                        <p className="text-sm text-muted-foreground">{edu.school}</p>
-                                    </div>
-                                    <Button variant="ghost" size="icon" onClick={() => removeFromList('education', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
-                                </div>
-                            ))}
-                        </div>
-                         <AddDialog type="education" onAdd={(item) => addToList('education', item as Education)} />
-                    </DetailSection>
-                    
-                    <DetailSection title="Current City" icon={Home}><Input id="city" value={formState.city || ''} onChange={(e) => handleFieldChange('city', e.target.value)} placeholder="e.g., Dubai" /></DetailSection>
-                    <DetailSection title="Hometown" icon={MapPin}><Input id="from" value={formState.from || ''} onChange={(e) => handleFieldChange('from', e.target.value)} placeholder="e.g., Riyadh" /></DetailSection>
-                    <DetailSection title="Relationship" icon={Heart}><Input id="relationship" value={formState.relationshipStatus || ''} onChange={(e) => handleFieldChange('relationshipStatus', e.target.value)} placeholder="e.g., Single, Married..." /></DetailSection>
-                </div>
 
-                <div className="flex justify-end mt-8">
-                    <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges} className="w-full md:w-auto">
-                        {isPending && <Loader2 className="mr-2 animate-spin" />}
-                        {isPending ? 'Saving...' : 'Save Changes'}
-                    </Button>
+                        {/* Education */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                    <GraduationCap className="w-4 h-4" /> Academic History
+                                </h4>
+                                <AddDialog type="education" onAdd={(item) => addToList('education', item as Education)} />
+                            </div>
+                            <div className="grid gap-4">
+                                {formState.education?.length === 0 && <p className="text-sm text-muted-foreground italic py-4">No education details added yet.</p>}
+                                {formState.education?.map((edu, index) => (
+                                    <Card key={index} className="bg-background border-2 group relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                                        <CardContent className="p-5 flex items-center justify-between gap-4">
+                                            <div className="flex gap-4 items-center">
+                                                <div className="bg-muted p-3 rounded-xl"><GraduationCap className="w-6 h-6 text-muted-foreground" /></div>
+                                                <div>
+                                                    <p className="font-extrabold text-lg">{edu.degree}</p>
+                                                    <p className="text-blue-500 font-medium">{edu.school}</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="text-destructive rounded-full hover:bg-destructive/5" onClick={() => removeFromList('education', index)}>
+                                                <Trash2 className="w-5 h-5"/>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DetailSection>
+
+                {/* Action Bar */}
+                <div className="sticky bottom-6 md:bottom-10 z-30 pt-8 animate-in slide-in-from-bottom-8 duration-700">
+                    <Card className="bg-primary shadow-2xl shadow-primary/30 border-none rounded-2xl overflow-hidden">
+                        <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 text-primary-foreground">
+                                {hasChanges ? (
+                                    <AlertCircle className="w-6 h-6 animate-pulse" />
+                                ) : (
+                                    <CheckCircle2 className="w-6 h-6" />
+                                )}
+                                <div>
+                                    <p className="font-bold text-lg">{hasChanges ? "You have unsaved changes" : "Your profile is up to date"}</p>
+                                    <p className="text-sm opacity-80">{hasChanges ? "Make sure to save your modifications before leaving." : "Everything is synced with our servers."}</p>
+                                </div>
+                            </div>
+                            <Button 
+                                onClick={handleSaveChanges} 
+                                disabled={isPending || !hasChanges} 
+                                className="w-full md:w-auto h-12 px-10 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold text-lg shadow-xl shadow-black/10 transition-all active:scale-95"
+                            >
+                                {isPending ? <Loader2 className="mr-2 animate-spin h-5 w-5" /> : null}
+                                {isPending ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </CardContent>
+                    </Card>
                 </div>
             </CardContent>
         </Card>
@@ -300,16 +457,8 @@ const AddDialog = ({ type, onAdd }: { type: 'link' | 'work' | 'education', onAdd
     const { toast } = useToast();
 
     const handleAdd = () => {
-        if (type === 'link' && (!title || !subtitle)) {
-            toast({ variant: 'destructive', title: "Invalid Link", description: "Please provide both a title and a URL." });
-            return;
-        }
-         if (type === 'work' && (!title || !subtitle)) {
-            toast({ variant: 'destructive', title: "Invalid Work Entry", description: "Please provide both a job title and company." });
-            return;
-        }
-        if (type === 'education' && (!title || !subtitle)) {
-            toast({ variant: 'destructive', title: "Invalid Education Entry", description: "Please provide both a school and a degree." });
+        if (!title.trim() || !subtitle.trim()) {
+            toast({ variant: 'destructive', title: "Missing details", description: "Please fill in all fields to add this item." });
             return;
         }
 
@@ -322,38 +471,42 @@ const AddDialog = ({ type, onAdd }: { type: 'link' | 'work' | 'education', onAdd
     };
     
     const config = {
-        link: { title: 'Add New Link', titleLabel: 'Link Title', subtitleLabel: 'URL', titlePlaceholder: 'e.g., My Portfolio', subtitlePlaceholder: 'https://...' },
-        work: { title: 'Add Work Experience', titleLabel: 'Job Title', subtitleLabel: 'Company Name', titlePlaceholder: 'e.g., Software Engineer', subtitlePlaceholder: 'e.g., Google' },
-        education: { title: 'Add Education', titleLabel: 'School / University', subtitleLabel: 'Degree / Certificate', titlePlaceholder: 'e.g., MIT', subtitlePlaceholder: 'e.g., B.S. in Computer Science' },
+        link: { title: 'Add New Link', titleLabel: 'Platform or Title', subtitleLabel: 'URL', titlePlaceholder: 'e.g., Personal Website', subtitlePlaceholder: 'https://...', icon: LinkIcon },
+        work: { title: 'Add Work Experience', titleLabel: 'Job Title', subtitleLabel: 'Company Name', titlePlaceholder: 'e.g., Software Architect', subtitlePlaceholder: 'e.g., Global Tech Inc.', icon: Briefcase },
+        education: { title: 'Add Education', titleLabel: 'School / University', subtitleLabel: 'Degree / Certificate', titlePlaceholder: 'e.g., Stanford University', subtitlePlaceholder: 'e.g., Master of Computer Science', icon: GraduationCap },
     }[type];
 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add {type.charAt(0).toUpperCase() + type.slice(1)}
+                <Button variant="outline" size="sm" className="rounded-full border-2 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all group">
+                    <PlusCircle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" /> 
+                    Add {type.charAt(0).toUpperCase() + type.slice(1)}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{config.title}</DialogTitle>
+            <DialogContent className="sm:max-w-[450px] rounded-3xl">
+                <DialogHeader className="space-y-3">
+                    <div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-2">
+                        <config.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <DialogTitle className="text-2xl font-extrabold">{config.title}</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-6 py-6">
                     <div className="space-y-2">
-                        <Label htmlFor="title">{config.titleLabel}</Label>
-                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={config.titlePlaceholder}/>
+                        <Label htmlFor="title" className="text-sm font-bold text-muted-foreground">{config.titleLabel}</Label>
+                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={config.titlePlaceholder} className="h-12 rounded-xl bg-slate-50 border-2" />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="subtitle">{config.subtitleLabel}</Label>
-                        <Input id="subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={config.subtitlePlaceholder} />
+                        <Label htmlFor="subtitle" className="text-sm font-bold text-muted-foreground">{config.subtitleLabel}</Label>
+                        <Input id="subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={config.subtitlePlaceholder} className="h-12 rounded-xl bg-slate-50 border-2" />
                     </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-0">
                     <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
+                        <Button type="button" variant="ghost" className="rounded-xl h-12 font-bold">Cancel</Button>
                     </DialogClose>
                      <DialogClose asChild>
-                        <Button onClick={handleAdd}>Add Item</Button>
+                        <Button onClick={handleAdd} className="rounded-xl h-12 px-8 font-bold">Add Item</Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
