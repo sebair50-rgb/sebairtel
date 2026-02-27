@@ -82,7 +82,7 @@
     "unsaved": "Post unsaved!",
     "shareCopied": "Share link copied!",
     "reacted": "Reacted",
-    "react": "React",
+    "react": "Like",
     "comment": "Comment",
     "share": "Share",
     "noComments": "No comments yet. Be the first to comment!",
@@ -146,7 +146,6 @@
     "jobsAction": "View Jobs",
     "companiesTitle": "Companies & Institutions",
     "companiesDesc": "Explore a directory of local companies and institutions and connect with them directly.",
-    "companiesAction": "Browse Companies",
     "comingSoon": "Coming Soon: {title}",
     "comingSoonDesc": "We're working hard to launch this section. Stay tuned for updates!"
   },
