@@ -13,6 +13,7 @@ const Stories = () => {
     const { users, currentUser } = useAppContext();
     const { t } = useTranslation();
 
+    // In production, these would be fetched from a 'stories' collection in Firestore
     const mockStories = users.slice(0, 10).map((user, i) => ({
         id: `story-${i}`,
         user,
@@ -43,29 +44,36 @@ const Stories = () => {
                     </div>
 
                     {/* Other Stories */}
-                    {mockStories.map((story) => (
-                        <div key={story.id} className="relative w-[110px] h-[190px] shrink-0 rounded-xl overflow-hidden shadow-sm group cursor-pointer">
-                            <Image 
-                                src={story.image} 
-                                layout="fill" 
-                                objectFit="cover" 
-                                alt={story.user.name} 
-                                className="group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute inset-0 bg-black/20" />
-                            <div className="absolute top-2 left-2 ring-4 ring-blue-600 rounded-full">
-                                <Avatar className="h-8 w-8 border-2 border-white">
-                                    <AvatarImage src={story.user.avatar} />
-                                    <AvatarFallback>{story.user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
+                    {mockStories.length > 0 ? (
+                        mockStories.map((story) => (
+                            <div key={story.id} className="relative w-[110px] h-[190px] shrink-0 rounded-xl overflow-hidden shadow-sm group cursor-pointer">
+                                <Image 
+                                    src={story.image} 
+                                    layout="fill" 
+                                    objectFit="cover" 
+                                    alt={story.user.name} 
+                                    className="group-hover:scale-105 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/20" />
+                                <div className="absolute top-2 left-2 ring-4 ring-blue-600 rounded-full">
+                                    <Avatar className="h-8 w-8 border-2 border-white">
+                                        <AvatarImage src={story.user.avatar} />
+                                        <AvatarFallback>{story.user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </div>
+                                <div className="absolute bottom-2 left-2 right-2">
+                                    <p className="text-white text-[11px] font-bold truncate leading-tight">
+                                        {story.user.name}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="absolute bottom-2 left-2 right-2">
-                                <p className="text-white text-[11px] font-bold truncate leading-tight">
-                                    {story.user.name}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        // Placeholder for no stories
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="w-[110px] h-[190px] shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse border" />
+                        ))
+                    )}
                 </div>
                 <ScrollBar orientation="horizontal" />
             </ScrollArea>

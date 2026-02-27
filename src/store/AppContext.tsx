@@ -2,14 +2,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
+import type { User, Post, Call, Chat, Message, CallState, Notification, Comment } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
   doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, arrayRemove, Timestamp
 } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
@@ -147,21 +147,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [friendRequests, setFriendRequests] = useState<User[]>([]);
 
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  
-  const [isReadingAloud, setIsReadingAloud] = useState(false);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   const startEditPost = (post: Post) => setEditingPost(post);
   const cancelEditPost = () => setEditingPost(null);
 
-  // Stage 1: Quick Sync with AuthUser
   useEffect(() => {
     if (authLoading) return;
     if (authUser) {
-        // Set basic user info immediately to avoid stuck loading screens
         setCurrentUser(prev => {
             if (prev && prev.id === authUser.uid) return prev;
             return {
@@ -220,7 +216,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (selectedChatId) {
         markChatAsRead(selectedChatId);
-        clearSmartReplies();
+        setSmartReplies([]);
     }
   }, [selectedChatId, markChatAsRead]);
 
@@ -236,7 +232,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [authUser]);
 
-  // Stage 2: Full Hydration from Firestore
   useEffect(() => {
     if (authLoading || !authUser) return;
 
@@ -255,31 +250,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     interface: { ...defaultSettings.interface, ...userData.settings.interface },
                 }));
             }
-        } else {
-            console.log("Firestore profile missing, creating...");
-            const newUser: Omit<User, 'id'> = {
-                name: authUser.displayName || 'New User',
-                email: authUser.email!,
-                avatar: authUser.photoURL || `https://placehold.co/128x128/E6E6FA/333333.png?text=${(authUser.displayName || 'N').charAt(0)}`,
-                friends: [],
-                friendRequestsReceived: [],
-                friendRequestsSent: [],
-                isOnline: true,
-                lastSeen: serverTimestamp() as any,
-                settings: defaultSettings,
-            };
-            try {
-                await setDoc(userDocRef, newUser);
-                setCurrentUser({ id: authUser.uid, ...newUser });
-            } catch (error) {
-                console.error("Critical: Error creating user document:", error);
-            }
         }
-    }, (error) => {
-        console.error("Firestore user listener error:", error);
     });
     
-    const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
       const postsData = snapshot.docs.map(doc => {
           const data = doc.data();
@@ -334,7 +308,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setCalls(callsData);
     });
     
-    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'));
+    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'), limit(30));
     const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
         const notificationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
         setNotifications(notificationsData);
@@ -352,40 +326,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!currentUser || !authUser) return;
-    const fetchUsersInBatches = async (ids: string[]): Promise<User[]> => {
-        if (ids.length === 0) return [];
-        const userPromises = ids.slice(0, 30).map(id => getDoc(doc(db, 'users', id)));
-        const userSnapshots = await Promise.all(userPromises);
-        return userSnapshots.filter(s => s.exists()).map(s => ({ id: s.id, ...s.data() } as User));
-    };
     const fetchRelatedUsers = async () => {
         try {
-            const friendIds = currentUser.friends || [];
-            const requestIds = currentUser.friendRequestsReceived || [];
-            const relatedUsers = await fetchUsersInBatches([...new Set([...friendIds, ...requestIds])]);
-            const suggestionsQuery = query(collection(db, 'users'), limit(20));
+            const suggestionsQuery = query(collection(db, 'users'), limit(50));
             const suggestionsSnapshot = await getDocs(suggestionsQuery);
             const suggestionDocs = suggestionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-            const allFetchedUsers = [...relatedUsers, ...suggestionDocs];
-            const uniqueUsers = Array.from(new Map(allFetchedUsers.map(u => [u.id, u])).values());
-            setUsers(uniqueUsers.filter(u => u.id !== authUser.uid));
+            setUsers(suggestionDocs.filter(u => u.id !== authUser.uid));
         } catch (error) {
             console.error("Error fetching related users:", error);
         }
     };
     fetchRelatedUsers();
-  }, [currentUser, authUser]);
-
-  useEffect(() => {
-    const saveSettings = async () => {
-        if (!authUser || authLoading || !currentUser) return;
-        if (!currentUser.settings && JSON.stringify(settings) === JSON.stringify(defaultSettings)) return;
-        const userDocRef = doc(db, 'users', authUser.uid);
-        await updateDoc(userDocRef, { settings: settings }).catch(() => {});
-    };
-    const handler = setTimeout(saveSettings, 2000);
-    return () => clearTimeout(handler);
-  }, [settings, authUser, authLoading, currentUser]);
+  }, [currentUser?.id, authUser]);
 
   useEffect(() => {
       if (!currentUser || users.length === 0) {
@@ -400,7 +352,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       users.forEach(user => {
           if (friendIds.has(user.id)) friendsList.push(user);
           else if (receivedRequestIds.has(user.id)) requestsList.push(user);
-          else if (user.id !== currentUser.id && !sentRequestIds.has(user.id)) suggestionsList.push(user);
+          else if (!sentRequestIds.has(user.id)) suggestionsList.push(user);
       });
       setFriends(friendsList); setFriendRequests(requestsList); setSuggestedUsers(suggestionsList);
   }, [users, currentUser]);
