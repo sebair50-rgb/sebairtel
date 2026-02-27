@@ -1,8 +1,7 @@
-
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification, Comment } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
+import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -120,9 +119,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [initialContactTab, setInitialContactTab] = useState<'chats' | 'friends' | 'requests'>('friends');
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [users, setUsers] = useState<User[]>([]);
-  const [friends, setFriends] = useState<User[]>([]);
-  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
-  const [friendRequests, setFriendRequests] = useState<User[]>([]);
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
@@ -142,14 +138,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // Set a baseline user immediately from Auth to prevent hangs
-    setCurrentUser({
-        id: authUser.uid,
-        name: authUser.displayName || 'User',
-        avatar: authUser.photoURL || '',
-        email: authUser.email || '',
-    });
-
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
         if (userDoc.exists()) {
@@ -161,6 +149,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     setLanguage(userData.settings.language);
                 }
             }
+        } else {
+            setCurrentUser({
+                id: authUser.uid,
+                name: authUser.displayName || 'New User',
+                avatar: authUser.photoURL || '',
+                email: authUser.email || '',
+            });
         }
         setIsLoadingProfile(false);
     }, (error) => {
@@ -216,16 +211,24 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     fetchUsers();
   }, [authUser]);
 
-  useEffect(() => {
-      if (!currentUser || users.length === 0) {
-          setFriends([]); setFriendRequests([]); setSuggestedUsers([]); return;
-      }
+  const friends = useMemo(() => {
+      if (!currentUser) return [];
+      const fIds = new Set(currentUser.friends || []);
+      return users.filter(u => fIds.has(u.id));
+  }, [users, currentUser]);
+
+  const friendRequests = useMemo(() => {
+      if (!currentUser) return [];
+      const rIds = new Set(currentUser.friendRequestsReceived || []);
+      return users.filter(u => rIds.has(u.id));
+  }, [users, currentUser]);
+
+  const suggestedUsers = useMemo(() => {
+      if (!currentUser) return [];
       const fIds = new Set(currentUser.friends || []);
       const rIds = new Set(currentUser.friendRequestsReceived || []);
       const sIds = new Set(currentUser.friendRequestsSent || []);
-      setFriends(users.filter(u => fIds.has(u.id)));
-      setFriendRequests(users.filter(u => rIds.has(u.id)));
-      setSuggestedUsers(users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id)));
+      return users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id));
   }, [users, currentUser]);
 
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect, useMemo } from 'react';
@@ -61,8 +60,11 @@ const ProfileSettings = () => {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
+    // Track if we've already initialized the form to prevent overwriting unsaved changes
+    const hasInitialized = useRef(false);
+
      useEffect(() => {
-        if (currentUser) {
+        if (currentUser && !hasInitialized.current) {
             const initialData: Partial<User> = {
                 name: currentUser.name || '',
                 phone: currentUser.phone || '',
@@ -79,7 +81,7 @@ const ProfileSettings = () => {
             setInitialState(initialData);
             setFormState(initialData);
             setAvatarPreview(currentUser.avatar || null);
-            setAvatarFile(null);
+            hasInitialized.current = true;
         }
     }, [currentUser]);
     

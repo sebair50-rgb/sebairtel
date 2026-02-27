@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -35,35 +34,15 @@ const UserProfilePage = () => {
         unfriendUser, sendFriendRequest, acceptFriendRequest, isLoadingProfile
     } = useAppContext();
     
-    const [profileUser, setProfileUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
     const userId = params.id as string;
     const isOwnProfile = useMemo(() => userId === currentUser?.id || userId === 'me', [userId, currentUser?.id]);
 
-    useEffect(() => {
-        if (isLoadingProfile) return;
+    const profileUser = useMemo(() => {
+        if (isOwnProfile) return currentUser;
+        return users.find(u => u.id === userId) || null;
+    }, [userId, isOwnProfile, currentUser, users]);
 
-        const findUser = () => {
-            if (isOwnProfile && currentUser) {
-                setProfileUser(currentUser);
-                setIsLoading(false);
-                return;
-            }
-
-            const found = users.find(u => u.id === userId);
-            if (found) {
-                setProfileUser(found);
-                setIsLoading(false);
-            } else if (users.length > 0) {
-                // Done searching, not found
-                setProfileUser(null);
-                setIsLoading(false);
-            }
-        };
-
-        findUser();
-    }, [userId, isOwnProfile, currentUser, users, isLoadingProfile]);
+    const isLoading = isLoadingProfile || (profileUser === null && users.length === 0);
 
     const isFriend = useMemo(() => currentUser?.friends?.includes(profileUser?.id || ''), [currentUser, profileUser]);
     const requestSent = useMemo(() => currentUser?.friendRequestsSent?.includes(profileUser?.id || ''), [currentUser, profileUser]);
@@ -108,7 +87,7 @@ const UserProfilePage = () => {
         }
     };
 
-    if (isLoading || isLoadingProfile) {
+    if (isLoading) {
         return <ProfileSkeleton />;
     }
 
@@ -137,7 +116,7 @@ const UserProfilePage = () => {
                     
                     <div className="px-4 -mt-20">
                         <div className="relative w-40 h-40 mx-auto">
-                            <Avatar className="w-full h-full border-4 border-background ring-4 ring-background">
+                            <Avatar className="w-full h-full border-4 border-background ring-4 ring-background shadow-2xl">
                                 <AvatarImage src={profileUser.avatar} alt={profileUser.name} />
                                 <AvatarFallback className="text-5xl">{profileUser.name?.charAt(0)}</AvatarFallback>
                             </Avatar>
