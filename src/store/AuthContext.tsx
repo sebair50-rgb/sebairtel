@@ -42,16 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // Update Firebase Auth profile
-        await updateProfile(cred.user, { 
-            displayName: name,
-            photoURL: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`
-        });
-        
-        // Send verification email
-        await sendEmailVerification(cred.user);
-        
-        // Create Firestore user document
+        // 1. Create Firestore user document immediately
         await setDoc(doc(db, 'users', cred.user.uid), {
             name, 
             email, 
@@ -61,10 +52,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             friendRequestsSent: [], 
             isOnline: true, 
             lastSeen: serverTimestamp(),
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            settings: {
+                theme: 'system',
+                language: 'system',
+                notifications: { all: true, messages: true, mentions: true, calls: true },
+                privacy: { lastSeen: 'everyone', profilePhoto: 'everyone', friendRequests: 'everyone' },
+                sounds: { messageTone: 'default', notificationTone: 'default', callRingtone: 'default' },
+                interface: { showSocialTab: true, showAiTab: true, showAppsTab: true, showContactTab: true }
+            }
         });
 
-        // Crucial: Sign out after signup so the user must verify before entering the app
+        // 2. Update Firebase Auth profile
+        await updateProfile(cred.user, { 
+            displayName: name,
+            photoURL: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`
+        });
+        
+        // 3. Send verification email
+        await sendEmailVerification(cred.user);
+
+        // 4. Sign out so AuthGuard forces verification on next login
         await signOut(auth);
         
         return cred;

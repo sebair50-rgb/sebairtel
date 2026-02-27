@@ -23,7 +23,6 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import placeholderImages from '@/lib/placeholder-images.json';
-import { cn } from '@/lib/utils';
 import { useTranslation } from '@/store/LanguageContext';
 
 const UserProfilePage = () => {
@@ -33,53 +32,42 @@ const UserProfilePage = () => {
     const { t } = useTranslation();
     const { 
         users, currentUser, createChat, setSelectedChatId, setActiveTab, 
-        unfriendUser, sendFriendRequest, acceptFriendRequest 
+        unfriendUser, sendFriendRequest, acceptFriendRequest, isLoadingProfile
     } = useAppContext();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFriend, setIsFriend] = useState(false);
-    const [requestSent, setRequestSent] = useState(false);
-    const [requestReceived, setRequestReceived] = useState(false);
 
     const userId = params.id as string;
-    const isOwnProfile = userId === currentUser?.id;
-
-    const friendIds = JSON.stringify(currentUser?.friends);
-    const sentRequestIds = JSON.stringify(currentUser?.friendRequestsSent);
-    const receivedRequestIds = JSON.stringify(currentUser?.friendRequestsReceived);
+    const isOwnProfile = useMemo(() => userId === currentUser?.id || userId === 'me', [userId, currentUser?.id]);
 
     useEffect(() => {
-        if (users.length > 0 && currentUser) {
-            const foundUser = users.find(u => u.id === userId) || (isOwnProfile ? currentUser : null);
-            
-            if (foundUser) {
-                setProfileUser(foundUser);
-                setIsFriend(currentUser.friends?.includes(foundUser.id) || false);
-                setRequestSent(currentUser.friendRequestsSent?.includes(foundUser.id) || false);
-                setRequestReceived(currentUser.friendRequestsReceived?.includes(foundUser.id) || false);
-                 setIsLoading(false);
-            } else {
-                 // If user not found in the initial 'users' list, maybe they are the current user
-                if (isOwnProfile) {
-                     setProfileUser(currentUser);
-                     setIsLoading(false);
-                } else {
-                    // Handle case where user ID is invalid
-                    setIsLoading(false);
-                    setProfileUser(null);
-                }
+        if (isLoadingProfile) return;
+
+        const findUser = () => {
+            if (isOwnProfile && currentUser) {
+                setProfileUser(currentUser);
+                setIsLoading(false);
+                return;
             }
-        } else if (!currentUser && users.length === 0) {
-             // Still waiting for data from context
-            setIsLoading(true);
-        } else {
-            // Data is loaded, but user not found
-            setIsLoading(false);
-        }
 
-    }, [userId, users, currentUser, isOwnProfile, friendIds, sentRequestIds, receivedRequestIds]);
+            const found = users.find(u => u.id === userId);
+            if (found) {
+                setProfileUser(found);
+                setIsLoading(false);
+            } else if (users.length > 0) {
+                // Done searching, not found
+                setProfileUser(null);
+                setIsLoading(false);
+            }
+        };
 
+        findUser();
+    }, [userId, isOwnProfile, currentUser, users, isLoadingProfile]);
+
+    const isFriend = useMemo(() => currentUser?.friends?.includes(profileUser?.id || ''), [currentUser, profileUser]);
+    const requestSent = useMemo(() => currentUser?.friendRequestsSent?.includes(profileUser?.id || ''), [currentUser, profileUser]);
+    const requestReceived = useMemo(() => currentUser?.friendRequestsReceived?.includes(profileUser?.id || ''), [currentUser, profileUser]);
 
     const handleMessage = async () => {
         if (!profileUser) return;
@@ -95,17 +83,12 @@ const UserProfilePage = () => {
         if(!profileUser) return;
         try {
             await sendFriendRequest(profileUser);
-            setRequestSent(true);
             toast({
                 title: t('usersView.requestSent'),
                 description: t('usersView.requestSentDesc', { name: profileUser.name }),
             });
         } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: error.message || "Could not send friend request."
-            })
+            toast({ variant: 'destructive', title: 'Error', description: error.message });
         }
     }
     
@@ -115,40 +98,17 @@ const UserProfilePage = () => {
         toast({ title: t('usersView.friendAddedTitle'), description: t('usersView.friendAddedDesc', { name: profileUser.name }) });
     }
 
-    const handleShareProfile = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast({
-            title: t('profilePage.linkCopied'),
-            description: t('profilePage.linkCopiedDesc'),
-        });
-    };
-
-    const handleBlockUser = () => {
-        if(!profileUser) return;
-        toast({
-            variant: "destructive",
-            title: t('profilePage.userBlocked', { name: profileUser.name }),
-            description: t('profilePage.userBlockedDesc'),
-        });
-    };
-    
     const handleRemoveFriend = async () => {
         if(!profileUser) return;
         try {
             await unfriendUser(profileUser.id);
-            setIsFriend(false);
-            toast({
-                title: t('profilePage.friendRemoved', { name: profileUser.name }),
-            });
+            toast({ title: t('profilePage.friendRemoved', { name: profileUser.name }) });
         } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: t('profilePage.removeFriendFailed')
-            });
+            toast({ variant: 'destructive', title: t('profilePage.removeFriendFailed') });
         }
     };
 
-    if (isLoading) {
+    if (isLoading || isLoadingProfile) {
         return <ProfileSkeleton />;
     }
 
@@ -156,7 +116,6 @@ const UserProfilePage = () => {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 dark:bg-black">
                 <h2 className="text-2xl font-bold">{t('profilePage.userNotFound')}</h2>
-                <p className="text-muted-foreground mt-2">{t('profilePage.userNotFoundDesc')}</p>
                 <Button onClick={() => router.back()} className="mt-4">{t('profilePage.goBack')}</Button>
             </div>
         );
@@ -169,24 +128,10 @@ const UserProfilePage = () => {
             <ScrollArea className="h-full w-full">
                 <div className="relative pb-16">
                     <div className="absolute top-4 left-4 z-10">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="bg-background/50 backdrop-blur-sm rounded-full"
-                            onClick={() => router.back()}
-                        >
-                            <ArrowLeft />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="bg-background/50 backdrop-blur-sm rounded-full" onClick={() => router.back()}><ArrowLeft /></Button>
                     </div>
                     <div className="h-48 md:h-64 w-full relative">
-                        <Image 
-                            src={placeholderImages.profile.cover.src}
-                            data-ai-hint={placeholderImages.profile.cover.hint} 
-                            alt="Cover Photo" 
-                            layout="fill" 
-                            objectFit="cover" 
-                            className="bg-muted"
-                        />
+                        <Image src={placeholderImages.profile.cover.src} data-ai-hint={placeholderImages.profile.cover.hint} alt="Cover" layout="fill" objectFit="cover" className="bg-muted" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     </div>
                     
@@ -208,48 +153,33 @@ const UserProfilePage = () => {
                         <div className="mt-4 px-4 flex items-center justify-center gap-2">
                              {isFriend ? (
                                 <Button className="flex-1 max-w-xs" variant="secondary" onClick={handleMessage}>
-                                    <MessageSquare size={20} className="mr-2" />
-                                    {t('profilePage.message')}
+                                    <MessageSquare size={20} className="mr-2" /> {t('profilePage.message')}
                                 </Button>
                              ) : requestReceived ? (
                                 <Button className="flex-1 max-w-xs" onClick={handleAcceptFriend}>
-                                    <UserPlus size={20} className="mr-2" />
-                                    {t('profilePage.acceptRequest')}
+                                    <UserPlus size={20} className="mr-2" /> {t('profilePage.acceptRequest')}
                                 </Button>
                             ) : requestSent ? (
                                 <Button className="flex-1 max-w-xs" disabled>
-                                    <Check size={20} className="mr-2" />
-                                    {t('profilePage.requestSent')}
+                                    <Check size={20} className="mr-2" /> {t('profilePage.requestSent')}
                                 </Button>
                              ) : (
                                 <Button className="flex-1 max-w-xs" onClick={handleAddFriend}>
-                                    <UserPlus size={20} className="mr-2" />
-                                    {t('profilePage.addFriend')}
+                                    <UserPlus size={20} className="mr-2" /> {t('profilePage.addFriend')}
                                 </Button>
                              )}
                             
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="secondary" size="icon">
-                                        <MoreHorizontal />
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                <DropdownMenuTrigger asChild><Button variant="secondary" size="icon"><MoreHorizontal /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleShareProfile}>
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        <span>{t('profilePage.shareProfile')}</span>
+                                    <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(window.location.href); toast({ title: t('profilePage.linkCopied') }); }}>
+                                        <Share2 className="mr-2 h-4 w-4" /> <span>{t('profilePage.shareProfile')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
                                     {isFriend && (
                                         <DropdownMenuItem onClick={handleRemoveFriend} className="text-destructive focus:text-destructive">
-                                            <UserMinus className="mr-2 h-4 w-4" />
-                                            <span>{t('profilePage.removeFriend')}</span>
+                                            <UserMinus className="mr-2 h-4 w-4" /> <span>{t('profilePage.removeFriend')}</span>
                                         </DropdownMenuItem>
                                     )}
-                                    <DropdownMenuItem onClick={handleBlockUser} className="text-destructive focus:text-destructive">
-                                        <UserX className="mr-2 h-4 w-4" />
-                                        <span>{t('profilePage.blockUser')}</span>
-                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -264,79 +194,39 @@ const UserProfilePage = () => {
                             </TabsList>
                             <TabsContent value="about" className="mt-4">
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle>{t('profilePage.details')}</CardTitle>
-                                    </CardHeader>
+                                    <CardHeader><CardTitle>{t('profilePage.details')}</CardTitle></CardHeader>
                                     <CardContent className="space-y-4">
-                                        {profileUser.bio && (
-                                            <div className="text-center text-lg text-muted-foreground pt-2 pb-4 border-b">
-                                                <p>{profileUser.bio}</p>
-                                            </div>
-                                        )}
-                                        {profileUser.city && (
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Home className="w-5 h-5 text-primary" />
-                                                <span>{t('profilePage.livesIn')} <strong>{profileUser.city}</strong></span>
-                                            </div>
-                                        )}
-                                        {profileUser.from && (
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <MapPin className="w-5 h-5 text-primary" />
-                                                <span>{t('profilePage.from')} <strong>{profileUser.from}</strong></span>
-                                            </div>
-                                        )}
-                                        {(!profileUser.city && !profileUser.from && !profileUser.bio) && (
-                                            <div className="flex items-center gap-3 text-muted-foreground">
-                                                <Info className="w-5 h-5" />
-                                                <span>{t('profilePage.noDetails')}</span>
-                                            </div>
-                                        )}
+                                        {profileUser.bio && <div className="text-center text-lg text-muted-foreground pt-2 pb-4 border-b"><p>{profileUser.bio}</p></div>}
+                                        {profileUser.city && <div className="flex items-center gap-3 text-muted-foreground"><Home className="w-5 h-5 text-primary" /><span>{t('profilePage.livesIn')} <strong>{profileUser.city}</strong></span></div>}
+                                        {profileUser.from && <div className="flex items-center gap-3 text-muted-foreground"><MapPin className="w-5 h-5 text-primary" /><span>{t('profilePage.from')} <strong>{profileUser.from}</strong></span></div>}
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                             <TabsContent value="friends" className="mt-4">
                                 <Card>
-                                    <CardHeader>
-                                        <CardTitle>{t('profilePage.friendsCount', { count: profileFriends.length })}</CardTitle>
-                                    </CardHeader>
+                                    <CardHeader><CardTitle>{t('profilePage.friendsCount', { count: profileFriends.length })}</CardTitle></CardHeader>
                                     <CardContent>
-                                        {profileFriends.length > 0 ? (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                                {profileFriends.map(friend => (
-                                                    <Link href={`/profile/${friend.id}`} key={friend.id}>
-                                                        <Card className="text-center p-3 hover:shadow-lg transition-shadow aspect-square flex flex-col justify-center items-center">
-                                                            <Avatar className="w-16 h-16 mx-auto">
-                                                                <AvatarImage src={friend.avatar} alt={friend.name}/>
-                                                                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <p className="mt-2 font-semibold truncate text-sm">{friend.name}</p>
-                                                        </Card>
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-muted-foreground text-center py-8">{t('profilePage.noFriends')}</p>
-                                        )}
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                            {profileFriends.map(friend => (
+                                                <Link href={`/profile/${friend.id}`} key={friend.id}>
+                                                    <Card className="text-center p-3 hover:shadow-lg transition-shadow aspect-square flex flex-col justify-center items-center">
+                                                        <Avatar className="w-16 h-16 mx-auto"><AvatarImage src={friend.avatar}/><AvatarFallback>{friend.name.charAt(0)}</AvatarFallback></Avatar>
+                                                        <p className="mt-2 font-semibold truncate text-sm">{friend.name}</p>
+                                                    </Card>
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                             <TabsContent value="photos" className="mt-4">
                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>{t('profilePage.photos')}</CardTitle>
-                                    </CardHeader>
+                                    <CardHeader><CardTitle>{t('profilePage.photos')}</CardTitle></CardHeader>
                                     <CardContent>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                             {placeholderImages.profile.gallery.map((photo) => (
                                                 <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden group">
-                                                     <Image 
-                                                        src={photo.src} 
-                                                        alt={photo.hint} 
-                                                        layout="fill" 
-                                                        objectFit="cover" 
-                                                        className="transition-transform group-hover:scale-110"
-                                                        data-ai-hint={photo.hint}
-                                                    />
+                                                     <Image src={photo.src} alt="Gallery" layout="fill" objectFit="cover" className="transition-transform group-hover:scale-110" />
                                                 </div>
                                             ))}
                                         </div>
@@ -351,39 +241,12 @@ const UserProfilePage = () => {
     );
 };
 
-
 const ProfileSkeleton = () => (
     <div className="w-full h-full bg-slate-100 dark:bg-black">
-        <div className="relative">
-            <Skeleton className="h-48 md:h-64 w-full bg-muted" />
-        </div>
-        <div className="px-4 -mt-20">
-            <div className="relative w-40 h-40 mx-auto">
-                <Skeleton className="w-full h-full rounded-full" />
-            </div>
-        </div>
-        <div className="text-center mt-4 px-4 space-y-2">
-            <Skeleton className="h-9 w-48 mx-auto" />
-            <Skeleton className="h-5 w-32 mx-auto" />
-        </div>
-        <div className="mt-4 px-4 flex items-center justify-center gap-2">
-            <Skeleton className="h-10 flex-1 max-w-xs" />
-            <Skeleton className="h-10 w-10" />
-        </div>
-        <div className="mt-8 px-4 max-w-3xl mx-auto">
-             <div className="flex w-full justify-around mt-2 bg-slate-200 dark:bg-slate-800 p-1 rounded-lg">
-                 <Skeleton className="h-8 w-24" />
-                 <Skeleton className="h-8 w-24" />
-                 <Skeleton className="h-8 w-24" />
-            </div>
-             <div className="mt-4">
-                <Skeleton className="w-full h-48 rounded-lg" />
-             </div>
-        </div>
+        <Skeleton className="h-48 md:h-64 w-full" />
+        <div className="px-4 -mt-20"><Skeleton className="w-40 h-40 mx-auto rounded-full" /></div>
+        <div className="text-center mt-4 px-4 space-y-2"><Skeleton className="h-9 w-48 mx-auto" /><Skeleton className="h-5 w-32 mx-auto" /></div>
     </div>
 );
 
-
 export default UserProfilePage;
-
-    

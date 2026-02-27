@@ -44,6 +44,7 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
+  isLoadingProfile: boolean;
   updateUserProfile: (data: Partial<User>, files?: { avatar?: File }) => Promise<void>;
   posts: Post[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => Promise<void>;
@@ -108,6 +109,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const { authUser, loading: authLoading } = useAuth();
   const { setLanguage } = useTranslation();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
@@ -133,29 +135,37 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const cancelEditPost = () => setEditingPost(null);
 
   useEffect(() => {
-    if (authLoading || !authUser) return;
+    if (authLoading) return;
+    if (!authUser) {
+        setCurrentUser(null);
+        setIsLoadingProfile(false);
+        return;
+    }
+
+    // Set a baseline user immediately from Auth to prevent hangs
+    setCurrentUser({
+        id: authUser.uid,
+        name: authUser.displayName || 'User',
+        avatar: authUser.photoURL || '',
+        email: authUser.email || '',
+    });
 
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
         if (userDoc.exists()) {
             const userData = userDoc.data() as User;
             setCurrentUser({ id: userDoc.id, ...userData });
-            if (userData.settings) setSettings(prev => ({ ...prev, ...userData.settings }));
-        } else {
-            // Document might not exist yet if signup is in progress
-            const baseUser: User = {
-                id: authUser.uid,
-                name: authUser.displayName || 'New User',
-                avatar: authUser.photoURL || `https://placehold.co/128x128/6366f1/ffffff?text=${authUser.displayName?.charAt(0) || 'U'}`,
-                email: authUser.email || '',
-                friends: [],
-                friendRequestsReceived: [],
-                friendRequestsSent: [],
-                isOnline: true,
-                lastSeen: Timestamp.now()
-            };
-            setCurrentUser(baseUser);
+            if (userData.settings) {
+                setSettings(prev => ({ ...prev, ...userData.settings }));
+                if (userData.settings.language && userData.settings.language !== 'system') {
+                    setLanguage(userData.settings.language);
+                }
+            }
         }
+        setIsLoadingProfile(false);
+    }, (error) => {
+        console.error("Profile listener failed:", error);
+        setIsLoadingProfile(false);
     });
 
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
@@ -195,7 +205,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       unsubscribeUser(); unsubscribePosts(); unsubscribeChats(); unsubscribeNotifications();
     };
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading, setLanguage]);
 
   useEffect(() => {
     if (!authUser) return;
@@ -287,12 +297,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const userDocRef = doc(db, 'users', auth.currentUser.uid);
-    const existing = await getDoc(userDocRef);
-    if (existing.exists()) {
-        await updateDoc(userDocRef, { ...updateData, settings });
-    } else {
-        await setDoc(userDocRef, { ...updateData, settings, friends: [], friendRequestsReceived: [], friendRequestsSent: [] });
-    }
+    await updateDoc(userDocRef, { ...updateData, settings });
   };
 
   const createChat = async (friend: User): Promise<Chat | null> => {
@@ -426,7 +431,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const initiateCall = (user: User, type: 'audio' | 'video') => {
     setCallState({ status: 'outgoing', user, type });
-    // Simulate connection for UI demo, in production this would use WebRTC/Signaling
     setTimeout(() => {
         setCallState(prev => prev.status === 'outgoing' ? { ...prev, status: 'connected' } : prev);
     }, 3000);
@@ -434,9 +438,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const endCall = () => setCallState({ status: 'idle' });
   const answerCall = () => setCallState(prev => ({ ...prev, status: 'connected' }));
-  const addMissedCall = (user: User) => {
-      // In production this would be triggered by a call signaling failure
-  };
+  const addMissedCall = (user: User) => {};
 
   const readChatAloud = async () => {
     if (isReadingAloud) {
@@ -493,7 +495,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppContext.Provider value={{
-        currentUser, updateUserProfile, posts, addPost, updatePost, deletePost, addComment, editingPost, startEditPost, cancelEditPost,
+        currentUser, isLoadingProfile, updateUserProfile, posts, addPost, updatePost, deletePost, addComment, editingPost, startEditPost, cancelEditPost,
         calls, settings, setSettings, chats, setChats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
         addMessage, deleteMessage, updateMessage, users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
         createChat, unfriendUser, callState, initiateCall, answerCall, endCall, addMissedCall, notifications, unreadNotificationCount, markNotificationsAsRead,
