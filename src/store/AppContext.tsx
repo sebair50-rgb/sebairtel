@@ -44,9 +44,9 @@ export interface AppSettings {
 
 interface AppContextType {
   currentUser: User | null;
-  updateUserProfile: (data: Partial<User>, files?: { avatar?: File | string }) => Promise<void>;
+  updateUserProfile: (data: Partial<User>, files?: { avatar?: File }) => Promise<void>;
   posts: Post[];
-  addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaSrc?: string }) => Promise<void>;
+  addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
@@ -127,6 +127,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  const storage = getStorage();
+
   const startEditPost = (post: Post) => setEditingPost(post);
   const cancelEditPost = () => setEditingPost(null);
 
@@ -139,6 +141,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const userData = userDoc.data() as User;
             setCurrentUser({ id: userDoc.id, ...userData });
             if (userData.settings) setSettings(prev => ({ ...prev, ...userData.settings }));
+        } else {
+            // Document might not exist yet if signup is in progress
+            const baseUser: User = {
+                id: authUser.uid,
+                name: authUser.displayName || 'New User',
+                avatar: authUser.photoURL || `https://placehold.co/128x128/6366f1/ffffff?text=${authUser.displayName?.charAt(0) || 'U'}`,
+                email: authUser.email || '',
+                friends: [],
+                friendRequestsReceived: [],
+                friendRequestsSent: [],
+                isOnline: true,
+                lastSeen: Timestamp.now()
+            };
+            setCurrentUser(baseUser);
         }
     });
 
@@ -202,37 +218,81 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setSuggestedUsers(users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id)));
   }, [users, currentUser]);
 
-  const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaSrc?: string }) => {
+  const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+      await addDoc(collection(db, `users/${userId}/notifications`), {
+          ...notification,
+          timestamp: serverTimestamp(),
+          isRead: false
+      });
+  };
+
+  const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => {
     if (!currentUser) return;
+    
+    let mediaUrl = undefined;
+    if (data.mediaFile) {
+        const storageRef = ref(storage, `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
+        await uploadBytes(storageRef, data.mediaFile);
+        mediaUrl = await getDownloadURL(storageRef);
+    }
+
     await addDoc(collection(db, 'posts'), {
-      ...data, user: currentUser.name, userId: currentUser.id, avatar: currentUser.avatar,
-      reactions: [], comments: [], timestamp: serverTimestamp(),
+      content: data.content,
+      mediaType: data.mediaType || 'text',
+      mediaSrc: mediaUrl,
+      user: currentUser.name,
+      userId: currentUser.id,
+      avatar: currentUser.avatar,
+      reactions: [],
+      comments: [],
+      timestamp: serverTimestamp(),
     });
   };
 
-  const updatePost = async (id: string, data: Partial<Post>) => await updateDoc(doc(db, "posts", id), data);
-  const deletePost = async (id: string) => await deleteDoc(doc(db, 'posts', id));
+  const updatePost = async (id: string, data: Partial<Post>) => {
+      await updateDoc(doc(db, "posts", id), data);
+  };
+
+  const deletePost = async (id: string) => {
+      await deleteDoc(doc(db, 'posts', id));
+  };
   
   const addComment = async (postId: string, text: string) => {
     if (!currentUser) return;
     await updateDoc(doc(db, "posts", postId), {
-      comments: arrayUnion({ text, user: currentUser.name, userId: currentUser.id, avatar: currentUser.avatar, timestamp: Timestamp.now() })
+      comments: arrayUnion({ 
+          text, 
+          user: currentUser.name, 
+          userId: currentUser.id, 
+          avatar: currentUser.avatar, 
+          timestamp: Timestamp.now() 
+      })
     });
   };
 
-  const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File | string }) => {
+  const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
     if (!auth.currentUser) throw new Error("Not authenticated");
     const updateData: any = { ...data };
+    
     if (files?.avatar) {
-        const file = typeof files.avatar === 'string' ? await (await fetch(files.avatar)).blob() : files.avatar;
-        const storageRef = ref(getStorage(), `avatars/${auth.currentUser.uid}/${Date.now()}`);
-        await uploadBytes(storageRef, file);
+        const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
+        await uploadBytes(storageRef, files.avatar);
         const url = await getDownloadURL(storageRef);
         updateData.avatar = url;
         await updateProfile(auth.currentUser, { photoURL: url });
     }
-    if (data.name) await updateProfile(auth.currentUser, { displayName: data.name });
-    await updateDoc(doc(db, 'users', auth.currentUser.uid), { ...updateData, settings });
+    
+    if (data.name) {
+        await updateProfile(auth.currentUser, { displayName: data.name });
+    }
+    
+    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    const existing = await getDoc(userDocRef);
+    if (existing.exists()) {
+        await updateDoc(userDocRef, { ...updateData, settings });
+    } else {
+        await setDoc(userDocRef, { ...updateData, settings, friends: [], friendRequestsReceived: [], friendRequestsSent: [] });
+    }
   };
 
   const createChat = async (friend: User): Promise<Chat | null> => {
@@ -240,14 +300,26 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const q = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
     const snap = await getDocs(q);
     const existing = snap.docs.find(d => d.data().users.includes(friend.id));
-    if (existing) return { id: existing.id, ...existing.data() } as Chat;
+    
+    if (existing) {
+        setSelectedChatId(existing.id);
+        return { id: existing.id, ...existing.data() } as Chat;
+    }
+    
     const newRef = doc(collection(db, 'chats'));
     const chatData = {
-        id: newRef.id, users: [currentUser.id, friend.id],
-        userInfo: { [currentUser.id]: { name: currentUser.name, avatar: currentUser.avatar }, [friend.id]: { name: friend.name, avatar: friend.avatar } },
-        lastMessageTimestamp: serverTimestamp(), lastMessageText: 'Started conversation', unreadCount: { [currentUser.id]: 0, [friend.id]: 0 }
+        id: newRef.id,
+        users: [currentUser.id, friend.id],
+        userInfo: { 
+            [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }, 
+            [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar } 
+        },
+        lastMessageTimestamp: serverTimestamp(),
+        lastMessageText: 'Started conversation',
+        unreadCount: { [currentUser.id]: 0, [friend.id]: 0 }
     };
     await setDoc(newRef, chatData);
+    setSelectedChatId(newRef.id);
     return chatData as any;
   };
 
@@ -257,18 +329,34 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     batch.update(doc(db, 'users', currentUser.id), { friendRequestsSent: arrayUnion(target.id) });
     batch.update(doc(db, 'users', target.id), { friendRequestsReceived: arrayUnion(currentUser.id) });
     await batch.commit();
-    await addDoc(collection(db, `users/${target.id}/notifications`), {
-        type: 'friend_request', message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
-        fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }, timestamp: serverTimestamp(), isRead: false, link: '/contact'
+    
+    await createNotification(target.id, {
+        type: 'friend_request',
+        message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
+        fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+        link: '/contact'
     });
   };
 
   const acceptFriendRequest = async (user: User) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    batch.update(doc(db, 'users', currentUser.id), { friends: arrayUnion(user.id), friendRequestsReceived: arrayRemove(user.id) });
-    batch.update(doc(db, 'users', user.id), { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
+    batch.update(doc(db, 'users', currentUser.id), { 
+        friends: arrayUnion(user.id), 
+        friendRequestsReceived: arrayRemove(user.id) 
+    });
+    batch.update(doc(db, 'users', user.id), { 
+        friends: arrayUnion(currentUser.id), 
+        friendRequestsSent: arrayRemove(currentUser.id) 
+    });
     await batch.commit();
+
+    await createNotification(user.id, {
+        type: 'new_friend',
+        message: `<strong>${currentUser.name}</strong> accepted your friend request.`,
+        fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+        link: '/contact'
+    });
   };
 
   const declineFriendRequest = async (user: User) => {
@@ -279,64 +367,137 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
 
+  const unfriendUser = async (friendId: string) => {
+      if (!currentUser) return;
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'users', currentUser.id), { friends: arrayRemove(friendId) });
+      batch.update(doc(db, 'users', friendId), { friends: arrayRemove(currentUser.id) });
+      await batch.commit();
+  };
+
   const addMessage = async (chatId: string, msg: any) => {
     if (!currentUser) return;
     const chatRef = doc(db, 'chats', chatId);
-    await addDoc(collection(chatRef, 'messages'), { ...msg, timestamp: serverTimestamp() });
-    const otherId = (await getDoc(chatRef)).data()?.users.find((id: string) => id !== currentUser.id);
-    await updateDoc(chatRef, { lastMessageTimestamp: serverTimestamp(), lastMessageText: msg.text || 'Sent an attachment', [`unreadCount.${otherId}`]: increment(1) });
+    const messagesRef = collection(chatRef, 'messages');
+    
+    await addDoc(messagesRef, { 
+        ...msg, 
+        timestamp: serverTimestamp(),
+        userId: currentUser.id,
+        user: currentUser.name,
+        avatar: currentUser.avatar
+    });
+    
+    const chatDoc = await getDoc(chatRef);
+    const otherId = chatDoc.data()?.users.find((id: string) => id !== currentUser.id);
+    
+    await updateDoc(chatRef, { 
+        lastMessageTimestamp: serverTimestamp(), 
+        lastMessageText: msg.text || (msg.type === 'image' ? 'Sent an image' : 'Sent an attachment'), 
+        [`unreadCount.${otherId}`]: increment(1) 
+    });
+  };
+
+  const deleteMessage = async (chatId: string, messageId: string) => {
+      await deleteDoc(doc(db, 'chats', chatId, 'messages', messageId));
+  };
+
+  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
+      await updateDoc(doc(db, 'chats', chatId, 'messages', messageId), updatedMessage);
   };
 
   const markNotificationsAsRead = async () => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    notifications.filter(n => !n.isRead).forEach(n => batch.update(doc(db, `users/${currentUser.id}/notifications`, n.id), { isRead: true }));
+    notifications.filter(n => !n.isRead).forEach(n => {
+        batch.update(doc(db, `users/${currentUser.id}/notifications`, n.id), { isRead: true });
+    });
     await batch.commit();
   };
 
   const deleteNotifications = async (ids: string[]) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    ids.forEach(id => batch.delete(doc(db, `users/${currentUser.id}/notifications`, id)));
+    ids.forEach(id => {
+        batch.delete(doc(db, `users/${currentUser.id}/notifications`, id));
+    });
     await batch.commit();
   };
 
   const initiateCall = (user: User, type: 'audio' | 'video') => {
     setCallState({ status: 'outgoing', user, type });
-    setTimeout(() => setCallState(prev => prev.status === 'outgoing' ? { ...prev, status: 'connected' } : prev), 3000);
+    // Simulate connection for UI demo, in production this would use WebRTC/Signaling
+    setTimeout(() => {
+        setCallState(prev => prev.status === 'outgoing' ? { ...prev, status: 'connected' } : prev);
+    }, 3000);
   };
 
   const endCall = () => setCallState({ status: 'idle' });
   const answerCall = () => setCallState(prev => ({ ...prev, status: 'connected' }));
-  const addMissedCall = () => {};
+  const addMissedCall = (user: User) => {
+      // In production this would be triggered by a call signaling failure
+  };
 
   const readChatAloud = async () => {
-    if (isReadingAloud) { ttsAudioRef.current?.pause(); setIsReadingAloud(false); return; }
+    if (isReadingAloud) {
+        ttsAudioRef.current?.pause();
+        setIsReadingAloud(false);
+        return;
+    }
     if (!selectedChatId) return;
+    
     setIsReadingAloud(true);
-    const snap = await getDocs(query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(5)));
-    const text = snap.docs.reverse().map(d => `${d.data().user}: ${d.data().text || 'Attachment'}`).join('. ');
-    const { audioUrl } = await textToSpeech({ text });
-    ttsAudioRef.current = new Audio(audioUrl);
-    ttsAudioRef.current.play();
-    ttsAudioRef.current.onended = () => setIsReadingAloud(false);
+    const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
+    const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
+    const snap = await getDocs(q);
+    
+    const text = snap.docs.reverse()
+        .map(d => `${d.data().user}: ${d.data().text || 'Attachment'}`)
+        .join('. ');
+    
+    if (!text) {
+        setIsReadingAloud(false);
+        return;
+    }
+
+    try {
+        const { audioUrl } = await textToSpeech({ text });
+        ttsAudioRef.current = new Audio(audioUrl);
+        ttsAudioRef.current.play();
+        ttsAudioRef.current.onended = () => setIsReadingAloud(false);
+    } catch (error) {
+        console.error("TTS failed", error);
+        setIsReadingAloud(false);
+    }
   };
 
   const fetchSmartReplies = async () => {
     if (!selectedChatId) return;
-    const snap = await getDocs(query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(5)));
-    const history = snap.docs.reverse().map(d => d.data().text || '').join('\n');
-    const res = await smartReplySuggestions({ history });
-    setSmartReplies(res.suggestions);
+    const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
+    const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
+    const snap = await getDocs(q);
+    
+    const history = snap.docs.reverse()
+        .map(d => `${d.data().user}: ${d.data().text || ''}`)
+        .join('\n');
+    
+    if (!history) return;
+
+    try {
+        const res = await smartReplySuggestions({ history });
+        setSmartReplies(res.suggestions);
+    } catch (error) {
+        console.error("Smart replies failed", error);
+    }
   };
 
   return (
     <AppContext.Provider value={{
         currentUser, updateUserProfile, posts, addPost, updatePost, deletePost, addComment, editingPost, startEditPost, cancelEditPost,
         calls, settings, setSettings, chats, setChats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
-        addMessage, deleteMessage: async () => {}, updateMessage: async () => {}, users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
-        createChat, unfriendUser: async () => {}, callState, initiateCall, answerCall, endCall, addMissedCall, notifications, unreadNotificationCount, markNotificationsAsRead,
-        createNotification: async () => {}, deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies: () => setSmartReplies([])
+        addMessage, deleteMessage, updateMessage, users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
+        createChat, unfriendUser, callState, initiateCall, answerCall, endCall, addMissedCall, notifications, unreadNotificationCount, markNotificationsAsRead,
+        createNotification, deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies: () => setSmartReplies([])
     }}>
         {children}
     </AppContext.Provider>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -25,8 +26,12 @@ const CreatePost = () => {
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1048576) {
-                toast({ variant: 'destructive', title: t('createPost.fileTooLarge'), description: t('createPost.fileTooLargeDesc') });
+            if (file.size > 5242880) { // 5MB limit for production
+                toast({ 
+                    variant: 'destructive', 
+                    title: t('createPost.fileTooLarge'), 
+                    description: "Please choose a file smaller than 5MB." 
+                });
                 return;
             }
             setMediaFile(file);
@@ -39,27 +44,21 @@ const CreatePost = () => {
         
         setIsPosting(true);
         try {
-            let mediaSrc = undefined;
-            let mediaType: 'image' | 'video' | 'text' = 'text';
-
-            if (mediaFile) {
-                // Convert to base64 for demo purposes
-                const reader = new FileReader();
-                const base64 = await new Promise<string>((resolve) => {
-                    reader.onload = (e) => resolve(e.target?.result as string);
-                    reader.readAsDataURL(mediaFile);
-                });
-                mediaSrc = base64;
-                mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
-            }
-
-            await addPost({ content, mediaType, mediaSrc });
+            const mediaType = mediaFile?.type.startsWith('video') ? 'video' : 'image';
+            
+            await addPost({ 
+                content, 
+                mediaType: mediaFile ? mediaType : 'text', 
+                mediaFile: mediaFile || undefined 
+            });
+            
             setContent('');
             setMediaFile(null);
             setMediaPreview(null);
             setIsOpen(false);
             toast({ title: t('createPost.updateSuccess') });
         } catch (error: any) {
+            console.error("Post failed", error);
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         } finally {
             setIsPosting(false);
@@ -122,7 +121,7 @@ const CreatePost = () => {
                                 <p className="font-semibold text-sm">Add to your post</p>
                                 <div className="flex gap-1">
                                     <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="text-green-500 rounded-full h-9 w-9"><ImageIcon /></Button>
-                                    <Button variant="ghost" size="icon" className="text-blue-500 rounded-full h-9 w-9"><Video /></Button>
+                                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="text-blue-500 rounded-full h-9 w-9"><Video /></Button>
                                     <Button variant="ghost" size="icon" className="text-yellow-500 rounded-full h-9 w-9"><Smile /></Button>
                                 </div>
                             </div>

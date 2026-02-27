@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect, useMemo } from 'react';
@@ -103,8 +104,8 @@ const ProfileSettings = () => {
     const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1048576) {
-                 toast({ variant: "destructive", title: "Image size is too large", description: "Please choose an image smaller than 1MB." });
+            if (file.size > 2097152) { // 2MB limit
+                 toast({ variant: "destructive", title: "Image size is too large", description: "Please choose an image smaller than 2MB." });
                 return;
             }
             setAvatarFile(file);
@@ -135,9 +136,12 @@ const ProfileSettings = () => {
                         (updatePayload as any)[key] = formState[key];
                     }
                 });
+                
                 const filesToUpload: { avatar?: File } = {};
                 if (avatarFile) filesToUpload.avatar = avatarFile;
+                
                 await updateUserProfile(updatePayload, filesToUpload);
+                
                 toast({ title: "Profile updated!", description: "Your changes have been saved successfully." });
                 setInitialState(formState);
                 setAvatarFile(null);
@@ -200,7 +204,7 @@ const ProfileSettings = () => {
                                                 <div className="bg-primary/10 p-3 rounded-xl group-hover:bg-primary/20 transition-colors"><UploadCloud className="w-6 h-6 text-primary" /></div>
                                                 <div className="text-left">
                                                     <p className="font-bold">Upload from Device</p>
-                                                    <p className="text-sm text-muted-foreground">JPG, PNG or WEBP. Max 1MB.</p>
+                                                    <p className="text-sm text-muted-foreground">JPG, PNG or WEBP. Max 2MB.</p>
                                                 </div>
                                             </Button>
                                         </DialogClose>
