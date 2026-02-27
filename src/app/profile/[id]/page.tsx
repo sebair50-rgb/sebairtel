@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -17,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/dropdown-menu";
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -35,18 +36,22 @@ const UserProfilePage = () => {
     } = useAppContext();
     
     const userId = params.id as string;
-    const isOwnProfile = useMemo(() => userId === currentUser?.id || userId === 'me', [userId, currentUser?.id]);
-
+    
+    // Stabilized profileUser lookup to prevent infinite render cycles
     const profileUser = useMemo(() => {
-        if (isOwnProfile) return currentUser;
+        if (!userId) return null;
+        if (userId === 'me' || userId === currentUser?.id) return currentUser;
         return users.find(u => u.id === userId) || null;
-    }, [userId, isOwnProfile, currentUser, users]);
+    }, [userId, currentUser?.id, users]);
 
-    const isLoading = isLoadingProfile || (profileUser === null && users.length === 0);
+    const isOwnProfile = useMemo(() => profileUser?.id === currentUser?.id, [profileUser?.id, currentUser?.id]);
 
-    const isFriend = useMemo(() => currentUser?.friends?.includes(profileUser?.id || ''), [currentUser, profileUser]);
-    const requestSent = useMemo(() => currentUser?.friendRequestsSent?.includes(profileUser?.id || ''), [currentUser, profileUser]);
-    const requestReceived = useMemo(() => currentUser?.friendRequestsReceived?.includes(profileUser?.id || ''), [currentUser, profileUser]);
+    // Precise loading logic
+    const isLoading = isLoadingProfile || (userId !== 'me' && !profileUser && users.length === 0);
+
+    const isFriend = useMemo(() => currentUser?.friends?.includes(profileUser?.id || ''), [currentUser?.friends, profileUser?.id]);
+    const requestSent = useMemo(() => currentUser?.friendRequestsSent?.includes(profileUser?.id || ''), [currentUser?.friendRequestsSent, profileUser?.id]);
+    const requestReceived = useMemo(() => currentUser?.friendRequestsReceived?.includes(profileUser?.id || ''), [currentUser?.friendRequestsReceived, profileUser?.id]);
 
     const handleMessage = async () => {
         if (!profileUser) return;
@@ -93,7 +98,7 @@ const UserProfilePage = () => {
 
     if (!profileUser) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 dark:bg-black">
+            <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50 dark:bg-black w-full">
                 <h2 className="text-2xl font-bold">{t('profilePage.userNotFound')}</h2>
                 <Button onClick={() => router.back()} className="mt-4">{t('profilePage.goBack')}</Button>
             </div>
@@ -221,7 +226,7 @@ const UserProfilePage = () => {
 };
 
 const ProfileSkeleton = () => (
-    <div className="w-full h-full bg-slate-100 dark:bg-black">
+    <div className="w-full h-full bg-slate-100 dark:bg-black min-h-screen">
         <Skeleton className="h-48 md:h-64 w-full" />
         <div className="px-4 -mt-20"><Skeleton className="w-40 h-40 mx-auto rounded-full" /></div>
         <div className="text-center mt-4 px-4 space-y-2"><Skeleton className="h-9 w-48 mx-auto" /><Skeleton className="h-5 w-32 mx-auto" /></div>

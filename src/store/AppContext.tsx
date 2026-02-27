@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -132,34 +133,37 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (authLoading) return;
+    
     if (!authUser) {
         setCurrentUser(null);
         setIsLoadingProfile(false);
         return;
     }
 
+    // Set a baseline currentUser from auth while Firestore doc loads
+    setCurrentUser({
+        id: authUser.uid,
+        name: authUser.displayName || 'User',
+        avatar: authUser.photoURL || '',
+        email: authUser.email || '',
+    });
+
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
         if (userDoc.exists()) {
             const userData = userDoc.data() as User;
-            setCurrentUser({ id: userDoc.id, ...userData });
+            setCurrentUser(prev => ({ ...prev, ...userData, id: userDoc.id }));
+            
             if (userData.settings) {
                 setSettings(prev => ({ ...prev, ...userData.settings }));
                 if (userData.settings.language && userData.settings.language !== 'system') {
                     setLanguage(userData.settings.language);
                 }
             }
-        } else {
-            setCurrentUser({
-                id: authUser.uid,
-                name: authUser.displayName || 'New User',
-                avatar: authUser.photoURL || '',
-                email: authUser.email || '',
-            });
         }
         setIsLoadingProfile(false);
     }, (error) => {
-        console.error("Profile listener failed:", error);
+        console.error("Profile synchronization error:", error);
         setIsLoadingProfile(false);
     });
 
@@ -423,10 +427,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
 
-  const deleteNotifications = async (ids: string[]) => {
+  const deleteNotifications = async (notificationIds: string[]) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    ids.forEach(id => {
+    notificationIds.forEach(id => {
         batch.delete(doc(db, `users/${currentUser.id}/notifications`, id));
     });
     await batch.commit();

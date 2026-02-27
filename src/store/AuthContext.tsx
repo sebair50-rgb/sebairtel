@@ -10,6 +10,8 @@ import {
   signOut,
   updateProfile,
   sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
   type User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -30,6 +32,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set persistence to local to survive browser refreshes
+    setPersistence(auth, browserLocalPersistence);
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setAuthUser(user);
       setLoading(false);
@@ -43,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
         // 1. Create Firestore user document immediately
+        // We do this BEFORE everything else to ensure the profile is ready
         await setDoc(doc(db, 'users', cred.user.uid), {
             name, 
             email, 
@@ -63,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         });
 
-        // 2. Update Firebase Auth profile
+        // 2. Update Firebase Auth profile for immediate display
         await updateProfile(cred.user, { 
             displayName: name,
             photoURL: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`
@@ -72,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // 3. Send verification email
         await sendEmailVerification(cred.user);
 
-        // 4. Sign out so AuthGuard forces verification on next login
+        // 4. Force sign out - the user must verify before their first real session
         await signOut(auth);
         
         return cred;
@@ -88,10 +94,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
+        // Check if verified
         if (!cred.user.emailVerified) {
+            const emailAddr = cred.user.email;
             await signOut(auth);
             const error = new Error("Email not verified.");
             (error as any).code = 'auth/email-not-verified';
+            (error as any).email = emailAddr;
             throw error;
         }
         return cred;
@@ -100,7 +109,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
   
-  const logout = async () => await signOut(auth);
+  const logout = async () => {
+      setLoading(true);
+      try {
+          await signOut(auth);
+      } finally {
+          setLoading(false);
+      }
+  };
+
   const resendVerificationEmail = async () => { 
       if (auth.currentUser) {
           await sendEmailVerification(auth.currentUser); 
