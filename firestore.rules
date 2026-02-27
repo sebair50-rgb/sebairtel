@@ -3,10 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read public profiles, but only update their own.
+    // Users can read public profiles, but only create/update their own.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow update: if request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      
+      // User-specific subcollections like calls and notifications are private.
+      match /{subcollection}/{docId} {
+          allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Posts can be created and read by any authenticated user.
@@ -29,11 +34,6 @@ service cloud.firestore {
         // Only the author of the message can update or delete it.
         allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       }
-    }
-    
-    // User-specific subcollections like calls and notifications are private.
-    match /users/{userId}/{subcollection}/{docId} {
-        allow read, write, delete: if request.auth.uid == userId;
     }
   }
 }

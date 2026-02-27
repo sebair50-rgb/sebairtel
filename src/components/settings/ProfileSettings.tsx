@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, UploadCloud, Image as ImageIcon, Sparkles, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Camera, Loader2, Calendar as CalendarIcon, Phone, Briefcase, GraduationCap, Home, MapPin, Heart, Link as LinkIcon, PlusCircle, Trash2, UploadCloud, Sparkles, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
@@ -57,10 +56,8 @@ const ProfileSettings = () => {
     
     const [initialState, setInitialState] = useState<Partial<User>>({});
     const [formState, setFormState] = useState<Partial<User>>({});
-    
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
     const [isPending, startTransition] = useTransition();
 
      useEffect(() => {
@@ -92,12 +89,12 @@ const ProfileSettings = () => {
     }, [formState, initialState, avatarFile]);
 
     const profileCompletion = useMemo(() => {
-        if (!formState) return 0;
+        if (!formState || !currentUser) return 0;
         const fields = ['name', 'bio', 'phone', 'dob', 'city', 'from', 'relationshipStatus', 'avatar'];
         const filledFields = fields.filter(f => !!(formState as any)[f]);
         const hasLists = (formState.links?.length || 0) > 0 || (formState.workExperience?.length || 0) > 0 || (formState.education?.length || 0) > 0;
-        return Math.round(((filledFields.length + (hasLists ? 1 : 0)) / (fields.length + 1)) * 100);
-    }, [formState]);
+        return Math.min(100, Math.round(((filledFields.length + (hasLists ? 1 : 0)) / (fields.length + 1)) * 100));
+    }, [formState, currentUser]);
 
     const handleFieldChange = (field: keyof User, value: any) => {
         setFormState(prev => ({ ...prev, [field]: value }));
@@ -130,7 +127,6 @@ const ProfileSettings = () => {
 
     const handleSaveChanges = () => {
         if (!currentUser || !hasChanges) return;
-
         startTransition(async () => {
             try {
                 let updatePayload: Partial<User> = {};
@@ -139,18 +135,13 @@ const ProfileSettings = () => {
                         (updatePayload as any)[key] = formState[key];
                     }
                 });
-
                 const filesToUpload: { avatar?: File } = {};
                 if (avatarFile) filesToUpload.avatar = avatarFile;
-                
                 await updateUserProfile(updatePayload, filesToUpload);
-                
                 toast({ title: "Profile updated!", description: "Your changes have been saved successfully." });
                 setInitialState(formState);
                 setAvatarFile(null);
-
             } catch (error: any) {
-                console.error("Failed to update profile:", error);
                 toast({ variant: "destructive", title: "Error", description: error.message || "Failed to save profile changes." });
             }
         });
@@ -158,8 +149,9 @@ const ProfileSettings = () => {
 
     if (!currentUser) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4">
+                <Loader2 className="animate-spin h-10 w-10 text-primary" />
+                <p className="text-muted-foreground animate-pulse">Initializing your profile...</p>
             </div>
         )
     }
@@ -183,7 +175,6 @@ const ProfileSettings = () => {
             </CardHeader>
 
             <CardContent className="px-0 space-y-12">
-                {/* Avatar Section */}
                 <div className="bg-card border rounded-2xl p-8 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />
                     <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
@@ -242,23 +233,14 @@ const ProfileSettings = () => {
                     </div>
                 </div>
 
-                {/* Personal Information */}
-                <DetailSection 
-                    title="Basic Information" 
-                    description="Your primary details that help people identify you."
-                    icon={UserIcon}
-                >
+                <DetailSection title="Basic Information" description="Your primary details that help people identify you." icon={UserIcon}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="name" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
-                                Full Name <span className="text-destructive">*</span>
-                            </Label>
+                            <Label htmlFor="name" className="text-sm font-bold text-muted-foreground flex items-center gap-2">Full Name <span className="text-destructive">*</span></Label>
                             <Input id="name" value={formState.name || ''} onChange={(e) => handleFieldChange('name', e.target.value)} className="h-12 rounded-xl bg-background border-2 focus:ring-primary" placeholder="Enter your full name" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="dob" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
-                                Date of Birth
-                            </Label>
+                            <Label htmlFor="dob" className="text-sm font-bold text-muted-foreground flex items-center gap-2">Date of Birth</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant={"outline"} className={cn("w-full h-12 justify-start text-left font-normal rounded-xl border-2",!formState.dob && "text-muted-foreground")}>
@@ -267,33 +249,18 @@ const ProfileSettings = () => {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl" align="start">
-                                    <Calendar 
-                                        mode="single" 
-                                        selected={formState.dob ? new Date(formState.dob) : undefined} 
-                                        onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} 
-                                        initialFocus 
-                                        captionLayout="dropdown-buttons" 
-                                        fromYear={1950} 
-                                        toYear={new Date().getFullYear()} 
-                                    />
+                                    <Calendar mode="single" selected={formState.dob ? new Date(formState.dob) : undefined} onSelect={(date) => handleFieldChange('dob', date ? date.toISOString() : undefined)} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} />
                                 </PopoverContent>
                             </Popover>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="bio" className="text-sm font-bold text-muted-foreground flex items-center gap-2">
-                            Professional Bio
-                        </Label>
+                        <Label htmlFor="bio" className="text-sm font-bold text-muted-foreground flex items-center gap-2">Professional Bio</Label>
                         <Textarea id="bio" placeholder="Tell the world about yourself..." value={formState.bio || ''} onChange={(e) => handleFieldChange('bio', e.target.value)} className="min-h-[120px] rounded-xl bg-background border-2 p-4 leading-relaxed" />
                     </div>
                 </DetailSection>
 
-                {/* Contact & Location */}
-                <DetailSection 
-                    title="Contact & Location" 
-                    description="How others can reach you or where you're based."
-                    icon={Phone}
-                >
+                <DetailSection title="Contact & Location" description="How others can reach you or where you're based." icon={Phone}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="phone" className="text-sm font-bold text-muted-foreground">Phone Number</Label>
@@ -326,12 +293,7 @@ const ProfileSettings = () => {
                     </div>
                 </DetailSection>
 
-                {/* Portfolio */}
-                <DetailSection 
-                    title="Portfolio & Social" 
-                    description="Link your external profiles or personal website."
-                    icon={LinkIcon}
-                >
+                <DetailSection title="Portfolio & Social" description="Link your external profiles or personal website." icon={LinkIcon}>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {formState.links?.map((link, index) => (
                             <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-background border-2 border-primary/10 hover:border-primary/30 transition-all group">
@@ -351,95 +313,17 @@ const ProfileSettings = () => {
                     </div>
                 </DetailSection>
 
-                {/* Background */}
-                <DetailSection 
-                    title="Experience & Education" 
-                    description="Highlight your career path and academic achievements."
-                    icon={Briefcase}
-                >
-                    <div className="space-y-8">
-                        {/* Work */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                    <Briefcase className="w-4 h-4" /> Work Experience
-                                </h4>
-                                <AddDialog type="work" onAdd={(item) => addToList('workExperience', item as WorkExperience)} />
-                            </div>
-                            <div className="grid gap-4">
-                                {formState.workExperience?.length === 0 && <p className="text-sm text-muted-foreground italic py-4">No work experience added yet.</p>}
-                                {formState.workExperience?.map((work, index) => (
-                                    <Card key={index} className="bg-background border-2 group relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-                                        <CardContent className="p-5 flex items-center justify-between gap-4">
-                                            <div className="flex gap-4 items-center">
-                                                <div className="bg-muted p-3 rounded-xl"><Briefcase className="w-6 h-6 text-muted-foreground" /></div>
-                                                <div>
-                                                    <p className="font-extrabold text-lg">{work.title}</p>
-                                                    <p className="text-primary font-medium">{work.company}</p>
-                                                </div>
-                                            </div>
-                                            <Button variant="ghost" size="icon" className="text-destructive rounded-full hover:bg-destructive/5" onClick={() => removeFromList('workExperience', index)}>
-                                                <Trash2 className="w-5 h-5"/>
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Education */}
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                    <GraduationCap className="w-4 h-4" /> Academic History
-                                </h4>
-                                <AddDialog type="education" onAdd={(item) => addToList('education', item as Education)} />
-                            </div>
-                            <div className="grid gap-4">
-                                {formState.education?.length === 0 && <p className="text-sm text-muted-foreground italic py-4">No education details added yet.</p>}
-                                {formState.education?.map((edu, index) => (
-                                    <Card key={index} className="bg-background border-2 group relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-                                        <CardContent className="p-5 flex items-center justify-between gap-4">
-                                            <div className="flex gap-4 items-center">
-                                                <div className="bg-muted p-3 rounded-xl"><GraduationCap className="w-6 h-6 text-muted-foreground" /></div>
-                                                <div>
-                                                    <p className="font-extrabold text-lg">{edu.degree}</p>
-                                                    <p className="text-blue-500 font-medium">{edu.school}</p>
-                                                </div>
-                                            </div>
-                                            <Button variant="ghost" size="icon" className="text-destructive rounded-full hover:bg-destructive/5" onClick={() => removeFromList('education', index)}>
-                                                <Trash2 className="w-5 h-5"/>
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </DetailSection>
-
-                {/* Action Bar */}
                 <div className="sticky bottom-6 md:bottom-10 z-30 pt-8 animate-in slide-in-from-bottom-8 duration-700">
                     <Card className="bg-primary shadow-2xl shadow-primary/30 border-none rounded-2xl overflow-hidden">
                         <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-3 text-primary-foreground">
-                                {hasChanges ? (
-                                    <AlertCircle className="w-6 h-6 animate-pulse" />
-                                ) : (
-                                    <CheckCircle2 className="w-6 h-6" />
-                                )}
+                                {hasChanges ? <AlertCircle className="w-6 h-6 animate-pulse" /> : <CheckCircle2 className="w-6 h-6" />}
                                 <div>
                                     <p className="font-bold text-lg">{hasChanges ? "You have unsaved changes" : "Your profile is up to date"}</p>
                                     <p className="text-sm opacity-80">{hasChanges ? "Make sure to save your modifications before leaving." : "Everything is synced with our servers."}</p>
                                 </div>
                             </div>
-                            <Button 
-                                onClick={handleSaveChanges} 
-                                disabled={isPending || !hasChanges} 
-                                className="w-full md:w-auto h-12 px-10 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold text-lg shadow-xl shadow-black/10 transition-all active:scale-95"
-                            >
+                            <Button onClick={handleSaveChanges} disabled={isPending || !hasChanges} className="w-full md:w-auto h-12 px-10 rounded-xl bg-white text-primary hover:bg-slate-100 font-bold text-lg shadow-xl shadow-black/10 transition-all active:scale-95">
                                 {isPending ? <Loader2 className="mr-2 animate-spin h-5 w-5" /> : null}
                                 {isPending ? 'Saving...' : 'Save Changes'}
                             </Button>
@@ -455,40 +339,29 @@ const AddDialog = ({ type, onAdd }: { type: 'link' | 'work' | 'education', onAdd
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const { toast } = useToast();
-
     const handleAdd = () => {
         if (!title.trim() || !subtitle.trim()) {
-            toast({ variant: 'destructive', title: "Missing details", description: "Please fill in all fields to add this item." });
+            toast({ variant: 'destructive', title: "Missing details", description: "Please fill in all fields." });
             return;
         }
-
-        const item = type === 'link' ? { title, url: subtitle } :
-                     type === 'work' ? { title, company: subtitle } :
-                     { school: title, degree: subtitle };
-        onAdd(item);
-        setTitle('');
-        setSubtitle('');
+        const item = type === 'link' ? { title, url: subtitle } : type === 'work' ? { title, company: subtitle } : { school: title, degree: subtitle };
+        onAdd(item); setTitle(''); setSubtitle('');
     };
-    
     const config = {
-        link: { title: 'Add New Link', titleLabel: 'Platform or Title', subtitleLabel: 'URL', titlePlaceholder: 'e.g., Personal Website', subtitlePlaceholder: 'https://...', icon: LinkIcon },
-        work: { title: 'Add Work Experience', titleLabel: 'Job Title', subtitleLabel: 'Company Name', titlePlaceholder: 'e.g., Software Architect', subtitlePlaceholder: 'e.g., Global Tech Inc.', icon: Briefcase },
-        education: { title: 'Add Education', titleLabel: 'School / University', subtitleLabel: 'Degree / Certificate', titlePlaceholder: 'e.g., Stanford University', subtitlePlaceholder: 'e.g., Master of Computer Science', icon: GraduationCap },
+        link: { title: 'Add New Link', titleLabel: 'Platform', subtitleLabel: 'URL', titlePlaceholder: 'Website', subtitlePlaceholder: 'https://...', icon: LinkIcon },
+        work: { title: 'Add Work', titleLabel: 'Title', subtitleLabel: 'Company', titlePlaceholder: 'Role', subtitlePlaceholder: 'Company name', icon: Briefcase },
+        education: { title: 'Add Education', titleLabel: 'School', subtitleLabel: 'Degree', titlePlaceholder: 'University', subtitlePlaceholder: 'Master...', icon: GraduationCap },
     }[type];
-
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-full border-2 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all group">
-                    <PlusCircle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" /> 
-                    Add {type.charAt(0).toUpperCase() + type.slice(1)}
+                <Button variant="outline" size="sm" className="rounded-full border-2 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add {type}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[450px] rounded-3xl">
                 <DialogHeader className="space-y-3">
-                    <div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-2">
-                        <config.icon className="w-6 h-6 text-primary" />
-                    </div>
+                    <div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-2"><config.icon className="w-6 h-6 text-primary" /></div>
                     <DialogTitle className="text-2xl font-extrabold">{config.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 py-6">
@@ -501,13 +374,9 @@ const AddDialog = ({ type, onAdd }: { type: 'link' | 'work' | 'education', onAdd
                         <Input id="subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={config.subtitlePlaceholder} className="h-12 rounded-xl bg-slate-50 border-2" />
                     </div>
                 </div>
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <DialogClose asChild>
-                        <Button type="button" variant="ghost" className="rounded-xl h-12 font-bold">Cancel</Button>
-                    </DialogClose>
-                     <DialogClose asChild>
-                        <Button onClick={handleAdd} className="rounded-xl h-12 px-8 font-bold">Add Item</Button>
-                    </DialogClose>
+                <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="ghost">Cancel</Button></DialogClose>
+                    <DialogClose asChild><Button onClick={handleAdd}>Add Item</Button></DialogClose>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

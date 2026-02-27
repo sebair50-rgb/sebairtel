@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -149,21 +148,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // States for AI features
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
-  
-  // State for post editing
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
-  const startEditPost = (post: Post) => {
-    setEditingPost(post);
-  };
-  const cancelEditPost = () => {
-    setEditingPost(null);
-  };
-
+  const startEditPost = (post: Post) => setEditingPost(post);
+  const cancelEditPost = () => setEditingPost(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -177,8 +168,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('app-settings', JSON.stringify(settings));
-        
-        // Handle theme
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
         if (settings.theme === 'system') {
@@ -191,65 +180,39 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [settings]);
 
   useEffect(() => {
-      // Sync language context when app settings change
-      if (settings.language) {
-          setLanguage(settings.language);
-      }
+      if (settings.language) setLanguage(settings.language);
   }, [settings.language, setLanguage]);
 
   const markChatAsRead = useCallback(async (chatId: string) => {
     if (!authUser) return;
     const chatRef = doc(db, 'chats', chatId);
     const fieldName = `unreadCount.${authUser.uid}`;
-    
-    const chatDoc = await getDoc(chatRef);
-    if (chatDoc.exists()) {
-      await updateDoc(chatRef, { [fieldName]: 0 });
+    try {
+        await updateDoc(chatRef, { [fieldName]: 0 });
+    } catch (e) {
+        console.error("Error marking chat as read:", e);
     }
   }, [authUser]);
-
 
   useEffect(() => {
     if (selectedChatId) {
         markChatAsRead(selectedChatId);
-        clearSmartReplies(); // Clear replies when chat changes
+        clearSmartReplies();
     }
   }, [selectedChatId, markChatAsRead]);
 
-
-  // Presence management effect
   useEffect(() => {
     if (!authUser) return;
-
     const userStatusRef = doc(db, 'users', authUser.uid);
-    
-    // Set online status
-    updateDoc(userStatusRef, {
-        isOnline: true,
-        lastSeen: serverTimestamp(),
-    });
-
-    const handleBeforeUnload = () => {
-        updateDoc(userStatusRef, {
-            isOnline: false,
-            lastSeen: serverTimestamp(),
-        });
-    };
-    
+    updateDoc(userStatusRef, { isOnline: true, lastSeen: serverTimestamp() }).catch(() => {});
+    const handleBeforeUnload = () => updateDoc(userStatusRef, { isOnline: false, lastSeen: serverTimestamp() }).catch(() => {});
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
-        // Set offline on unmount/logout
-        updateDoc(userStatusRef, {
-            isOnline: false,
-            lastSeen: serverTimestamp(),
-        });
+        updateDoc(userStatusRef, { isOnline: false, lastSeen: serverTimestamp() }).catch(() => {});
     }
-
   }, [authUser]);
 
-  // Main listener for all data related to the authenticated user
   useEffect(() => {
     if (authLoading) return;
     if (!authUser) {
@@ -269,9 +232,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         if (userDoc.exists()) {
             const userData = userDoc.data() as User;
             setCurrentUser({ id: userDoc.id, ...userData });
-            // Load user-specific settings from Firestore
             if (userData.settings) {
-                 setSettings(prevSettings => ({
+                 setSettings(prev => ({
                     ...defaultSettings,
                     ...userData.settings,
                     notifications: { ...defaultSettings.notifications, ...userData.settings.notifications },
@@ -281,8 +243,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 }));
             }
         } else {
-            // Document doesn't exist, let's create it.
-            console.warn("User document not found for authenticated user, creating one...");
+            console.log("Creating initial user profile...");
             const newUser: Omit<User, 'id'> = {
                 name: authUser.displayName || 'New User',
                 email: authUser.email!,
@@ -296,7 +257,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             };
             try {
                 await setDoc(userDocRef, newUser);
-                // The onSnapshot listener will automatically pick up the new document and set the currentUser state.
+                setCurrentUser({ id: authUser.uid, ...newUser });
             } catch (error) {
                 console.error("Error creating user document:", error);
             }
@@ -322,20 +283,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
              const data = doc.data();
              const otherUserId = data.users.find((id: string) => id !== authUser.uid);
              let otherUserInfo: any;
-
              if (data.userInfo && data.userInfo[otherUserId]) {
                  otherUserInfo = data.userInfo[otherUserId];
-             } else {
-                 if (otherUserId) {
-                     const userDoc = await getDoc(doc(db, 'users', otherUserId));
-                     if (userDoc.exists()) {
-                        otherUserInfo = { id: userDoc.id, ...userDoc.data() };
-                     }
-                 }
+             } else if (otherUserId) {
+                 const userDoc = await getDoc(doc(db, 'users', otherUserId));
+                 if (userDoc.exists()) otherUserInfo = { id: userDoc.id, ...userDoc.data() };
              }
-             
              const unreadCount = (data.unreadCount && data.unreadCount[authUser.uid]) ? data.unreadCount[authUser.uid] : 0;
-
              return {
                  id: doc.id,
                  ...data,
@@ -346,18 +300,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                  unreadCount: { [authUser.uid]: unreadCount },
              } as Chat;
         });
-        
         Promise.all(chatsDataPromises).then(chatsData => {
-            const sortedChats = chatsData.sort((a, b) => {
-                const timeA = a.lastMessageTimestamp?.toMillis() || 0;
-                const timeB = b.lastMessageTimestamp?.toMillis() || 0;
-                return timeB - timeA;
-            });
+            const sortedChats = chatsData.sort((a, b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0));
             setChats(sortedChats);
         });
-
-    }, (error) => {
-        console.error("Firestore chats listener error:", error);
     });
 
     const callsQuery = query(collection(db, `users/${authUser.uid}/calls`), orderBy('timestamp', 'desc'));
@@ -377,10 +323,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
         const notificationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
         setNotifications(notificationsData);
-        const unreadCount = notificationsData.filter(n => !n.isRead).length;
-        setUnreadNotificationCount(unreadCount);
+        setUnreadNotificationCount(notificationsData.filter(n => !n.isRead).length);
     });
-
 
     return () => {
       unsubscribeUser();
@@ -391,142 +335,75 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [authUser, authLoading]);
 
-  // This new effect will handle fetching the dynamic user lists (friends, suggestions)
   useEffect(() => {
     if (!currentUser || !authUser) return;
-
     const fetchUsersInBatches = async (ids: string[]): Promise<User[]> => {
         if (ids.length === 0) return [];
-        const idBatches: string[][] = [];
-        for (let i = 0; i < ids.length; i += 30) {
-            idBatches.push(ids.slice(i, i + 30));
-        }
-
-        const userPromises = idBatches.map(batch => 
-            getDocs(query(collection(db, 'users'), where('__name__', 'in', batch)))
-        );
-
+        const userPromises = ids.slice(0, 30).map(id => getDoc(doc(db, 'users', id)));
         const userSnapshots = await Promise.all(userPromises);
-        const users = userSnapshots.flatMap(snapshot => 
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))
-        );
-        return users;
+        return userSnapshots.filter(s => s.exists()).map(s => ({ id: s.id, ...s.data() } as User));
     };
-
     const fetchRelatedUsers = async () => {
         try {
             const friendIds = currentUser.friends || [];
             const requestIds = currentUser.friendRequestsReceived || [];
-            const sentRequestIds = currentUser.friendRequestsSent || [];
-
-            const allKnownIds = new Set([...friendIds, ...requestIds, ...sentRequestIds, currentUser.id]);
-
-            // Fetch friends and requests in one go
-            const relatedUserIds = [...new Set([...friendIds, ...requestIds])];
-            const relatedUsers = await fetchUsersInBatches(relatedUserIds);
-            
-            // Fetch suggestions
-            const suggestionsQuery = query(collection(db, 'users'), limit(30));
+            const relatedUsers = await fetchUsersInBatches([...new Set([...friendIds, ...requestIds])]);
+            const suggestionsQuery = query(collection(db, 'users'), limit(20));
             const suggestionsSnapshot = await getDocs(suggestionsQuery);
             const suggestionDocs = suggestionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
-            // Combine and deduplicate all fetched users
             const allFetchedUsers = [...relatedUsers, ...suggestionDocs];
             const uniqueUsers = Array.from(new Map(allFetchedUsers.map(u => [u.id, u])).values());
-            
-            // Filter out the current user
-            const otherUsers = uniqueUsers.filter(u => u.id !== authUser.uid);
-            setUsers(otherUsers);
-
+            setUsers(uniqueUsers.filter(u => u.id !== authUser.uid));
         } catch (error) {
             console.error("Error fetching related users:", error);
         }
     };
-
     fetchRelatedUsers();
   }, [currentUser, authUser]);
 
-  // Persist settings to Firestore whenever they change
   useEffect(() => {
     const saveSettings = async () => {
-        if (!authUser || authLoading) return;
-        // Avoid saving default settings on initial load before user settings are fetched
-        if (currentUser && !currentUser.settings && JSON.stringify(settings) === JSON.stringify(defaultSettings)) {
-             return;
-        }
-        
+        if (!authUser || authLoading || !currentUser) return;
+        if (!currentUser.settings && JSON.stringify(settings) === JSON.stringify(defaultSettings)) return;
         const userDocRef = doc(db, 'users', authUser.uid);
-        await updateDoc(userDocRef, { settings: settings });
+        await updateDoc(userDocRef, { settings: settings }).catch(() => {});
     };
-    
-    // Debounce saving settings
-    const handler = setTimeout(() => {
-        saveSettings();
-    }, 1000);
-
-    return () => {
-        clearTimeout(handler);
-    };
-
+    const handler = setTimeout(saveSettings, 2000);
+    return () => clearTimeout(handler);
   }, [settings, authUser, authLoading, currentUser]);
-
 
   useEffect(() => {
       if (!currentUser || users.length === 0) {
-          setFriends([]);
-          setFriendRequests([]);
-          setSuggestedUsers([]);
-          return;
+          setFriends([]); setFriendRequests([]); setSuggestedUsers([]); return;
       }
-
       const friendIds = new Set(currentUser.friends || []);
-      const sentRequestIds = new Set(currentUser.friendRequestsSent || []);
       const receivedRequestIds = new Set(currentUser.friendRequestsReceived || []);
-      
+      const sentRequestIds = new Set(currentUser.friendRequestsSent || []);
       const friendsList: User[] = [];
       const requestsList: User[] = [];
       const suggestionsList: User[] = [];
-
       users.forEach(user => {
-          if (friendIds.has(user.id)) {
-              friendsList.push(user);
-          } else if (receivedRequestIds.has(user.id)) {
-              requestsList.push(user);
-          } else if (user.id !== currentUser.id && !sentRequestIds.has(user.id)) {
-              suggestionsList.push(user);
-          }
+          if (friendIds.has(user.id)) friendsList.push(user);
+          else if (receivedRequestIds.has(user.id)) requestsList.push(user);
+          else if (user.id !== currentUser.id && !sentRequestIds.has(user.id)) suggestionsList.push(user);
       });
-      
-      setFriends(friendsList);
-      setFriendRequests(requestsList);
-      setSuggestedUsers(suggestionsList);
-
+      setFriends(friendsList); setFriendRequests(requestsList); setSuggestedUsers(suggestionsList);
   }, [users, currentUser]);
   
   const getMessageDescription = (msg: Message): string => {
     switch (msg.type) {
-        case 'text':
-            return msg.text || '';
-        case 'image':
-            return `Sent an image ${msg.text ? `- with caption: ${msg.text}` : ''}`;
-        case 'video':
-            return `Sent a video ${msg.text ? `- with caption: ${msg.text}` : ''}`;
-        case 'audio':
-            return 'Sent a voice message';
-        case 'file':
-             return `Sent a file named '${msg.fileInfo?.name || 'file'}' ${msg.text ? `- with caption: ${msg.text}` : ''}`;
-        case 'code':
-            const codeMatch = msg.text?.match(/```(\w+)/);
-            const lang = codeMatch ? ` of type ${codeMatch[1]}` : '';
-            return `Sent a code snippet${lang}`;
-        default:
-            return 'Sent a message';
+        case 'text': return msg.text || '';
+        case 'image': return 'Sent an image';
+        case 'video': return 'Sent a video';
+        case 'audio': return 'Sent a voice message';
+        case 'file': return `Sent a file: ${msg.fileInfo?.name || 'file'}`;
+        case 'code': return 'Sent a code snippet';
+        default: return 'Sent a message';
     }
   };
 
   const addPost = async (postData: { content: string, mediaType?: 'image' | 'video' | 'code', mediaSrc?: string }) => {
     if (!currentUser) return;
-    
     const dataToSave: any = {
       content: postData.content,
       user: currentUser.name,
@@ -538,560 +415,190 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       mediaType: postData.mediaType || 'text',
       mediaSrc: postData.mediaSrc || null,
     };
-    
-    if (dataToSave.mediaType === 'text' && dataToSave.content.includes('```')) {
-        dataToSave.mediaType = 'code';
-    }
-
-
-    if (dataToSave.mediaSrc && dataToSave.mediaSrc.length > 1048487) {
-        throw new Error("File size exceeds 1MB limit.");
-    }
-
+    if (dataToSave.mediaType === 'text' && dataToSave.content.includes('```')) dataToSave.mediaType = 'code';
     await addDoc(collection(db, 'posts'), dataToSave);
   };
   
   const updatePost = async (postId: string, data: Partial<Post>) => {
-      const postRef = doc(db, "posts", postId);
-      const updateData: {[key: string]: any} = {};
-
-      if (data.content !== undefined) updateData.content = data.content;
-      if (data.reactions !== undefined) updateData.reactions = data.reactions;
-      
-      // Handle cases where mediaSrc could be null to remove it.
-      if (data.mediaSrc === undefined) { // Check for undefined to distinguish from null
-          // Do not update media if it's not provided
-      } else {
-        updateData.mediaSrc = data.mediaSrc;
-        updateData.mediaType = data.mediaType;
-      }
-      
-      // Auto-detect code type on update as well
-      if (updateData.content && updateData.content.includes('```') && !updateData.mediaSrc) {
-        updateData.mediaType = 'code';
-      } else if (data.mediaType) {
-        updateData.mediaType = data.mediaType;
-      }
-
-      await updateDoc(postRef, updateData);
+      await updateDoc(doc(db, "posts", postId), data);
   }
 
   const deletePost = async (postId: string) => {
-    const postRef = doc(db, 'posts', postId);
-    await deleteDoc(postRef);
+    await deleteDoc(doc(db, 'posts', postId));
   };
 
   const addComment = async (postId: string, commentText: string) => {
     if (!currentUser) return;
-
     const newComment: Comment = {
       text: commentText,
       user: currentUser.name,
       userId: currentUser.id,
       avatar: currentUser.avatar,
-      timestamp: Timestamp.now(), // Use client-side timestamp
+      timestamp: Timestamp.now(),
     };
-
-    const postRef = doc(db, "posts", postId);
-    await updateDoc(postRef, {
-      comments: arrayUnion(newComment)
-    });
+    await updateDoc(doc(db, "posts", postId), { comments: arrayUnion(newComment) });
   };
 
   const createChat = async (friend: User): Promise<Chat | null> => {
     if (!currentUser) return null;
-
-    const existingChatQuery = query(
-      collection(db, 'chats'), 
-      where('users', 'array-contains', currentUser.id)
-    );
-    const querySnapshot = await getDocs(existingChatQuery);
-    const existingChat = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as Chat))
-      .find(chat => chat.users.includes(friend.id));
-
-    if (existingChat) {
-      return existingChat;
-    }
-
+    const q = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
+    const snapshot = await getDocs(q);
+    const existingChat = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chat)).find(chat => chat.users.includes(friend.id));
+    if (existingChat) return existingChat;
     const newChatRef = doc(collection(db, 'chats'));
     const newChatData: Omit<Chat, 'lastMessageTime'> = {
-        id: newChatRef.id,
-        name: friend.name,
-        avatar: friend.avatar,
-        users: [currentUser.id, friend.id],
-        userInfo: {
-            [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
-            [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar }
-        },
-        lastMessageTimestamp: serverTimestamp() as any,
-        lastMessageText: `You started a conversation with ${friend.name}`,
-        unreadCount: { [currentUser.id]: 0, [friend.id]: 0 },
-        isMuted: false,
-        isBlocked: false,
+        id: newChatRef.id, name: friend.name, avatar: friend.avatar, users: [currentUser.id, friend.id],
+        userInfo: { [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }, [friend.id]: { id: friend.id, name: friend.name, avatar: friend.avatar } },
+        lastMessageTimestamp: serverTimestamp() as any, lastMessageText: `Conversation started`, unreadCount: { [currentUser.id]: 0, [friend.id]: 0 }, isMuted: false, isBlocked: false,
     };
-
     await setDoc(newChatRef, newChatData);
+    return { ...newChatData, lastMessageTime: 'Just now' } as Chat;
+  };
 
-    await createNotification(friend.id, {
-        type: 'new_friend',
-        message: `${currentUser.name} started a conversation with you.`,
-        fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
-        link: `/chats/${newChatRef.id}`
-    });
-
-    const createdChatForState: Chat = {
-        ...newChatData,
-        lastMessageTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' }),
-    };
-    
-    setChats(prevChats => [createdChatForState, ...prevChats].sort((a,b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
-    
-    return createdChatForState;
-};
-
-    const unfriendUser = async (friendId: string) => {
-        if (!currentUser) return;
-        const currentUserRef = doc(db, 'users', currentUser.id);
-        const friendRef = doc(db, 'users', friendId);
-
-        const batch = writeBatch(db);
-        batch.update(currentUserRef, { friends: arrayRemove(friendId) });
-        batch.update(friendRef, { friends: arrayRemove(currentUser.id) });
-        await batch.commit();
-
-        const q = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
-        const querySnapshot = await getDocs(q);
-        const chatDoc = querySnapshot.docs.find(doc => doc.data().users.includes(friendId));
-        if (chatDoc) {
-            await deleteDoc(doc(db, 'chats', chatDoc.id));
-        }
-    };
+  const unfriendUser = async (friendId: string) => {
+    if (!currentUser) return;
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'users', currentUser.id), { friends: arrayRemove(friendId) });
+    batch.update(doc(db, 'users', friendId), { friends: arrayRemove(currentUser.id) });
+    await batch.commit();
+  };
 
   const addMessage = async (chatId: string, messageData: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
-    if (!currentUser || !settings.notifications.all || !settings.notifications.messages) return;
+    if (!currentUser) return;
     const chatRef = doc(db, 'chats', chatId);
-    const messagesColRef = collection(chatRef, 'messages');
-    
-    const dataToSend: any = {
-        ...messageData,
-        timestamp: serverTimestamp(),
-    };
-    
-    await addDoc(messagesColRef, dataToSend);
-
-    let lastMessageText = getMessageDescription(messageData as Message);
-
+    await addDoc(collection(chatRef, 'messages'), { ...messageData, timestamp: serverTimestamp() });
     const chatDoc = await getDoc(chatRef);
     if(chatDoc.exists()) {
-        const chatData = chatDoc.data() as Chat;
-        const otherUserId = chatData.users.find(id => id !== currentUser.id);
-
+        const otherUserId = (chatDoc.data() as Chat).users.find(id => id !== currentUser.id);
         if (otherUserId) {
              const unreadCountField = `unreadCount.${otherUserId}`;
-             await updateDoc(chatRef, {
-                lastMessageTimestamp: serverTimestamp(),
-                lastMessageText: lastMessageText,
-                [unreadCountField]: increment(1)
-            });
-
-            await createNotification(otherUserId, {
-                type: 'new_message',
-                message: `You have a new message from <strong>${currentUser.name}</strong>`,
-                fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
-                link: `/chats/${chatId}`
-            });
+             await updateDoc(chatRef, { lastMessageTimestamp: serverTimestamp(), lastMessageText: getMessageDescription(messageData as Message), [unreadCountField]: increment(1) });
         }
     }
   };
-  
 
-  const deleteMessage = async (chatId: string, messageId: string) => {
-      const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
-      await deleteDoc(msgRef);
-  };
-  
-  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
-       const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
-       await updateDoc(msgRef, updatedMessage);
-  }
+  const deleteMessage = async (chatId: string, messageId: string) => await deleteDoc(doc(db, 'chats', chatId, 'messages', messageId));
+  const updateMessage = async (chatId: string, messageId: string, updated: Partial<Message>) => await updateDoc(doc(db, 'chats', chatId, 'messages', messageId), updated);
   
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-      const userRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const userSettings = userData.settings as AppSettings | undefined;
-
-          // Only send notification if the user has them enabled
-          if (userSettings?.notifications?.all) {
-              const userNotificationsRef = collection(db, `users/${userId}/notifications`);
-              await addDoc(userNotificationsRef, {
-                  ...notification,
-                  timestamp: serverTimestamp(),
-                  isRead: false,
-              });
-          }
-      }
+      await addDoc(collection(db, `users/${userId}/notifications`), { ...notification, timestamp: serverTimestamp(), isRead: false });
   };
 
   const sendFriendRequest = async (targetUser: User) => {
     if (!currentUser) return;
-    const currentUserRef = doc(db, 'users', currentUser.id);
-    const targetUserRef = doc(db, 'users', targetUser.id);
-
     const batch = writeBatch(db);
-    batch.update(currentUserRef, { friendRequestsSent: arrayUnion(targetUser.id) });
-    batch.update(targetUserRef, { friendRequestsReceived: arrayUnion(currentUser.id) });
+    batch.update(doc(db, 'users', currentUser.id), { friendRequestsSent: arrayUnion(targetUser.id) });
+    batch.update(doc(db, 'users', targetUser.id), { friendRequestsReceived: arrayUnion(currentUser.id) });
     await batch.commit();
-
-    await createNotification(targetUser.id, {
-        type: 'friend_request',
-        message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
-        fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
-        link: `/contact`
-    });
-
-    setCurrentUser(prev => ({...prev!, friendRequestsSent: [...(prev?.friendRequestsSent || []), targetUser.id]}));
+    createNotification(targetUser.id, { type: 'friend_request', message: `<strong>${currentUser.name}</strong> sent you a friend request.`, fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar}, link: `/contact` });
   };
 
   const acceptFriendRequest = async (requestingUser: User) => {
     if (!currentUser) return;
-    const currentUserRef = doc(db, 'users', currentUser.id);
-    const requestingUserRef = doc(db, 'users', requestingUser.id);
-    
     const batch = writeBatch(db);
-    batch.update(currentUserRef, { friends: arrayUnion(requestingUser.id), friendRequestsReceived: arrayRemove(requestingUser.id) });
-    batch.update(requestingUserRef, { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
+    batch.update(doc(db, 'users', currentUser.id), { friends: arrayUnion(requestingUser.id), friendRequestsReceived: arrayRemove(requestingUser.id) });
+    batch.update(doc(db, 'users', requestingUser.id), { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
     await batch.commit();
-    
-    await createNotification(requestingUser.id, {
-        type: 'new_friend',
-        message: `You and <strong>${currentUser.name}</strong> are now friends.`,
-        fromUser: {id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar},
-        link: `/profile/${currentUser.id}`
-    });
   };
 
   const declineFriendRequest = async (requestingUser: User) => {
       if (!currentUser) return;
-      const currentUserRef = doc(db, 'users', currentUser.id);
-      const requestingUserRef = doc(db, 'users', requestingUser.id);
-      
       const batch = writeBatch(db);
-      batch.update(currentUserRef, { friendRequestsReceived: arrayRemove(requestingUser.id) });
-      batch.update(requestingUserRef, { friendRequestsSent: arrayRemove(currentUser.id) });
+      batch.update(doc(db, 'users', currentUser.id), { friendRequestsReceived: arrayRemove(requestingUser.id) });
+      batch.update(doc(db, 'users', requestingUser.id), { friendRequestsSent: arrayRemove(currentUser.id) });
       await batch.commit();
   };
   
   const markNotificationsAsRead = async () => {
     if (!currentUser || unreadNotificationCount === 0) return;
-    const notificationsRef = collection(db, `users/${currentUser.id}/notifications`);
-    const q = query(notificationsRef, where("isRead", "==", false));
+    const q = query(collection(db, `users/${currentUser.id}/notifications`), where("isRead", "==", false));
     const snapshot = await getDocs(q);
-    
     const batch = writeBatch(db);
-    snapshot.docs.forEach(doc => {
-      batch.update(doc.ref, { isRead: true });
-    });
-    
+    snapshot.docs.forEach(doc => batch.update(doc.ref, { isRead: true }));
     await batch.commit();
   };
   
-    const deleteNotifications = async (notificationIds: string[]) => {
-        if (!currentUser || notificationIds.length === 0) return;
-        const batch = writeBatch(db);
-        notificationIds.forEach(id => {
-            const notificationRef = doc(db, `users/${currentUser.id}/notifications`, id);
-            batch.delete(notificationRef);
-        });
-        await batch.commit();
-    };
-
-
-  const addCallLog = async (user: User, type: 'outgoing' | 'incoming' | 'missed', duration?: string) => {
-    if(!currentUser) return;
-    
-    const callData: Omit<Call, 'id' | 'time'> = {
-        user: user.name,
-        userId: user.id,
-        avatar: user.avatar,
-        type: type,
-        timestamp: serverTimestamp() as any,
-        duration: duration || '0:00'
-    };
-    await addDoc(collection(db, `users/${currentUser.id}/calls`), callData);
-
-    if (type !== 'missed') {
-        const otherUserCallType = type === 'outgoing' ? 'incoming' : 'outgoing';
-        const otherUserCallData: Omit<Call, 'id'| 'time'> = {
-            user: currentUser.name,
-            userId: currentUser.id,
-            avatar: currentUser.avatar,
-            type: otherUserCallType,
-            timestamp: serverTimestamp() as any,
-            duration: duration || '0:00'
-        };
-        await addDoc(collection(db, `users/${user.id}/calls`), otherUserCallData);
-    }
-  }
+  const deleteNotifications = async (notificationIds: string[]) => {
+    if (!currentUser || notificationIds.length === 0) return;
+    const batch = writeBatch(db);
+    notificationIds.forEach(id => batch.delete(doc(db, `users/${currentUser.id}/notifications`, id)));
+    await batch.commit();
+  };
 
   const addMissedCall = async (user: User) => {
-      if(!currentUser || !settings.notifications.all || !settings.notifications.calls) return;
-      await addCallLog(user, 'missed');
-      await createNotification(currentUser.id, {
-          type: 'missed_call',
-          message: `You have a missed call from ${user.name}.`,
-          fromUser: {id: user.id, name: user.name, avatar: user.avatar},
-          link: `/calls`
-      });
+      if(!currentUser) return;
+      await addDoc(collection(db, `users/${currentUser.id}/calls`), { user: user.name, userId: user.id, avatar: user.avatar, type: 'missed', timestamp: serverTimestamp() });
   }
-
-  const playRingingSound = () => {
-    if (audioRef.current) {
-        audioRef.current.pause();
-    }
-    // Note: The /ringing.mp3 file needs to be in the `public` directory.
-    audioRef.current = new Audio('/ringing.mp3');
-    audioRef.current.loop = true;
-    audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-  };
-
-  const stopRingingSound = () => {
-      if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current = null;
-      }
-  };
 
   const initiateCall = (user: User, type: 'audio' | 'video') => {
       if (callState.status !== 'idle') return;
-      
       setCallState({ status: 'outgoing', user, type });
-      addCallLog(user, 'outgoing');
-      playRingingSound();
-
-      // Simulate call connection or timeout
-      const callTimeout = setTimeout(() => {
-          setCallState(prev => {
-              if (prev.status === 'outgoing') {
-                  stopRingingSound();
-                  // Simulate that the other user didn't answer
-                  addMissedCall(user);
-                  return { status: 'idle' };
-              }
-              return prev;
-          });
-      }, 15000); // 15 seconds timeout
-
-      // Temporary timeout to simulate connection
-      setTimeout(() => {
-          setCallState(prev => {
-              if (prev.status === 'outgoing') {
-                  stopRingingSound();
-                  clearTimeout(callTimeout);
-                  return { ...prev, status: 'connected' };
-              }
-              return prev;
-          })
-      }, 5000);
+      setTimeout(() => setCallState(prev => prev.status === 'outgoing' ? { ...prev, status: 'connected' } : prev), 3000);
   };
 
-  const answerCall = () => {
-      if (callState.status === 'incoming') {
-          stopRingingSound();
-          setCallState({ ...callState, status: 'connected' });
-      }
-  };
-
-  const endCall = () => {
-      stopRingingSound();
-      if(callState.status === 'incoming' && callState.user) {
-          addMissedCall(callState.user);
-      }
-      setCallState({ status: 'idle' });
-  };
+  const answerCall = () => setCallState(prev => prev.status === 'incoming' ? { ...prev, status: 'connected' } : prev);
+  const endCall = () => setCallState({ status: 'idle' });
   
-    // AI Feature: Read Chat Aloud
-    const readChatAloud = useCallback(async () => {
-        if (isReadingAloud) {
-            // Stop playing
-            if (ttsAudioRef.current) {
-                ttsAudioRef.current.pause();
-                ttsAudioRef.current = null;
-            }
-            setIsReadingAloud(false);
-            return;
-        }
+  const readChatAloud = useCallback(async () => {
+    if (isReadingAloud) { if (ttsAudioRef.current) ttsAudioRef.current.pause(); setIsReadingAloud(false); return; }
+    if (!selectedChatId) return;
+    setIsReadingAloud(true);
+    try {
+        const q = query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        const text = snapshot.docs.reverse().map(d => `${d.data().user}: ${getMessageDescription(d.data() as Message)}`).join('\n');
+        const { audioUrl } = await textToSpeech({ text });
+        ttsAudioRef.current = new Audio(audioUrl);
+        ttsAudioRef.current.play();
+        ttsAudioRef.current.onended = () => setIsReadingAloud(false);
+    } catch (error) { setIsReadingAloud(false); throw error; }
+  }, [isReadingAloud, selectedChatId]);
 
-        if (!selectedChatId) return;
-        
-        setIsReadingAloud(true);
-        try {
-            const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-            const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(10));
-            const snapshot = await getDocs(q);
-            const messages = snapshot.docs.map(doc => doc.data() as Message);
-            
-            if (messages.length === 0) {
-                 throw new Error("No messages to read.");
-            }
+  const fetchSmartReplies = useCallback(async () => {
+    if (!selectedChatId) return;
+    try {
+        const q = query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(5));
+        const snapshot = await getDocs(q);
+        const history = snapshot.docs.reverse().map(d => getMessageDescription(d.data() as Message)).join('\n');
+        const res = await smartReplySuggestions({ history });
+        setSmartReplies(res.suggestions);
+    } catch (error) { console.error(error); }
+  }, [selectedChatId]);
 
-            const chatText = messages.reverse().map(m => `${m.user}: ${getMessageDescription(m)}`).join('\n');
-            const { audioUrl } = await textToSpeech({ text: chatText });
+  const clearSmartReplies = useCallback(() => setSmartReplies([]), []);
 
-            ttsAudioRef.current = new Audio(audioUrl);
-            ttsAudioRef.current.play();
-            ttsAudioRef.current.onended = () => {
-                setIsReadingAloud(false);
-            };
-
-        } catch (error) {
-            console.error("TTS failed:", error);
-            setIsReadingAloud(false);
-            throw error;
-        }
-    }, [isReadingAloud, selectedChatId]);
-
-     // AI Feature: Fetch Smart Replies
-    const fetchSmartReplies = useCallback(async () => {
-        if (!selectedChatId) return;
-
-        try {
-            const messagesColRef = collection(db, 'chats', selectedChatId, 'messages');
-            const q = query(messagesColRef, orderBy('timestamp', 'desc'), limit(5));
-            const snapshot = await getDocs(q);
-            const messages = snapshot.docs.map(doc => doc.data() as Message);
-             if (messages.length === 0) {
-                setSmartReplies([]);
-                return;
-            }
-
-            const history = messages.reverse().map(m => `${getMessageDescription(m)}`).join('\n');
-            const response = await smartReplySuggestions({ history });
-            setSmartReplies(response.suggestions);
-
-        } catch (error) {
-            console.error("Failed to fetch smart replies:", error);
-            throw error;
-        }
-    }, [selectedChatId]);
-
-    const clearSmartReplies = useCallback(() => {
-        setSmartReplies([]);
-    }, []);
-
-    const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File | string }) => {
-        if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
-    
-        const updateData: { [key: string]: any } = { ...data };
-        const storage = getStorage();
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-    
-        // Handle Avatar Upload
-        if (files?.avatar) {
-             if (currentUser.avatar && !currentUser.avatar.includes('placehold.co')) {
-                try {
-                    const oldAvatarRef = ref(storage, currentUser.avatar);
-                    await deleteObject(oldAvatarRef);
-                } catch (error: any) {
-                    if (error.code !== 'storage/object-not-found') {
-                        console.error("Error deleting old avatar:", error);
-                    }
-                }
-            }
-            
-            let newAvatarUrl: string;
-
-            if (typeof files.avatar === 'string') {
-                // It's a base64 data URI from the AI generator
-                const response = await fetch(files.avatar);
-                const blob = await response.blob();
-                const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/ai-generated-${Date.now()}.png`);
-                const snapshot = await uploadBytes(avatarRef, blob);
-                newAvatarUrl = await getDownloadURL(snapshot.ref);
-
-            } else {
-                // It's a File object from user upload
-                const avatarFile = files.avatar;
-                const avatarRef = ref(storage, `avatars/${auth.currentUser.uid}/${avatarFile.name}`);
-                const snapshot = await uploadBytes(avatarRef, avatarFile);
-                newAvatarUrl = await getDownloadURL(snapshot.ref);
-            }
-
-            updateData.avatar = newAvatarUrl;
-            await updateProfile(auth.currentUser, { photoURL: newAvatarUrl });
-        }
-    
-        // Update user display name in Auth if it has changed
-        if (data.name && data.name !== auth.currentUser.displayName) {
-            await updateProfile(auth.currentUser, { displayName: data.name });
-        }
-    
-        if (Object.keys(updateData).length > 0) {
-            await updateDoc(userDocRef, updateData);
-        }
-    };
-    
-  const value = {
-    currentUser,
-    updateUserProfile,
-    posts,
-    addPost,
-    updatePost,
-    deletePost,
-    addComment,
-    editingPost,
-    startEditPost,
-    cancelEditPost,
-    calls,
-    settings,
-    setSettings,
-    chats,
-    setChats,
-    selectedChatId,
-    setSelectedChatId,
-    activeTab,
-    setActiveTab,
-    initialContactTab,
-    setInitialContactTab,
-    addMessage,
-    deleteMessage,
-    updateMessage,
-    users,
-    friends,
-    suggestedUsers,
-    friendRequests,
-    sendFriendRequest,
-    acceptFriendRequest,
-    declineFriendRequest,
-    createChat,
-    unfriendUser,
-    callState,
-    initiateCall,
-    answerCall,
-    endCall,
-    addMissedCall,
-    notifications,
-    unreadNotificationCount,
-    markNotificationsAsRead,
-    createNotification,
-    deleteNotifications,
-    readChatAloud,
-    isReadingAloud,
-    smartReplies,
-    fetchSmartReplies,
-    clearSmartReplies,
+  const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File | string }) => {
+    if (!auth.currentUser || !currentUser) throw new Error("Not authenticated");
+    const updateData: { [key: string]: any } = { ...data };
+    if (files?.avatar) {
+        const avatarRef = ref(getStorage(), `avatars/${auth.currentUser.uid}/${Date.now()}.png`);
+        let blob: Blob;
+        if (typeof files.avatar === 'string') blob = await (await fetch(files.avatar)).blob();
+        else blob = files.avatar;
+        await uploadBytes(avatarRef, blob);
+        const url = await getDownloadURL(avatarRef);
+        updateData.avatar = url;
+        await updateProfile(auth.currentUser, { photoURL: url });
+    }
+    if (data.name) await updateProfile(auth.currentUser, { displayName: data.name });
+    await updateDoc(doc(db, 'users', auth.currentUser.uid), updateData);
   };
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+    
+  return (
+    <AppContext.Provider value={{
+        currentUser, updateUserProfile, posts, addPost, updatePost, deletePost, addComment, editingPost, startEditPost, cancelEditPost,
+        calls, settings, setSettings, chats, setChats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
+        addMessage, deleteMessage, updateMessage, users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
+        createChat, unfriendUser, callState, initiateCall, answerCall, endCall, addMissedCall, notifications, unreadNotificationCount, markNotificationsAsRead,
+        createNotification, deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies
+    }}>
+        {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppContextProvider');
-  }
+  if (context === undefined) throw new Error('useAppContext must be used within an AppContextProvider');
   return context;
 };
