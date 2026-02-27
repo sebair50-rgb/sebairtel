@@ -201,19 +201,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setUnreadNotificationCount(data.filter(n => !n.isRead).length);
     });
 
+    const usersQuery = query(collection(db, 'users'), limit(100));
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)).filter(u => u.id !== authUser.uid));
+    });
+
     return () => {
-      unsubscribeUser(); unsubscribePosts(); unsubscribeChats(); unsubscribeNotifications();
+      unsubscribeUser(); unsubscribePosts(); unsubscribeChats(); unsubscribeNotifications(); unsubscribeUsers();
     };
   }, [authUser, authLoading, setLanguage]);
-
-  useEffect(() => {
-    if (!authUser || !authUser.emailVerified) return;
-    const fetchUsers = async () => {
-        const snapshot = await getDocs(query(collection(db, 'users'), limit(100)));
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)).filter(u => u.id !== authUser.uid));
-    };
-    fetchUsers();
-  }, [authUser]);
 
   const friends = useMemo(() => {
       if (!currentUser) return [];

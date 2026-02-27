@@ -22,7 +22,7 @@ interface UsersViewProps {
 
 const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     const { 
-        friends, suggestedUsers, friendRequests, 
+        friends, suggestedUsers, friendRequests, currentUser,
         createChat, setSelectedChatId, sendFriendRequest,
         acceptFriendRequest, declineFriendRequest
     } = useAppContext();
@@ -40,12 +40,12 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
                 title: t('usersView.requestSent'),
                 description: t('usersView.requestSentDesc', { name: user.name }),
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             toast({
                 variant: 'destructive',
                 title: t('usersView.requestError'),
-                description: t('usersView.requestErrorDesc'),
+                description: error.message || t('usersView.requestErrorDesc'),
             });
         }
     };
@@ -100,50 +100,57 @@ const UsersView: React.FC<UsersViewProps> = ({ setActiveTab }) => {
     }
 
 
-    const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' | 'request' }) => (
-         <motion.div 
-            layout="position"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-between gap-4 py-3"
-        >
-            <div 
-                className="flex items-center gap-4 cursor-pointer flex-1"
-                onClick={() => router.push(`/profile/${user.id}`)}
+    const UserCard = ({ user, action }: { user: UserType, action: 'add' | 'message' | 'request' }) => {
+        const isRequestSent = currentUser?.friendRequestsSent?.includes(user.id);
+
+        return (
+            <motion.div 
+                layout="position"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center justify-between gap-4 py-3"
             >
-                <Avatar className="h-12 w-12 border">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-left overflow-hidden">
-                    <p className="font-bold text-lg truncate">{user.name}</p>
-                </div>
-            </div>
-            {action === 'add' ? (
-                 <Button 
-                    className="bg-primary hover:bg-primary/90" 
-                    size="sm" 
-                    onClick={(e) => { e.stopPropagation(); handleAddFriend(user); }}
-                    disabled={user.friendRequestsSent?.includes(user.id)}
+                <div 
+                    className="flex items-center gap-4 cursor-pointer flex-1"
+                    onClick={() => router.push(`/profile/${user.id}`)}
                 >
-                    <UserPlus size={16} className="mr-1" />
-                    {t('usersView.add')}
-                </Button>
-            ) : action === 'message' ? (
-                <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
-                    <MessageSquare size={16} className="mr-1" />
-                    {t('usersView.message')}
-                </Button>
-            ) : (
-                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={(e) => {e.stopPropagation(); handleDecline(user)}}>{t('liveStreamPage.decline')}</Button>
-                    <Button size="sm" onClick={(e) => {e.stopPropagation(); handleAccept(user)}}>{t('liveStreamPage.accept')}</Button>
+                    <Avatar className="h-12 w-12 border">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-left overflow-hidden">
+                        <p className="font-bold text-lg truncate">{user.name}</p>
+                    </div>
                 </div>
-            )}
-        </motion.div>
-    );
+                {action === 'add' ? (
+                    <Button 
+                        className={cn(isRequestSent ? "bg-muted text-muted-foreground" : "bg-primary hover:bg-primary/90")}
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); if(!isRequestSent) handleAddFriend(user); }}
+                        disabled={isRequestSent}
+                    >
+                        {isRequestSent ? (
+                            <><Check size={16} className="mr-1" /> {t('profilePage.requestSent')}</>
+                        ) : (
+                            <><UserPlus size={16} className="mr-1" /> {t('usersView.add')}</>
+                        )}
+                    </Button>
+                ) : action === 'message' ? (
+                    <Button className="bg-primary hover:bg-primary/90" size="sm" onClick={(e) => { e.stopPropagation(); handleMessageFriend(user); }}>
+                        <MessageSquare size={16} className="mr-1" />
+                        {t('usersView.message')}
+                    </Button>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={(e) => {e.stopPropagation(); handleDecline(user)}}>{t('liveStreamPage.decline')}</Button>
+                        <Button size="sm" onClick={(e) => {e.stopPropagation(); handleAccept(user)}}>{t('liveStreamPage.accept')}</Button>
+                    </div>
+                )}
+            </motion.div>
+        )
+    };
 
     return (
         <div className="w-full flex flex-col h-full bg-white">
