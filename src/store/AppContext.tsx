@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -156,6 +157,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const startEditPost = (post: Post) => setEditingPost(post);
   const cancelEditPost = () => setEditingPost(null);
 
+  // Stage 1: Quick Sync with AuthUser
+  useEffect(() => {
+    if (authLoading) return;
+    if (authUser) {
+        // Set basic user info immediately to avoid stuck loading screens
+        setCurrentUser(prev => {
+            if (prev && prev.id === authUser.uid) return prev;
+            return {
+                id: authUser.uid,
+                name: authUser.displayName || 'User',
+                email: authUser.email || '',
+                avatar: authUser.photoURL || `https://placehold.co/128x128/E6E6FA/333333.png?text=${(authUser.displayName || 'U').charAt(0)}`,
+                friends: [],
+                friendRequestsReceived: [],
+                friendRequestsSent: [],
+            };
+        });
+    } else {
+        setCurrentUser(null);
+    }
+  }, [authUser, authLoading]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const savedSettings = localStorage.getItem('app-settings');
@@ -213,19 +236,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [authUser]);
 
+  // Stage 2: Full Hydration from Firestore
   useEffect(() => {
-    if (authLoading) return;
-    if (!authUser) {
-      setCurrentUser(null);
-      setPosts([]);
-      setChats([]);
-      setUsers([]);
-      setFriends([]);
-      setSuggestedUsers([]);
-      setCalls([]);
-      setNotifications([]);
-      return;
-    };
+    if (authLoading || !authUser) return;
 
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, async (userDoc) => {
@@ -243,7 +256,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 }));
             }
         } else {
-            console.log("Creating initial user profile...");
+            console.log("Firestore profile missing, creating...");
             const newUser: Omit<User, 'id'> = {
                 name: authUser.displayName || 'New User',
                 email: authUser.email!,
@@ -259,9 +272,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 await setDoc(userDocRef, newUser);
                 setCurrentUser({ id: authUser.uid, ...newUser });
             } catch (error) {
-                console.error("Error creating user document:", error);
+                console.error("Critical: Error creating user document:", error);
             }
         }
+    }, (error) => {
+        console.error("Firestore user listener error:", error);
     });
     
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
