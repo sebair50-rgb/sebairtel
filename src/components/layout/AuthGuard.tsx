@@ -19,7 +19,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const isVerifyPage = pathname.startsWith('/verify-email');
     
     if (!authUser) {
-      // User is not logged in
+      // User is not logged in: stay on auth pages or redirect to login
       if (!isAuthPage && !isVerifyPage) {
         router.replace('/login');
       }
@@ -39,7 +39,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     }
   }, [authUser, loading, router, pathname]);
 
-  // Show loading screen during state transitions
+  // Show loading screen during initial state load
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -53,7 +53,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
   const isVerifyPage = pathname.startsWith('/verify-email');
 
-  // Determine if content should be rendered to avoid flickering/UI flashes
+  // Determine if content should be rendered
   const shouldShowContent = 
     (!authUser && (isAuthPage || isVerifyPage)) || 
     (authUser && !authUser.emailVerified && isVerifyPage) ||
@@ -63,7 +63,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
-  // Fallback while router.replace executes
+  // Fallback UI while router executes redirects
   return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />

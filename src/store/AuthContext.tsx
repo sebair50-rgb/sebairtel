@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set persistence to local to survive browser refreshes
     setPersistence(auth, browserLocalPersistence);
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -47,12 +46,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // 1. Create Firestore user document immediately
-        // We do this BEFORE everything else to ensure the profile is ready
+        // 1. Update Profile first so the AuthGuard sees the name immediately
+        await updateProfile(cred.user, { 
+            displayName: name,
+            photoURL: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`
+        });
+
+        // 2. Create Firestore user document
         await setDoc(doc(db, 'users', cred.user.uid), {
+            id: cred.user.uid,
             name, 
             email, 
-            avatar: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`,
+            avatar: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`,
             friends: [], 
             friendRequestsReceived: [], 
             friendRequestsSent: [], 
@@ -68,19 +73,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 interface: { showSocialTab: true, showAiTab: true, showAppsTab: true, showContactTab: true }
             }
         });
-
-        // 2. Update Firebase Auth profile for immediate display
-        await updateProfile(cred.user, { 
-            displayName: name,
-            photoURL: `https://placehold.co/128x128/6366f1/ffffff?text=${encodeURIComponent(name.charAt(0))}`
-        });
         
         // 3. Send verification email
         await sendEmailVerification(cred.user);
 
-        // 4. Force sign out - the user must verify before their first real session
-        await signOut(auth);
-        
+        // We do NOT sign out here anymore. The AuthGuard will handle the unverified state.
         return cred;
       } catch (error) {
           console.error("Signup process failed:", error);
@@ -94,9 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        // Check if verified
         if (!cred.user.emailVerified) {
             const emailAddr = cred.user.email;
+            // For login, we do sign out if not verified to prevent accessing the app
             await signOut(auth);
             const error = new Error("Email not verified.");
             (error as any).code = 'auth/email-not-verified';

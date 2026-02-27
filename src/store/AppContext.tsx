@@ -134,13 +134,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (authLoading) return;
     
-    if (!authUser) {
+    if (!authUser || !authUser.emailVerified) {
         setCurrentUser(null);
         setIsLoadingProfile(false);
         return;
     }
 
-    // Set a baseline currentUser from auth while Firestore doc loads
+    // Baseline currentUser
     setCurrentUser({
         id: authUser.uid,
         name: authUser.displayName || 'User',
@@ -207,7 +207,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [authUser, authLoading, setLanguage]);
 
   useEffect(() => {
-    if (!authUser) return;
+    if (!authUser || !authUser.emailVerified) return;
     const fetchUsers = async () => {
         const snapshot = await getDocs(query(collection(db, 'users'), limit(100)));
         setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)).filter(u => u.id !== authUser.uid));

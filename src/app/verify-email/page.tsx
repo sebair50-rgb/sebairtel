@@ -11,7 +11,7 @@ import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function VerifyEmailPage() {
-    const { resendVerificationEmail, loading } = useAuth();
+    const { resendVerificationEmail, loading, logout } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -22,7 +22,7 @@ export default function VerifyEmailPage() {
             await resendVerificationEmail();
             toast({
                 title: "Link Sent",
-                description: `A new verification link has been sent to ${email}.`,
+                description: `A new verification link has been sent to ${email || 'your email'}.`,
             });
         } catch (error: any) {
              toast({
@@ -31,6 +31,11 @@ export default function VerifyEmailPage() {
                 description: "Failed to send email. You may have requested a link too many times. Please try again later.",
             });
         }
+    }
+
+    const handleBackToLogin = async () => {
+        await logout();
+        router.push('/login');
     }
 
     return (
@@ -47,21 +52,21 @@ export default function VerifyEmailPage() {
                         <CardTitle className="mt-4 text-2xl">Verify Your Email</CardTitle>
                         <CardDescription>
                             We have sent an activation link to <br />
-                            <span className="font-bold text-primary">{email || 'your email'}</span>.
+                            <span className="font-bold text-primary">{email || 'your registered email'}</span>.
                             <br />
                             Please click the link to activate your account.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            If you don't find the email, please check your spam folder.
+                            If you don't find the email, please check your spam folder. Once verified, try logging in again.
                         </p>
                         <Button onClick={handleResendEmail} disabled={loading} variant="secondary" className="w-full">
                             {loading ? <Loader2 className="animate-spin" /> : "Resend Verification Link"}
                         </Button>
                     </CardContent>
                     <CardFooter className="flex justify-center">
-                        <Button variant="outline" onClick={() => router.push('/login')}>
+                        <Button variant="outline" onClick={handleBackToLogin}>
                             Back to Sign In
                         </Button>
                     </CardFooter>

@@ -45,7 +45,8 @@ export default function SignupPage() {
 
         try {
             await signup(email, password, name);
-            // After signup, the user is signed out in AuthContext to force verification
+            // The AuthGuard will detect the new user and redirect to /verify-email
+            // But we call push here too for responsiveness
             router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error: any) {
             console.error("Signup Error:", error);
@@ -57,8 +58,8 @@ export default function SignupPage() {
                 description = 'The email address is badly formatted.';
             } else if (error.code === 'auth/weak-password') {
                 description = 'The password is too weak.';
-            } else if (error.message) {
-                description = error.message;
+            } else if (error.code === 'auth/operation-not-allowed') {
+                description = 'Email/password accounts are not enabled. Contact support.';
             }
 
              toast({
