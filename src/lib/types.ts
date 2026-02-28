@@ -17,9 +17,9 @@ export interface UserLink {
 }
 
 export interface User {
-  id: string; // Changed to string for Firestore UID
+  id: string;
   name: string;
-  avatar: string; // Now represents photoURL
+  avatar: string;
   email?: string;
   dob?: string;
   bio?: string;
@@ -31,7 +31,7 @@ export interface User {
   friendRequestsSent?: string[];
   isOnline?: boolean;
   lastSeen?: Timestamp;
-  settings?: any; // To store user-specific settings
+  settings?: any;
   links?: UserLink[];
   workExperience?: WorkExperience[];
   education?: Education[];
@@ -39,10 +39,10 @@ export interface User {
 }
 
 export interface Message {
-    id: string; // Changed for Firestore
+    id: string;
     user: string;
     userId: string;
-    avatar: string; // photoURL
+    avatar: string;
     text?: string;
     time: string;
     timestamp: Timestamp;
@@ -58,21 +58,19 @@ export interface Message {
     likedBy?: string[];
 }
 
-
 export interface Chat {
-  id: string; // Firestore document ID
+  id: string;
   name: string;
-  avatar: string; // photoURL
-  users: string[]; // array of user uids
+  avatar: string;
+  users: string[];
   userInfo: { [key: string]: { id: string; name: string; avatar: string; }};
-  unreadCount?: { [key: string]: number }; // Unread count per user UID
+  unreadCount?: { [key: string]: number };
   lastMessageTime?: string;
   lastMessageText?: string;
   lastMessageTimestamp?: Timestamp;
   isMuted?: boolean;
   isBlocked?: boolean;
 }
-
 
 export interface Comment {
   user: string;
@@ -88,25 +86,57 @@ export interface Reaction {
 }
 
 export interface Post {
-  id: string; // Firestore document ID
+  id: string;
   user: string;
   userId: string;
-  avatar: string; // photoURL
+  avatar: string;
   content: string;
-  mediaType?: 'image' | 'video' | 'code';
+  mediaType?: 'image' | 'video' | 'code' | 'text';
   mediaSrc?: string;
   time: string;
   timestamp: Timestamp;
   reactions: Reaction[];
-  isSaved?: boolean; // This will be client-side state
   comments: Comment[];
+}
+
+export interface NewsItem {
+    id: string;
+    title: string;
+    category: string;
+    description: string;
+    image: string;
+    timestamp: Timestamp;
+    author?: string;
+    link?: string;
+}
+
+export interface MarketItem {
+    id: string;
+    userId: string;
+    title: string;
+    description: string;
+    price?: number;
+    category: 'job' | 'service' | 'product';
+    timestamp: Timestamp;
+    image?: string;
+}
+
+export interface Store {
+    id: string;
+    ownerId: string;
+    name: string;
+    description: string;
+    category: 'market' | 'pharmacy' | 'service';
+    image: string;
+    location?: string;
+    timestamp: Timestamp;
 }
 
 export interface Call {
     id: string;
     user: string;
     userId: string;
-    avatar: string; // photoURL
+    avatar: string;
     type: 'incoming' | 'outgoing' | 'missed';
     time: string;
     timestamp: Timestamp;
@@ -128,9 +158,9 @@ export interface Notification {
     fromUser: {
         id: string;
         name: string;
-        avatar: string; // photoURL
+        avatar: string;
     };
     timestamp: Timestamp;
     isRead: boolean;
-    link?: string; // e.g., /posts/postId123 or /chats/chatId456
+    link?: string;
 }

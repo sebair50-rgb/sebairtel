@@ -11,6 +11,7 @@ import NewsView from './NewsView';
 import PublicFeed from './PublicFeed';
 import AppHeader from '../layout/AppHeader';
 import { useTranslation } from '@/store/LanguageContext';
+import { ScrollArea } from '../ui/scroll-area';
 
 const CommunityPosts = () => {
     const { t } = useTranslation();
@@ -27,45 +28,41 @@ const CommunityPosts = () => {
     return (
         <div className="w-full h-full flex flex-col bg-slate-50 dark:bg-black">
              <Tabs value={activeSocialTab} onValueChange={setActiveSocialTab} className="w-full h-full flex flex-col">
-                <div className="bg-background border-b sticky top-0 z-10">
+                <div className="bg-background border-b sticky top-0 z-20 shadow-sm">
                     <AppHeader title={t('socialFeed.community')} icon={Home} />
-                    <div className="px-4 md:px-6 pb-2">
-                        <TabsList className="grid w-full grid-cols-5 h-auto p-1.5 bg-amber-100 dark:bg-stone-900">
+                    <div className="px-4 md:px-6 pb-3 pt-1">
+                        <TabsList className="grid w-full grid-cols-5 h-12 p-1 bg-muted/50 rounded-xl">
                         {socialTabs.map(tab => (
-                                <TabsTrigger key={tab.value} value={tab.value} className="py-2 text-xs sm:text-sm data-[state=active]:shadow-md">
+                                <TabsTrigger key={tab.value} value={tab.value} className="h-10 text-xs sm:text-sm font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all">
                                     <tab.icon className="mr-1 sm:mr-2 h-4 w-4 shrink-0" />
-                                    <span className="truncate">{tab.label}</span>
+                                    <span className="hidden sm:inline">{tab.label}</span>
                                 </TabsTrigger>
                         ))}
                         </TabsList>
                     </div>
                 </div>
             
-                <TabsContent value="feed" className="flex-1 overflow-y-auto mt-0">
-                    <div className="p-0 md:p-6">
-                        <PublicFeed />
-                    </div>
-                </TabsContent>
-                <TabsContent value="live" className="flex-1 overflow-y-auto mt-0">
-                    <div className="p-4 md:p-6">
-                        <LiveFeed />
-                    </div>
-                </TabsContent>
-                <TabsContent value="news" className="flex-1 overflow-y-auto mt-0">
-                    <div className="p-4 md:p-6">
-                        <NewsView />
-                    </div>
-                </TabsContent>
-                <TabsContent value="business" className="flex-1 overflow-y-auto mt-0">
-                    <div className="p-4 md:p-6">
-                        <MarketView />
-                    </div>
-                </TabsContent>
-                <TabsContent value="market" className="flex-1 overflow-y-auto mt-0">
-                    <div className="p-4 md:p-6">
-                        <StoreView />
-                    </div>
-                </TabsContent>
+                <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full w-full">
+                        <div className="p-4 md:p-8">
+                            <TabsContent value="feed" className="mt-0 focus-visible:outline-none">
+                                <PublicFeed />
+                            </TabsContent>
+                            <TabsContent value="live" className="mt-0 focus-visible:outline-none">
+                                <LiveFeed />
+                            </TabsContent>
+                            <TabsContent value="news" className="mt-0 focus-visible:outline-none">
+                                <NewsView />
+                            </TabsContent>
+                            <TabsContent value="business" className="mt-0 focus-visible:outline-none">
+                                <MarketView />
+                            </TabsContent>
+                            <TabsContent value="market" className="mt-0 focus-visible:outline-none">
+                                <StoreView />
+                            </TabsContent>
+                        </div>
+                    </ScrollArea>
+                </div>
              </Tabs>
         </div>
     );

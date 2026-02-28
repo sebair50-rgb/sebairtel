@@ -15,22 +15,15 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      
-      // Allow user to create/update their own document fully
       allow create: if isOwner(userId);
-      
-      // Allow updates to own profile, OR allow other users to modify ONLY friend request arrays
       allow update: if isOwner(userId) || (
         isSignedIn() && 
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendRequestsReceived', 'friendRequestsSent', 'friends'])
       );
       
       match /notifications/{notifId} {
-        // Users can read and delete their own notifications
         allow read, delete: if isOwner(userId);
-        // Any signed-in user can create a notification for another user (e.g. friend request alert)
         allow create: if isSignedIn();
-        // Only owner can mark as read
         allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
       }
 
@@ -53,6 +46,23 @@ service cloud.firestore {
         allow read, create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.users;
         allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
       }
+    }
+
+    match /news/{newsId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Only admin via console/internal tools
+    }
+
+    match /market_items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /stores/{storeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
   }
 }

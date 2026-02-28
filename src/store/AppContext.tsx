@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useRef, useMemo } from 'react';
-import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useRef } from 'react';
+import type { User, Post, Call, Chat, Message, CallState, Notification, NewsItem, MarketItem, Store } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
@@ -47,18 +47,17 @@ interface AppContextType {
   isLoadingProfile: boolean;
   updateUserProfile: (data: Partial<User>, files?: { avatar?: File }) => Promise<void>;
   posts: Post[];
+  news: NewsItem[];
+  marketItems: MarketItem[];
+  stores: Store[];
   addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
-  editingPost: Post | null;
-  startEditPost: (post: Post) => void;
-  cancelEditPost: () => void;
   calls: Call[];
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   chats: Chat[];
-  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
   selectedChatId: string | null;
   setSelectedChatId: (id: string | null) => void;
   activeTab: string;
@@ -81,11 +80,9 @@ interface AppContextType {
   initiateCall: (user: User, type: 'audio' | 'video') => void;
   answerCall: () => void;
   endCall: () => void;
-  addMissedCall: (user: User) => void;
   notifications: Notification[];
   unreadNotificationCount: number;
   markNotificationsAsRead: () => void;
-  createNotification: (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => Promise<void>;
   deleteNotifications: (notificationIds: string[]) => Promise<void>;
   readChatAloud: () => Promise<void>;
   isReadingAloud: boolean;
@@ -111,6 +108,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [marketItems, setMarketItems] = useState<MarketItem[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -123,154 +123,120 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const storage = getStorage();
 
-  const startEditPost = (post: Post) => setEditingPost(post);
-  const cancelEditPost = () => setEditingPost(null);
-
   useEffect(() => {
     if (authLoading) return;
-    
-    if (!authUser || !authUser.emailVerified) {
+    if (!authUser) {
         setCurrentUser(null);
         setIsLoadingProfile(false);
         return;
     }
 
-    // High-speed fallback from session data
-    setCurrentUser({
-        id: authUser.uid,
-        name: authUser.displayName || 'User',
-        avatar: authUser.photoURL || '',
-        email: authUser.email || '',
-    });
-
-    const userDocRef = doc(db, 'users', authUser.uid);
-    const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
-        if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            setCurrentUser(prev => ({ ...prev, ...userData, id: userDoc.id }));
-            
-            if (userData.settings) {
-                setSettings(prev => ({ ...prev, ...userData.settings }));
-                if (userData.settings.language && userData.settings.language !== 'system') {
-                    setLanguage(userData.settings.language);
+    const unsubUser = onSnapshot(doc(db, 'users', authUser.uid), (snap) => {
+        if (snap.exists()) {
+            const data = snap.data() as User;
+            setCurrentUser({ ...data, id: snap.id });
+            if (data.settings) {
+                setSettings(prev => ({ ...prev, ...data.settings }));
+                if (data.settings.language && data.settings.language !== 'system') {
+                    setLanguage(data.settings.language);
                 }
             }
         }
         setIsLoadingProfile(false);
-    }, (error) => {
-        console.error("Profile sync error:", error);
-        setIsLoadingProfile(false);
     });
 
-    const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
-    const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          time: doc.data().timestamp?.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) || '',
-      } as Post)));
+    const unsubPosts = onSnapshot(query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
+        setPosts(snap.docs.map(d => ({ id: d.id, ...d.data(), time: d.data().timestamp?.toDate().toLocaleTimeString() || '' } as Post)));
     });
 
-    const chatsQuery = query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid));
-    const unsubscribeChats = onSnapshot(chatsQuery, async (snapshot) => {
-        const chatsDataPromises = snapshot.docs.map(async (chatDoc) => {
-             const data = chatDoc.data();
-             const otherUserId = data.users.find((id: string) => id !== authUser.uid);
-             const otherUserInfo = data.userInfo?.[otherUserId] || { name: 'Unknown', avatar: '' };
-             return {
-                 id: chatDoc.id,
-                 ...data,
-                 name: otherUserInfo.name,
-                 avatar: otherUserInfo.avatar,
-                 lastMessageTime: data.lastMessageTimestamp?.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' }) || '',
-             } as Chat;
+    const unsubNews = onSnapshot(query(collection(db, 'news'), orderBy('timestamp', 'desc'), limit(20)), (snap) => {
+        setNews(snap.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem)));
+    });
+
+    const unsubMarket = onSnapshot(query(collection(db, 'market_items'), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
+        setMarketItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as MarketItem)));
+    });
+
+    const unsubStores = onSnapshot(query(collection(db, 'stores'), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
+        setStores(snap.docs.map(d => ({ id: d.id, ...d.data() } as Store)));
+    });
+
+    const unsubChats = onSnapshot(query(collection(db, 'chats'), where('users', 'array-contains', authUser.uid)), async (snap) => {
+        const data = snap.docs.map(d => {
+            const chat = d.data();
+            const otherId = chat.users.find((id: string) => id !== authUser.uid);
+            const otherInfo = chat.userInfo?.[otherId] || { name: 'Unknown', avatar: '' };
+            return {
+                id: d.id,
+                ...chat,
+                name: otherInfo.name,
+                avatar: otherInfo.avatar,
+                lastMessageTime: chat.lastMessageTimestamp?.toDate().toLocaleTimeString() || '',
+            } as Chat;
         });
-        const chatsData = await Promise.all(chatsDataPromises);
-        setChats(chatsData.sort((a, b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
+        setChats(data.sort((a, b) => (b.lastMessageTimestamp?.toMillis() || 0) - (a.lastMessageTimestamp?.toMillis() || 0)));
     });
 
-    const notificationsQuery = query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'), limit(30));
-    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+    const unsubNotifs = onSnapshot(query(collection(db, `users/${authUser.uid}/notifications`), orderBy('timestamp', 'desc'), limit(30)), (snap) => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Notification));
         setNotifications(data);
         setUnreadNotificationCount(data.filter(n => !n.isRead).length);
     });
 
-    const usersQuery = query(collection(db, 'users'), limit(100));
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)).filter(u => u.id !== authUser.uid));
+    const unsubUsers = onSnapshot(query(collection(db, 'users'), limit(100)), (snap) => {
+        setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() } as User)).filter(u => u.id !== authUser.uid));
     });
 
     return () => {
-      unsubscribeUser(); unsubscribePosts(); unsubscribeChats(); unsubscribeNotifications(); unsubscribeUsers();
+        unsubUser(); unsubPosts(); unsubNews(); unsubMarket(); unsubStores(); unsubChats(); unsubNotifs(); unsubUsers();
     };
   }, [authUser, authLoading, setLanguage]);
 
   const friends = useMemo(() => {
-      if (!currentUser) return [];
-      const fIds = new Set(currentUser.friends || []);
+      const fIds = new Set(currentUser?.friends || []);
       return users.filter(u => fIds.has(u.id));
   }, [users, currentUser]);
 
   const friendRequests = useMemo(() => {
-      if (!currentUser) return [];
-      const rIds = new Set(currentUser.friendRequestsReceived || []);
+      const rIds = new Set(currentUser?.friendRequestsReceived || []);
       return users.filter(u => rIds.has(u.id));
   }, [users, currentUser]);
 
   const suggestedUsers = useMemo(() => {
-      if (!currentUser) return [];
-      const fIds = new Set(currentUser.friends || []);
-      const rIds = new Set(currentUser.friendRequestsReceived || []);
-      const sIds = new Set(currentUser.friendRequestsSent || []);
-      return users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id));
+      const excluded = new Set([...(currentUser?.friends || []), ...(currentUser?.friendRequestsReceived || []), ...(currentUser?.friendRequestsSent || [])]);
+      return users.filter(u => !excluded.has(u.id));
   }, [users, currentUser]);
 
   const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
-    if (!auth.currentUser) throw new Error("Not authenticated");
-    const updateData: any = { ...data };
-    
+    if (!auth.currentUser) return;
+    const updatePayload: any = { ...data };
     if (files?.avatar) {
-        const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
-        await uploadBytes(storageRef, files.avatar);
-        const url = await getDownloadURL(storageRef);
-        updateData.avatar = url;
+        const sRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
+        await uploadBytes(sRef, files.avatar);
+        const url = await getDownloadURL(sRef);
+        updatePayload.avatar = url;
         await updateProfile(auth.currentUser, { photoURL: url });
     }
-    
-    if (data.name) {
-        await updateProfile(auth.currentUser, { displayName: data.name });
-    }
-    
-    const userDocRef = doc(db, 'users', auth.currentUser.uid);
-    await updateDoc(userDocRef, { ...updateData, settings });
-  };
-
-  const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-      await addDoc(collection(db, `users/${userId}/notifications`), {
-          ...notification,
-          timestamp: serverTimestamp(),
-          isRead: false
-      });
+    if (data.name) await updateProfile(auth.currentUser, { displayName: data.name });
+    await updateDoc(doc(db, 'users', auth.currentUser.uid), { ...updatePayload, settings });
   };
 
   const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => {
     if (!currentUser) return;
-    let mediaUrl = undefined;
+    let mUrl = undefined;
     if (data.mediaFile) {
-        const storageRef = ref(storage, `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
-        await uploadBytes(storageRef, data.mediaFile);
-        mediaUrl = await getDownloadURL(storageRef);
+        const sRef = ref(storage, `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
+        await uploadBytes(sRef, data.mediaFile);
+        mUrl = await getDownloadURL(sRef);
     }
     await addDoc(collection(db, 'posts'), {
       content: data.content,
       mediaType: data.mediaType || 'text',
-      mediaSrc: mediaUrl,
+      mediaSrc: mUrl,
       user: currentUser.name,
       userId: currentUser.id,
       avatar: currentUser.avatar,
@@ -280,24 +246,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updatePost = async (id: string, data: Partial<Post>) => {
-      await updateDoc(doc(db, "posts", id), data);
-  };
-
-  const deletePost = async (id: string) => {
-      await deleteDoc(doc(db, 'posts', id));
-  };
-  
   const addComment = async (postId: string, text: string) => {
     if (!currentUser) return;
     await updateDoc(doc(db, "posts", postId), {
-      comments: arrayUnion({ 
-          text, 
-          user: currentUser.name, 
-          userId: currentUser.id, 
-          avatar: currentUser.avatar, 
-          timestamp: Timestamp.now() 
-      })
+      comments: arrayUnion({ text, user: currentUser.name, userId: currentUser.id, avatar: currentUser.avatar, timestamp: Timestamp.now() })
     });
   };
 
@@ -306,15 +258,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const q = query(collection(db, 'chats'), where('users', 'array-contains', currentUser.id));
     const snap = await getDocs(q);
     const existing = snap.docs.find(d => d.data().users.includes(friend.id));
-    
-    if (existing) {
-        setSelectedChatId(existing.id);
-        return { id: existing.id, ...existing.data() } as Chat;
-    }
-    
-    const newRef = doc(collection(db, 'chats'));
-    const chatData = {
-        id: newRef.id,
+    if (existing) { setSelectedChatId(existing.id); return { id: existing.id, ...existing.data() } as Chat; }
+    const nRef = doc(collection(db, 'chats'));
+    const cData = {
+        id: nRef.id,
         users: [currentUser.id, friend.id],
         userInfo: { 
             [currentUser.id]: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }, 
@@ -324,9 +271,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         lastMessageText: 'Started conversation',
         unreadCount: { [currentUser.id]: 0, [friend.id]: 0 }
     };
-    await setDoc(newRef, chatData);
-    setSelectedChatId(newRef.id);
-    return chatData as any;
+    await setDoc(nRef, cData);
+    setSelectedChatId(nRef.id);
+    return cData as any;
   };
 
   const sendFriendRequest = async (target: User) => {
@@ -335,10 +282,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     batch.update(doc(db, 'users', currentUser.id), { friendRequestsSent: arrayUnion(target.id) });
     batch.update(doc(db, 'users', target.id), { friendRequestsReceived: arrayUnion(currentUser.id) });
     await batch.commit();
-    await createNotification(target.id, {
+    await addDoc(collection(db, `users/${target.id}/notifications`), {
         type: 'friend_request',
         message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
         fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+        timestamp: serverTimestamp(),
+        isRead: false,
         link: '/contact'
     });
   };
@@ -349,91 +298,44 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     batch.update(doc(db, 'users', currentUser.id), { friends: arrayUnion(user.id), friendRequestsReceived: arrayRemove(user.id) });
     batch.update(doc(db, 'users', user.id), { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
     await batch.commit();
-    await createNotification(user.id, {
+    await addDoc(collection(db, `users/${user.id}/notifications`), {
         type: 'new_friend',
         message: `<strong>${currentUser.name}</strong> accepted your friend request.`,
         fromUser: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+        timestamp: serverTimestamp(),
+        isRead: false,
         link: '/contact'
     });
   };
 
-  const declineFriendRequest = async (user: User) => {
-    if (!currentUser) return;
-    const batch = writeBatch(db);
-    batch.update(doc(db, 'users', currentUser.id), { friendRequestsReceived: arrayRemove(user.id) });
-    batch.update(doc(db, 'users', user.id), { friendRequestsSent: arrayRemove(currentUser.id) });
-    await batch.commit();
-  };
-
-  const unfriendUser = async (friendId: string) => {
-      if (!currentUser) return;
-      const batch = writeBatch(db);
-      batch.update(doc(db, 'users', currentUser.id), { friends: arrayRemove(friendId) });
-      batch.update(doc(db, 'users', friendId), { friends: arrayRemove(currentUser.id) });
-      await batch.commit();
-  };
-
   const addMessage = async (chatId: string, msg: any) => {
     if (!currentUser) return;
-    const chatRef = doc(db, 'chats', chatId);
-    await addDoc(collection(chatRef, 'messages'), { 
-        ...msg, 
-        timestamp: serverTimestamp(),
-        userId: currentUser.id,
-        user: currentUser.name,
-        avatar: currentUser.avatar
-    });
-    const chatDoc = await getDoc(chatRef);
-    const otherId = chatDoc.data()?.users.find((id: string) => id !== currentUser.id);
-    await updateDoc(chatRef, { 
-        lastMessageTimestamp: serverTimestamp(), 
-        lastMessageText: msg.text || 'Sent an attachment', 
-        [`unreadCount.${otherId}`]: increment(1) 
-    });
-  };
-
-  const deleteMessage = async (chatId: string, messageId: string) => {
-      await deleteDoc(doc(db, 'chats', chatId, 'messages', messageId));
-  };
-
-  const updateMessage = async (chatId: string, messageId: string, updatedMessage: Partial<Message>) => {
-      await updateDoc(doc(db, "chats", chatId, "messages", messageId), updatedMessage);
+    const cRef = doc(db, 'chats', chatId);
+    await addDoc(collection(cRef, 'messages'), { ...msg, timestamp: serverTimestamp(), userId: currentUser.id, user: currentUser.name, avatar: currentUser.avatar });
+    const snap = await getDoc(cRef);
+    const oId = snap.data()?.users.find((id: string) => id !== currentUser.id);
+    await updateDoc(cRef, { lastMessageTimestamp: serverTimestamp(), lastMessageText: msg.text || 'Sent an attachment', [`unreadCount.${oId}`]: increment(1) });
   };
 
   const markNotificationsAsRead = async () => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    notifications.filter(n => !n.isRead).forEach(n => {
-        batch.update(doc(db, `users/${currentUser.id}/notifications`, n.id), { isRead: true });
-    });
+    notifications.filter(n => !n.isRead).forEach(n => { batch.update(doc(db, `users/${currentUser.id}/notifications`, n.id), { isRead: true }); });
     await batch.commit();
   };
 
-  const deleteNotifications = async (notificationIds: string[]) => {
+  const deleteNotifications = async (ids: string[]) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    notificationIds.forEach(id => { batch.delete(doc(db, `users/${currentUser.id}/notifications`, id)); });
+    ids.forEach(id => { batch.delete(doc(db, `users/${currentUser.id}/notifications`, id)); });
     await batch.commit();
   };
-
-  const initiateCall = (user: User, type: 'audio' | 'video') => {
-    setCallState({ status: 'outgoing', user, type });
-    setTimeout(() => {
-        setCallState(prev => prev.status === 'outgoing' ? { ...prev, status: 'connected' } : prev);
-    }, 3000);
-  };
-
-  const endCall = () => setCallState({ status: 'idle' });
-  const answerCall = () => setCallState(prev => ({ ...prev, status: 'connected' }));
-  const addMissedCall = (user: User) => {};
 
   const readChatAloud = async () => {
     if (isReadingAloud) { ttsAudioRef.current?.pause(); setIsReadingAloud(false); return; }
     if (!selectedChatId) return;
     setIsReadingAloud(true);
-    const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
-    const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
-    const snap = await getDocs(q);
+    const snap = await getDocs(query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(5)));
     const text = snap.docs.reverse().map(d => `${d.data().user}: ${d.data().text || 'Attachment'}`).join('. ');
     if (!text) { setIsReadingAloud(false); return; }
     try {
@@ -441,29 +343,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         ttsAudioRef.current = new Audio(audioUrl);
         ttsAudioRef.current.play();
         ttsAudioRef.current.onended = () => setIsReadingAloud(false);
-    } catch (error) { console.error("TTS failed", error); setIsReadingAloud(false); }
+    } catch (e) { console.error("TTS failed", e); setIsReadingAloud(false); }
   };
 
   const fetchSmartReplies = async () => {
     if (!selectedChatId) return;
-    const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
-    const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
-    const snap = await getDocs(q);
+    const snap = await getDocs(query(collection(db, 'chats', selectedChatId, 'messages'), orderBy('timestamp', 'desc'), limit(5)));
     const history = snap.docs.reverse().map(d => `${d.data().user}: ${d.data().text || ''}`).join('\n');
     if (!history) return;
     try {
         const res = await smartReplySuggestions({ history });
         setSmartReplies(res.suggestions);
-    } catch (error) { console.error("Smart replies failed", error); }
+    } catch (e) { console.error("Smart replies failed", e); }
   };
 
   return (
     <AppContext.Provider value={{
-        currentUser, isLoadingProfile, updateUserProfile, posts, addPost, updatePost, deletePost, addComment, editingPost, startEditPost, cancelEditPost,
-        calls, settings, setSettings, chats, setChats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
-        addMessage, deleteMessage, updateMessage, users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest,
-        createChat, unfriendUser, callState, initiateCall, answerCall, endCall, addMissedCall, notifications, unreadNotificationCount, markNotificationsAsRead,
-        createNotification, deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies: () => setSmartReplies([])
+        currentUser, isLoadingProfile, updateUserProfile, posts, news, marketItems, stores, addPost, updatePost: (id, data) => updateDoc(doc(db, "posts", id), data), deletePost: (id) => deleteDoc(doc(db, 'posts', id)), addComment,
+        calls, settings, setSettings, chats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
+        addMessage, deleteMessage: (cid, mid) => deleteDoc(doc(db, 'chats', cid, 'messages', mid)), updateMessage: (cid, mid, data) => updateDoc(doc(db, "chats", cid, "messages", mid), data), users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest: (u) => writeBatch(db).update(doc(db, 'users', currentUser!.id), { friendRequestsReceived: arrayRemove(u.id) }).update(doc(db, 'users', u.id), { friendRequestsSent: arrayRemove(currentUser!.id) }).commit(),
+        createChat, unfriendUser: (fid) => writeBatch(db).update(doc(db, 'users', currentUser!.id), { friends: arrayRemove(fid) }).update(doc(db, 'users', fid), { friends: arrayRemove(currentUser!.id) }).commit(), callState, initiateCall: (u, t) => { setCallState({ status: 'outgoing', user: u, type: t }); setTimeout(() => setCallState(p => p.status === 'outgoing' ? { ...p, status: 'connected' } : p), 3000); }, answerCall: () => setCallState(p => ({ ...p, status: 'connected' })), endCall: () => setCallState({ status: 'idle' }), notifications, unreadNotificationCount, markNotificationsAsRead,
+        deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies: () => setSmartReplies([])
     }}>
         {children}
     </AppContext.Provider>
