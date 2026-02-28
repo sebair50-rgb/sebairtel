@@ -140,7 +140,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // Baseline Profile
+    // Baseline Profile initialization from Auth Session
+    // This allows the UI to render while the Firestore listener connects
     setCurrentUser({
         id: authUser.uid,
         name: authUser.displayName || 'User',
@@ -163,7 +164,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsLoadingProfile(false);
     }, (error) => {
-        console.error("Critical synchronization error:", error);
+        console.error("Profile sync error:", error);
         setIsLoadingProfile(false);
     });
 

@@ -34,9 +34,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
+    // Ensure persistence is set before observing auth state
     setPersistence(auth, browserLocalPersistence);
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setAuthUser(user);
       setLoading(false);
     });
@@ -47,21 +48,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsSigningUp(true);
       setLoading(true);
       try {
+        // 1. Create Auth Account
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // 1. Update Profile immediately
+        // 2. Set Profile Display Name and Avatar Placeholder
+        const avatarUrl = `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`;
         await updateProfile(cred.user, { 
             displayName: name,
-            photoURL: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`
+            photoURL: avatarUrl
         });
 
-        // 2. Create the primary User document in Firestore immediately
-        // This MUST happen before we consider signup finished
+        // 3. Provision Database Record immediately
+        // This ensures the data is ready before any redirection happens
         await setDoc(doc(db, 'users', cred.user.uid), {
             id: cred.user.uid,
             name, 
             email, 
-            avatar: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`,
+            avatar: avatarUrl,
             friends: [], 
             friendRequestsReceived: [], 
             friendRequestsSent: [], 
@@ -78,12 +81,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         });
         
-        // 3. Send verification email
+        // 4. Trigger Verification Email
         await sendEmailVerification(cred.user);
 
         return cred;
       } catch (error) {
-          console.error("Signup process failed:", error);
+          console.error("Critical Signup failure:", error);
           throw error;
       } finally {
         setIsSigningUp(false);
@@ -96,20 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         
-        // Check verification - if not verified, we sign out to maintain strict access control
-        if (!cred.user.emailVerified) {
-            const emailAddr = cred.user.email;
-            await signOut(auth);
-            const error = new Error("Email not verified.");
-            (error as any).code = 'auth/email-not-verified';
-            (error as any).email = emailAddr;
-            throw error;
-        }
-        
-        // Update online status
+        // Update user's online status upon successful login
         const userRef = doc(db, 'users', cred.user.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
             await setDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() }, { merge: true });
         }
 
@@ -140,7 +133,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   };
 
-  return <AuthContext.Provider value={{ authUser, loading, isSigningUp, login, signup, logout, resendVerificationEmail }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ 
+        authUser, 
+        loading, 
+        isSigningUp, 
+        login, 
+        signup, 
+        logout, 
+        resendVerificationEmail 
+    }}>
+        {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

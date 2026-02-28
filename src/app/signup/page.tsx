@@ -46,8 +46,8 @@ export default function SignupPage() {
         try {
             await signup(email, password, name);
             // Redirection is now primarily handled by the AuthGuard for stability,
-            // but we call push here as a fallback responsive action.
-            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+            // but we call replace here as a fallback responsive action.
+            router.replace(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error: any) {
             console.error("Signup error details:", error);
             let description = error.message || 'An unexpected technical error occurred. Please verify your connection.';
@@ -58,8 +58,6 @@ export default function SignupPage() {
                 description = 'The email address format is invalid.';
             } else if (error.code === 'auth/weak-password') {
                 description = 'The password provided is too weak for production standards.';
-            } else if (error.code === 'auth/operation-not-allowed') {
-                description = 'Account creation is currently restricted. Please contact support.';
             }
 
              toast({
@@ -76,49 +74,49 @@ export default function SignupPage() {
                 <div className="flex justify-center mb-6">
                     <Logo />
                 </div>
-                <Card className="shadow-2xl">
+                <Card className="shadow-2xl border-none ring-1 ring-slate-200">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+                        <CardTitle className="text-2xl font-extrabold tracking-tight">Create Account</CardTitle>
                         <CardDescription>Join SebairTel AI and start your journey</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSignup} className="space-y-4">
                              <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
+                                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="name" type="text" placeholder="e.g., Ali Mohammed" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-11" />
+                                    <Input id="name" type="text" placeholder="e.g., Ali Mohammed" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
                                 <div className="relative">
                                     <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" />
+                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" />
+                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
                                 </div>
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="confirm-password">Confirm Password</Label>
+                                <Label htmlFor="confirm-password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-11" />
+                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full h-11 font-bold" disabled={loading}>
-                                {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+                            <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95" disabled={loading}>
+                                {loading ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
                                 {loading ? "Initializing..." : "Create Account"}
                             </Button>
                         </form>
-                         <div className="mt-6 text-center text-sm">
+                         <div className="mt-8 text-center text-sm text-muted-foreground">
                            Already have an account?{" "}
-                            <Link href="/login" className="underline font-bold text-primary">
+                            <Link href="/login" className="underline font-bold text-primary hover:text-primary/80 transition-colors">
                                 Sign In
                             </Link>
                         </div>

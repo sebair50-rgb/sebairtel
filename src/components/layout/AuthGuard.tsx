@@ -14,16 +14,17 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // If the system is performing a signup, we freeze the Guard to prevent race conditions
+    // If the system is performing a background signup task, freeze the guard 
+    // to prevent redirection race conditions.
     if (loading || isSigningUp) return;
 
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
     const isVerifyPage = pathname.startsWith('/verify-email');
     
-    // AuthGuard logic:
-    // 1. Not logged in -> Redirect to login if not already on an auth page
-    // 2. Logged in + Not Verified -> Redirect to verify-email if not already there
-    // 3. Logged in + Verified -> Redirect to home if on an auth/verify page
+    // Facebook-style gating logic:
+    // 1. Not logged in -> Redirect to login if not already on an auth screen.
+    // 2. Logged in + Not Verified -> Redirect to /verify-email immediately.
+    // 3. Logged in + Verified -> Redirect to home IF on login/signup/verify pages.
     
     if (!authUser) {
       if (!isAuthPage && !isVerifyPage) {
@@ -48,13 +49,13 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     }
   }, [authUser, loading, isSigningUp, router, pathname]);
 
-  // Global loading state for hydration and initial auth check
+  // Global splash screen for hydration and system-level state transitions
   if (loading || isSigningUp || !isReady) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
         <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-4 text-sm font-medium animate-pulse">
           {isSigningUp ? "Creating your secure environment..." : "Securing professional session..."}
         </p>
       </div>
