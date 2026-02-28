@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { MailCheck, Loader2, RefreshCw, LogOut } from 'lucide-react';
 import Logo from '@/components/shared/Logo';
 import { useAuth } from '@/store/AuthContext';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
     const { resendVerificationEmail, loading, logout } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -87,5 +87,17 @@ export default function VerifyEmailPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function VerifyEmailPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center h-screen bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <VerifyEmailContent />
+        </Suspense>
     );
 }

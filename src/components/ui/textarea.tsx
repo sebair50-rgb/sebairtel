@@ -20,7 +20,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
         }
     }, [props.id]);
     
-    React.useLayoutEffect(() => {
+    // Using useEffect instead of useLayoutEffect to avoid hydration warnings in Next.js
+    React.useEffect(() => {
         autoResize();
     }, [value, autoResize]);
 

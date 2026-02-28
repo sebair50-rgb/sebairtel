@@ -19,24 +19,25 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
     const isVerifyPage = pathname.startsWith('/verify-email');
     
+    // AuthGuard logic:
+    // 1. Not logged in -> Redirect to login if not already on an auth page
+    // 2. Logged in + Not Verified -> Redirect to verify-email if not already there
+    // 3. Logged in + Verified -> Redirect to home if on an auth/verify page
+    
     if (!authUser) {
-      // Unauthenticated: Ensure they are on a safe page (login/signup)
       if (!isAuthPage && !isVerifyPage) {
         router.replace('/login');
       } else {
         setIsReady(true);
       }
     } else {
-       // Authenticated: Strict handling of email verification
        if (!authUser.emailVerified) {
-           // Mandatory redirect to verification if unverified
            if (!isVerifyPage) {
                router.replace(`/verify-email?email=${encodeURIComponent(authUser.email || '')}`);
            } else {
                setIsReady(true);
            }
        } else {
-           // Verified users are not allowed on auth/verify pages
            if (isAuthPage || isVerifyPage) {
                router.replace('/');
            } else {

@@ -140,7 +140,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // Phase 1: Initialize baseline profile from Auth session for immediate UI responsiveness
+    // Baseline Profile
     setCurrentUser({
         id: authUser.uid,
         name: authUser.displayName || 'User',
@@ -148,7 +148,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         email: authUser.email || '',
     });
 
-    // Phase 2: Establish real-time Firestore listener for full profile and settings
     const userDocRef = doc(db, 'users', authUser.uid);
     const unsubscribeUser = onSnapshot(userDocRef, (userDoc) => {
         if (userDoc.exists()) {
@@ -168,7 +167,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setIsLoadingProfile(false);
     });
 
-    // Social Data Engine
     const postsQuery = query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50));
     const unsubscribePosts = onSnapshot(postsQuery, (snapshot) => {
       setPosts(snapshot.docs.map(doc => ({
@@ -233,7 +231,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       return users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id));
   }, [users, currentUser]);
 
-  // Operational Methods
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
       await addDoc(collection(db, `users/${userId}/notifications`), {
           ...notification,
