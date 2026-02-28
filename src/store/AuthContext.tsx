@@ -19,6 +19,7 @@ import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 interface AuthContextType {
   authUser: FirebaseUser | null;
   loading: boolean;
+  isSigningUp: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence);
@@ -42,18 +44,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const signup = async (email: string, password: string, name: string) => {
+      setIsSigningUp(true);
       setLoading(true);
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // 1. Update Profile so the AuthGuard and UI see the name immediately
+        // 1. Update Profile immediately
         await updateProfile(cred.user, { 
             displayName: name,
             photoURL: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`
         });
 
         // 2. Create the primary User document in Firestore immediately
-        // This is atomic - we ensure this is set before finishing the signup process
+        // This MUST happen before we consider signup finished
         await setDoc(doc(db, 'users', cred.user.uid), {
             id: cred.user.uid,
             name, 
@@ -83,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error("Signup process failed:", error);
           throw error;
       } finally {
+        setIsSigningUp(false);
         setLoading(false);
       }
   }
@@ -136,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   };
 
-  return <AuthContext.Provider value={{ authUser, loading, login, signup, logout, resendVerificationEmail }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ authUser, loading, isSigningUp, login, signup, logout, resendVerificationEmail }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

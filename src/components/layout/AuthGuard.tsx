@@ -8,13 +8,14 @@ import { Loader2 } from 'lucide-react';
 import Logo from '../shared/Logo';
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { authUser, loading } = useAuth();
+  const { authUser, loading, isSigningUp } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
+    // If the system is performing a signup, we freeze the Guard to prevent race conditions
+    if (loading || isSigningUp) return;
 
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
     const isVerifyPage = pathname.startsWith('/verify-email');
@@ -45,15 +46,17 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
            }
        }
     }
-  }, [authUser, loading, router, pathname]);
+  }, [authUser, loading, isSigningUp, router, pathname]);
 
   // Global loading state for hydration and initial auth check
-  if (loading || !isReady) {
+  if (loading || isSigningUp || !isReady) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
         <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">Securing professional session...</p>
+        <p className="text-muted-foreground mt-2">
+          {isSigningUp ? "Creating your secure environment..." : "Securing professional session..."}
+        </p>
       </div>
     );
   }
