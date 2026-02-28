@@ -6,8 +6,8 @@ import type { User, Post, Call, Chat, Message, CallState, Notification, NewsItem
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
-  collection, onSnapshot, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
-  doc, updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, arrayRemove, Timestamp
+  collection, onSnapshot, doc, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
+  updateDoc, where, getDocs, setDoc, getDoc, writeBatch, increment, limit, arrayUnion, arrayRemove, Timestamp
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from 'firebase/auth';
@@ -135,10 +135,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
+    // Set a baseline user from Auth data immediately to prevent load hangs
+    const baselineUser: User = {
+        id: authUser.uid,
+        name: authUser.displayName || 'User',
+        avatar: authUser.photoURL || `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(authUser.displayName?.charAt(0) || 'U')}`,
+        email: authUser.email || '',
+        friends: [],
+        friendRequestsReceived: [],
+        friendRequestsSent: [],
+    };
+    setCurrentUser(baselineUser);
+
     const unsubUser = onSnapshot(doc(db, 'users', authUser.uid), (snap) => {
         if (snap.exists()) {
             const data = snap.data() as User;
-            setCurrentUser({ ...data, id: snap.id });
+            setCurrentUser(prev => ({ 
+                ...prev, 
+                ...data, 
+                id: snap.id,
+                email: data.email || authUser.email || ''
+            }));
             if (data.settings) {
                 setSettings(prev => ({ ...prev, ...data.settings }));
                 if (data.settings.language && data.settings.language !== 'system') {
@@ -361,8 +378,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     <AppContext.Provider value={{
         currentUser, isLoadingProfile, updateUserProfile, posts, news, marketItems, stores, addPost, updatePost: (id, data) => updateDoc(doc(db, "posts", id), data), deletePost: (id) => deleteDoc(doc(db, 'posts', id)), addComment,
         calls, settings, setSettings, chats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
-        addMessage, deleteMessage: (cid, mid) => deleteDoc(doc(db, 'chats', cid, 'messages', mid)), updateMessage: (cid, mid, data) => updateDoc(doc(db, "chats", cid, "messages", mid), data), users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest: (u) => writeBatch(db).update(doc(db, 'users', currentUser!.id), { friendRequestsReceived: arrayRemove(u.id) }).update(doc(db, 'users', u.id), { friendRequestsSent: arrayRemove(currentUser!.id) }).commit(),
-        createChat, unfriendUser: (fid) => writeBatch(db).update(doc(db, 'users', currentUser!.id), { friends: arrayRemove(fid) }).update(doc(db, 'users', fid), { friends: arrayRemove(currentUser!.id) }).commit(), callState, initiateCall: (u, t) => { setCallState({ status: 'outgoing', user: u, type: t }); setTimeout(() => setCallState(p => p.status === 'outgoing' ? { ...p, status: 'connected' } : p), 3000); }, answerCall: () => setCallState(p => ({ ...p, status: 'connected' })), endCall: () => setCallState({ status: 'idle' }), notifications, unreadNotificationCount, markNotificationsAsRead,
+        addMessage, deleteMessage: (cid, mid) => deleteDoc(doc(db, 'chats', cid, 'messages', mid)), updateMessage: (cid, mid, data) => updateDoc(doc(db, "chats", cid, "messages", mid), data), users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest: (u) => {
+            const batch = writeBatch(db);
+            batch.update(doc(db, 'users', currentUser!.id), { friendRequestsReceived: arrayRemove(u.id) });
+            batch.update(doc(db, 'users', u.id), { friendRequestsSent: arrayRemove(currentUser!.id) });
+            return batch.commit();
+        },
+        createChat, unfriendUser: (fid) => {
+            const batch = writeBatch(db);
+            batch.update(doc(db, 'users', currentUser!.id), { friends: arrayRemove(fid) });
+            batch.update(doc(db, 'users', fid), { friends: arrayRemove(currentUser!.id) });
+            return batch.commit();
+        }, callState, initiateCall: (u, t) => { setCallState({ status: 'outgoing', user: u, type: t }); setTimeout(() => setCallState(p => p.status === 'outgoing' ? { ...p, status: 'connected' } : p), 3000); }, answerCall: () => setCallState(p => ({ ...p, status: 'connected' })), endCall: () => setCallState({ status: 'idle' }), notifications, unreadNotificationCount, markNotificationsAsRead,
         deleteNotifications, readChatAloud, isReadingAloud, smartReplies, fetchSmartReplies, clearSmartReplies: () => setSmartReplies([])
     }}>
         {children}

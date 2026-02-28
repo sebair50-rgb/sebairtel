@@ -50,7 +50,7 @@ const DetailSection = ({ title, description, children, icon: Icon }: { title: st
 );
 
 const ProfileSettings = () => {
-    const { currentUser, updateUserProfile } = useAppContext();
+    const { currentUser, updateUserProfile, isLoadingProfile } = useAppContext();
     const { toast } = useToast();
     const router = useRouter();
     const avatarFileInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +64,7 @@ const ProfileSettings = () => {
     const hasInitialized = useRef(false);
 
      useEffect(() => {
+        // Initialize form when currentUser data is available or changes significantly
         if (currentUser && !hasInitialized.current) {
             const initialData: Partial<User> = {
                 name: currentUser.name || '',
@@ -92,12 +93,12 @@ const ProfileSettings = () => {
     }, [formState, initialState, avatarFile]);
 
     const profileCompletion = useMemo(() => {
-        if (!formState || !currentUser) return 0;
+        if (!formState) return 0;
         const fields = ['name', 'bio', 'phone', 'dob', 'city', 'from', 'relationshipStatus', 'avatar'];
         const filledFields = fields.filter(f => !!(formState as any)[f]);
         const hasLists = (formState.links?.length || 0) > 0 || (formState.workExperience?.length || 0) > 0 || (formState.education?.length || 0) > 0;
         return Math.min(100, Math.round(((filledFields.length + (hasLists ? 1 : 0)) / (fields.length + 1)) * 100));
-    }, [formState, currentUser]);
+    }, [formState]);
 
     const handleFieldChange = (field: keyof User, value: any) => {
         setFormState(prev => ({ ...prev, [field]: value }));
@@ -153,7 +154,8 @@ const ProfileSettings = () => {
         });
     };
 
-    if (!currentUser) {
+    // Show loading state ONLY during the very first authentication check
+    if (isLoadingProfile && !currentUser) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] w-full gap-4">
                 <Loader2 className="animate-spin h-10 w-10 text-primary" />
@@ -161,6 +163,9 @@ const ProfileSettings = () => {
             </div>
         )
     }
+
+    // This handles the rare case where currentUser might be null even after loading
+    if (!currentUser) return null;
 
     return (
         <Card className="border-none shadow-none bg-transparent">
