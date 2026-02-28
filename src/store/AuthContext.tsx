@@ -69,7 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await sendEmailVerification(cred.user);
 
         // 4. Provision Firestore Profile (Non-blocking)
-        // We do not throw if this fails, to prevent marking registration as failed
         try {
             await setDoc(doc(db, 'users', cred.user.uid), {
                 id: cred.user.uid,
@@ -102,14 +101,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
   
   const login = async (email: string, password: string) => {
-    return signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    // Explicit reload to ensure emailVerified status is fresh
+    await reload(cred.user);
+    return cred;
   }
   
   const logout = async () => {
       setLoading(true);
       try {
           if (auth.currentUser) {
-              // Update status before signing out
               try {
                   await setDoc(doc(db, 'users', auth.currentUser.uid), { 
                       isOnline: false, 

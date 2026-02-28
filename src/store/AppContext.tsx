@@ -134,14 +134,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (authLoading) return;
     
-    // Strict Verification check
     if (!authUser || !authUser.emailVerified) {
         setCurrentUser(null);
         setIsLoadingProfile(false);
         return;
     }
 
-    // Baseline Profile initialization from Auth Session
+    // High-speed fallback from session data
     setCurrentUser({
         id: authUser.uid,
         name: authUser.displayName || 'User',
@@ -232,6 +231,26 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       return users.filter(u => !fIds.has(u.id) && !rIds.has(u.id) && !sIds.has(u.id));
   }, [users, currentUser]);
 
+  const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
+    if (!auth.currentUser) throw new Error("Not authenticated");
+    const updateData: any = { ...data };
+    
+    if (files?.avatar) {
+        const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
+        await uploadBytes(storageRef, files.avatar);
+        const url = await getDownloadURL(storageRef);
+        updateData.avatar = url;
+        await updateProfile(auth.currentUser, { photoURL: url });
+    }
+    
+    if (data.name) {
+        await updateProfile(auth.currentUser, { displayName: data.name });
+    }
+    
+    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    await updateDoc(userDocRef, { ...updateData, settings });
+  };
+
   const createNotification = async (userId: string, notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
       await addDoc(collection(db, `users/${userId}/notifications`), {
           ...notification,
@@ -242,14 +261,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => {
     if (!currentUser) return;
-    
     let mediaUrl = undefined;
     if (data.mediaFile) {
         const storageRef = ref(storage, `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
         await uploadBytes(storageRef, data.mediaFile);
         mediaUrl = await getDownloadURL(storageRef);
     }
-
     await addDoc(collection(db, 'posts'), {
       content: data.content,
       mediaType: data.mediaType || 'text',
@@ -282,26 +299,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           timestamp: Timestamp.now() 
       })
     });
-  };
-
-  const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
-    if (!auth.currentUser) throw new Error("Not authenticated");
-    const updateData: any = { ...data };
-    
-    if (files?.avatar) {
-        const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
-        await uploadBytes(storageRef, files.avatar);
-        const url = await getDownloadURL(storageRef);
-        updateData.avatar = url;
-        await updateProfile(auth.currentUser, { photoURL: url });
-    }
-    
-    if (data.name) {
-        await updateProfile(auth.currentUser, { displayName: data.name });
-    }
-    
-    const userDocRef = doc(db, 'users', auth.currentUser.uid);
-    await updateDoc(userDocRef, { ...updateData, settings });
   };
 
   const createChat = async (friend: User): Promise<Chat | null> => {
@@ -338,7 +335,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     batch.update(doc(db, 'users', currentUser.id), { friendRequestsSent: arrayUnion(target.id) });
     batch.update(doc(db, 'users', target.id), { friendRequestsReceived: arrayUnion(currentUser.id) });
     await batch.commit();
-    
     await createNotification(target.id, {
         type: 'friend_request',
         message: `<strong>${currentUser.name}</strong> sent you a friend request.`,
@@ -350,16 +346,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const acceptFriendRequest = async (user: User) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    batch.update(doc(db, 'users', currentUser.id), { 
-        friends: arrayUnion(user.id), 
-        friendRequestsReceived: arrayRemove(user.id) 
-    });
-    batch.update(doc(db, 'users', user.id), { 
-        friends: arrayUnion(currentUser.id), 
-        friendRequestsSent: arrayRemove(currentUser.id) 
-    });
+    batch.update(doc(db, 'users', currentUser.id), { friends: arrayUnion(user.id), friendRequestsReceived: arrayRemove(user.id) });
+    batch.update(doc(db, 'users', user.id), { friends: arrayUnion(currentUser.id), friendRequestsSent: arrayRemove(currentUser.id) });
     await batch.commit();
-
     await createNotification(user.id, {
         type: 'new_friend',
         message: `<strong>${currentUser.name}</strong> accepted your friend request.`,
@@ -387,22 +376,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const addMessage = async (chatId: string, msg: any) => {
     if (!currentUser) return;
     const chatRef = doc(db, 'chats', chatId);
-    const messagesRef = collection(chatRef, 'messages');
-    
-    await addDoc(messagesRef, { 
+    await addDoc(collection(chatRef, 'messages'), { 
         ...msg, 
         timestamp: serverTimestamp(),
         userId: currentUser.id,
         user: currentUser.name,
         avatar: currentUser.avatar
     });
-    
     const chatDoc = await getDoc(chatRef);
     const otherId = chatDoc.data()?.users.find((id: string) => id !== currentUser.id);
-    
     await updateDoc(chatRef, { 
         lastMessageTimestamp: serverTimestamp(), 
-        lastMessageText: msg.text || (msg.type === 'image' ? 'Sent an image' : 'Sent an attachment'), 
+        lastMessageText: msg.text || 'Sent an attachment', 
         [`unreadCount.${otherId}`]: increment(1) 
     });
   };
@@ -427,9 +412,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const deleteNotifications = async (notificationIds: string[]) => {
     if (!currentUser) return;
     const batch = writeBatch(db);
-    notificationIds.forEach(id => {
-        batch.delete(doc(db, `users/${currentUser.id}/notifications`, id));
-    });
+    notificationIds.forEach(id => { batch.delete(doc(db, `users/${currentUser.id}/notifications`, id)); });
     await batch.commit();
   };
 
@@ -445,36 +428,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const addMissedCall = (user: User) => {};
 
   const readChatAloud = async () => {
-    if (isReadingAloud) {
-        ttsAudioRef.current?.pause();
-        setIsReadingAloud(false);
-        return;
-    }
+    if (isReadingAloud) { ttsAudioRef.current?.pause(); setIsReadingAloud(false); return; }
     if (!selectedChatId) return;
-    
     setIsReadingAloud(true);
     const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
     const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
     const snap = await getDocs(q);
-    
-    const text = snap.docs.reverse()
-        .map(d => `${d.data().user}: ${d.data().text || 'Attachment'}`)
-        .join('. ');
-    
-    if (!text) {
-        setIsReadingAloud(false);
-        return;
-    }
-
+    const text = snap.docs.reverse().map(d => `${d.data().user}: ${d.data().text || 'Attachment'}`).join('. ');
+    if (!text) { setIsReadingAloud(false); return; }
     try {
         const { audioUrl } = await textToSpeech({ text });
         ttsAudioRef.current = new Audio(audioUrl);
         ttsAudioRef.current.play();
         ttsAudioRef.current.onended = () => setIsReadingAloud(false);
-    } catch (error) {
-        console.error("TTS failed", error);
-        setIsReadingAloud(false);
-    }
+    } catch (error) { console.error("TTS failed", error); setIsReadingAloud(false); }
   };
 
   const fetchSmartReplies = async () => {
@@ -482,19 +449,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const messagesCol = collection(db, 'chats', selectedChatId, 'messages');
     const q = query(messagesCol, orderBy('timestamp', 'desc'), limit(5));
     const snap = await getDocs(q);
-    
-    const history = snap.docs.reverse()
-        .map(d => `${d.data().user}: ${d.data().text || ''}`)
-        .join('\n');
-    
+    const history = snap.docs.reverse().map(d => `${d.data().user}: ${d.data().text || ''}`).join('\n');
     if (!history) return;
-
     try {
         const res = await smartReplySuggestions({ history });
         setSmartReplies(res.suggestions);
-    } catch (error) {
-        console.error("Smart replies failed", error);
-    }
+    } catch (error) { console.error("Smart replies failed", error); }
   };
 
   return (

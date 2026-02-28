@@ -14,14 +14,13 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // If we are currently in the middle of a signup process, hold the UI
+    // Hold navigation during high-priority state changes
     if (loading || isSigningUp) return;
 
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
     const isVerifyPage = pathname.startsWith('/verify-email');
     
-    // Gating Logic:
-    // 1. No User -> Force Login (unless on login/signup)
+    // 1. No User -> Redirect to login unless already there
     if (!authUser) {
       if (!isAuthPage) {
         router.replace('/login');
@@ -31,7 +30,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // 2. User exists but not verified -> Force /verify-email
+    // 2. Unverified User -> Strictly hold on verify-email
     if (!authUser.emailVerified) {
       if (!isVerifyPage) {
         router.replace(`/verify-email?email=${encodeURIComponent(authUser.email || '')}`);
@@ -41,13 +40,13 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    // 3. User exists and is verified -> Prevent /login, /signup, /verify-email
+    // 3. Fully Verified User -> Prevent access to auth pages
     if (isAuthPage || isVerifyPage) {
       router.replace('/');
       return;
     }
 
-    // 4. Everything is fine
+    // 4. Verification complete, allow app entry
     setIsReady(true);
   }, [authUser, loading, isSigningUp, router, pathname]);
 

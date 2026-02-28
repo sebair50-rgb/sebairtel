@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect, useMemo } from 'react';
@@ -60,7 +61,6 @@ const ProfileSettings = () => {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
 
-    // Track if we've already initialized the form to prevent overwriting unsaved changes
     const hasInitialized = useRef(false);
 
      useEffect(() => {

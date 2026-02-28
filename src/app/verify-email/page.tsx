@@ -20,7 +20,7 @@ function VerifyEmailContent() {
     const [isResending, setIsResending] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Auto-redirect if status changes
+    // Dynamic gate logic: If status updates via background verification, redirect immediately
     useEffect(() => {
         if (authUser?.emailVerified) {
             router.replace('/');
@@ -49,7 +49,7 @@ function VerifyEmailContent() {
     const handleRefreshStatus = async () => {
         setIsRefreshing(true);
         try {
-            await refreshUser();
+            await refreshUser(); // This triggers user.reload() which is the only way to update emailVerified
             if (authUser?.emailVerified) {
                 toast({ title: "Email Verified!", description: "Welcome to SebairTel." });
                 router.replace('/');
