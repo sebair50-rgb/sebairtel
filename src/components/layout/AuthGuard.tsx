@@ -14,47 +14,48 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // If the system is performing a background signup task, freeze the guard 
-    // to prevent redirection race conditions.
+    // If we are currently in the middle of a signup process, hold the UI
     if (loading || isSigningUp) return;
 
     const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
     const isVerifyPage = pathname.startsWith('/verify-email');
     
-    // Facebook-style gating logic:
-    // 1. Not logged in -> Redirect to login if not already on an auth screen.
-    // 2. Logged in + Not Verified -> Redirect to /verify-email immediately.
-    // 3. Logged in + Verified -> Redirect to home IF on login/signup/verify pages.
-    
+    // Gating Logic:
+    // 1. No User -> Force Login (unless on login/signup)
     if (!authUser) {
-      if (!isAuthPage && !isVerifyPage) {
+      if (!isAuthPage) {
         router.replace('/login');
       } else {
         setIsReady(true);
       }
-    } else {
-       if (!authUser.emailVerified) {
-           if (!isVerifyPage) {
-               router.replace(`/verify-email?email=${encodeURIComponent(authUser.email || '')}`);
-           } else {
-               setIsReady(true);
-           }
-       } else {
-           if (isAuthPage || isVerifyPage) {
-               router.replace('/');
-           } else {
-               setIsReady(true);
-           }
-       }
+      return;
     }
+
+    // 2. User exists but not verified -> Force /verify-email
+    if (!authUser.emailVerified) {
+      if (!isVerifyPage) {
+        router.replace(`/verify-email?email=${encodeURIComponent(authUser.email || '')}`);
+      } else {
+        setIsReady(true);
+      }
+      return;
+    }
+
+    // 3. User exists and is verified -> Prevent /login, /signup, /verify-email
+    if (isAuthPage || isVerifyPage) {
+      router.replace('/');
+      return;
+    }
+
+    // 4. Everything is fine
+    setIsReady(true);
   }, [authUser, loading, isSigningUp, router, pathname]);
 
-  // Global splash screen for hydration and system-level state transitions
   if (loading || isSigningUp || !isReady) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <Logo />
-        <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
+      <div className="flex flex-col items-center justify-center h-screen bg-background text-center p-6">
+        <Logo className="w-16 h-16" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary mt-6" />
         <p className="text-muted-foreground mt-4 text-sm font-medium animate-pulse">
           {isSigningUp ? "Creating your secure environment..." : "Securing professional session..."}
         </p>

@@ -18,7 +18,7 @@ export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const { signup, loading } = useAuth();
+    const { signup, isSigningUp } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -28,8 +28,8 @@ export default function SignupPage() {
         if (password.length < 6) {
             toast({
                 variant: "destructive",
-                title: "Security Requirement",
-                description: "Password should be at least 6 characters long for production security.",
+                title: "Weak Password",
+                description: "Password must be at least 6 characters.",
             });
             return;
         }
@@ -37,27 +37,24 @@ export default function SignupPage() {
         if (password !== confirmPassword) {
             toast({
                 variant: "destructive",
-                title: "Configuration Error",
-                description: "Passwords do not match. Please re-enter your credentials.",
+                title: "Passwords Mismatch",
+                description: "Please ensure your passwords match.",
             });
             return;
         }
 
         try {
             await signup(email, password, name);
-            // Redirection is now primarily handled by the AuthGuard for stability,
-            // but we call replace here as a fallback responsive action.
-            router.replace(`/verify-email?email=${encodeURIComponent(email)}`);
+            // Redirection is handled by the AuthGuard automatically
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error: any) {
-            console.error("Signup error details:", error);
-            let description = error.message || 'An unexpected technical error occurred. Please verify your connection.';
+            console.error("Signup error:", error);
+            let description = "An unexpected error occurred. Please try again.";
             
             if (error.code === 'auth/email-already-in-use') {
-                description = 'This email address is already associated with an account.';
+                description = 'This email is already registered.';
             } else if (error.code === 'auth/invalid-email') {
-                description = 'The email address format is invalid.';
-            } else if (error.code === 'auth/weak-password') {
-                description = 'The password provided is too weak for production standards.';
+                description = 'Invalid email address format.';
             }
 
              toast({
@@ -82,41 +79,41 @@ export default function SignupPage() {
                     <CardContent>
                         <form onSubmit={handleSignup} className="space-y-4">
                              <div className="space-y-2">
-                                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</Label>
+                                <Label htmlFor="name" className="text-xs font-bold uppercase text-muted-foreground">Full Name</Label>
                                 <div className="relative">
                                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="name" type="text" placeholder="e.g., Ali Mohammed" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
+                                    <Input id="name" type="text" placeholder="Ali Mohammed" required value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-12 rounded-xl" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
+                                <Label htmlFor="email" className="text-xs font-bold uppercase text-muted-foreground">Email Address</Label>
                                 <div className="relative">
                                     <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
+                                    <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
+                                <Label htmlFor="password" className="text-xs font-bold uppercase text-muted-foreground">Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
+                                    <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl" />
                                 </div>
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="confirm-password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Confirm Password</Label>
+                                <Label htmlFor="confirm-password" className="text-xs font-bold uppercase text-muted-foreground">Confirm Password</Label>
                                 <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12 rounded-xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-primary transition-all" />
+                                    <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12 rounded-xl" />
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95" disabled={loading}>
-                                {loading ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
-                                {loading ? "Initializing..." : "Create Account"}
+                            <Button type="submit" className="w-full h-12 rounded-xl font-bold text-lg" disabled={isSigningUp}>
+                                {isSigningUp ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : null}
+                                {isSigningUp ? "Creating Account..." : "Create Account"}
                             </Button>
                         </form>
                          <div className="mt-8 text-center text-sm text-muted-foreground">
                            Already have an account?{" "}
-                            <Link href="/login" className="underline font-bold text-primary hover:text-primary/80 transition-colors">
+                            <Link href="/login" className="underline font-bold text-primary">
                                 Sign In
                             </Link>
                         </div>

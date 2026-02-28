@@ -12,9 +12,10 @@ import {
   sendEmailVerification,
   setPersistence,
   browserLocalPersistence,
+  reload,
   type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
   authUser: FirebaseUser | null;
@@ -24,6 +25,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<any>;
   logout: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,19 +36,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSigningUp, setIsSigningUp] = useState(false);
 
   useEffect(() => {
-    // Ensure persistence is set before observing auth state
     setPersistence(auth, browserLocalPersistence);
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setAuthUser(user);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      await reload(auth.currentUser);
+      setAuthUser({ ...auth.currentUser });
+    }
+  };
   
   const signup = async (email: string, password: string, name: string) => {
       setIsSigningUp(true);
-      setLoading(true);
       try {
         // 1. Create Auth Account
         const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -58,68 +65,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             photoURL: avatarUrl
         });
 
-        // 3. Provision Database Record immediately
-        // This ensures the data is ready before any redirection happens
-        await setDoc(doc(db, 'users', cred.user.uid), {
-            id: cred.user.uid,
-            name, 
-            email, 
-            avatar: avatarUrl,
-            friends: [], 
-            friendRequestsReceived: [], 
-            friendRequestsSent: [], 
-            isOnline: true, 
-            lastSeen: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            settings: {
-                theme: 'system',
-                language: 'system',
-                notifications: { all: true, messages: true, mentions: true, calls: true },
-                privacy: { lastSeen: 'everyone', profilePhoto: 'everyone', friendRequests: 'everyone' },
-                sounds: { messageTone: 'default', notificationTone: 'default', callRingtone: 'default' },
-                interface: { showSocialTab: true, showAiTab: true, showAppsTab: true, showContactTab: true }
-            }
-        });
-        
-        // 4. Trigger Verification Email
+        // 3. Trigger Verification Email immediately
         await sendEmailVerification(cred.user);
 
+        // 4. Provision Firestore Profile (Non-blocking)
+        // We do not throw if this fails, to prevent marking registration as failed
+        try {
+            await setDoc(doc(db, 'users', cred.user.uid), {
+                id: cred.user.uid,
+                name, 
+                email, 
+                avatar: avatarUrl,
+                friends: [], 
+                friendRequestsReceived: [], 
+                friendRequestsSent: [], 
+                isOnline: true, 
+                lastSeen: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                settings: {
+                    theme: 'system',
+                    language: 'system',
+                    notifications: { all: true, messages: true, mentions: true, calls: true },
+                    privacy: { lastSeen: 'everyone', profilePhoto: 'everyone', friendRequests: 'everyone' },
+                    sounds: { messageTone: 'default', notificationTone: 'default', callRingtone: 'default' },
+                    interface: { showSocialTab: true, showAiTab: true, showAppsTab: true, showContactTab: true }
+                }
+            });
+        } catch (fsError) {
+            console.error("Firestore profile provisioning delayed or failed:", fsError);
+        }
+
         return cred;
-      } catch (error) {
-          console.error("Critical Signup failure:", error);
-          throw error;
       } finally {
         setIsSigningUp(false);
-        setLoading(false);
       }
   }
   
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        
-        // Update user's online status upon successful login
-        const userRef = doc(db, 'users', cred.user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            await setDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() }, { merge: true });
-        }
-
-        return cred;
-    } finally {
-        setLoading(false);
-    }
+    return signInWithEmailAndPassword(auth, email, password);
   }
   
   const logout = async () => {
       setLoading(true);
       try {
           if (auth.currentUser) {
-              await setDoc(doc(db, 'users', auth.currentUser.uid), { 
-                  isOnline: false, 
-                  lastSeen: serverTimestamp() 
-              }, { merge: true });
+              // Update status before signing out
+              try {
+                  await setDoc(doc(db, 'users', auth.currentUser.uid), { 
+                      isOnline: false, 
+                      lastSeen: serverTimestamp() 
+                  }, { merge: true });
+              } catch (e) {
+                  console.warn("Could not update online status during logout", e);
+              }
           }
           await signOut(auth);
       } finally {
@@ -141,7 +139,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login, 
         signup, 
         logout, 
-        resendVerificationEmail 
+        resendVerificationEmail,
+        refreshUser
     }}>
         {children}
     </AuthContext.Provider>

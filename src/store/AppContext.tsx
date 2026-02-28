@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef, useMemo } from 'react';
 import type { User, Post, Call, Chat, Message, CallState, Notification } from '@/lib/types';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
@@ -134,6 +134,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (authLoading) return;
     
+    // Strict Verification check
     if (!authUser || !authUser.emailVerified) {
         setCurrentUser(null);
         setIsLoadingProfile(false);
@@ -141,7 +142,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Baseline Profile initialization from Auth Session
-    // This allows the UI to render while the Firestore listener connects
     setCurrentUser({
         id: authUser.uid,
         name: authUser.displayName || 'User',
