@@ -63,22 +63,20 @@ const generateVideoFlow = ai.defineFlow(
             throw new Error('Failed to find the generated video');
           }
     
-        // The media.url from Veo is a temporary gs:// URL.
-        // For client-side display, we need to fetch it and convert to a data URI.
-        const fetch = (await import('node-fetch')).default;
+        // The URL needs the API key appended to be accessed.
         const apiKey = process.env.GEMINI_API_KEY;
-    
         if (!apiKey) {
           throw new Error('GEMINI_API_KEY environment variable not set.');
         }
         
-        // The URL needs the API key appended to be accessed.
+        // Using native Node.js fetch (available in Next.js 15 environments)
         const videoDownloadResponse = await fetch(`${video.media.url}&key=${apiKey}`);
-        if (!videoDownloadResponse.ok || !videoDownloadResponse.body) {
+        if (!videoDownloadResponse.ok) {
             throw new Error(`Failed to fetch video from storage. Status: ${videoDownloadResponse.statusText}`);
         }
     
-        const videoBuffer = await videoDownloadResponse.buffer();
+        const arrayBuffer = await videoDownloadResponse.arrayBuffer();
+        const videoBuffer = Buffer.from(arrayBuffer);
         const base64Video = videoBuffer.toString('base64');
         const contentType = video.media.contentType || 'video/mp4';
     

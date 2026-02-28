@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
