@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/store/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Logo from '../shared/Logo';
 
@@ -11,6 +11,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { authUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -19,58 +20,44 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const isVerifyPage = pathname.startsWith('/verify-email');
     
     if (!authUser) {
-      // User is not logged in: stay on auth pages or redirect to login
+      // Unauthenticated: Ensure they are on a safe page (login/signup)
       if (!isAuthPage && !isVerifyPage) {
         router.replace('/login');
+      } else {
+        setIsReady(true);
       }
     } else {
-       // User IS logged in:
+       // Authenticated: Strict handling of email verification
        if (!authUser.emailVerified) {
-           // Forced redirect to verification if they haven't verified yet
+           // Mandatory redirect to verification if unverified
            if (!isVerifyPage) {
                router.replace(`/verify-email?email=${encodeURIComponent(authUser.email || '')}`);
+           } else {
+               setIsReady(true);
            }
        } else {
-           // If verified, don't allow them on Auth or Verify pages
+           // Verified users are not allowed on auth/verify pages
            if (isAuthPage || isVerifyPage) {
                router.replace('/');
+           } else {
+               setIsReady(true);
            }
        }
     }
   }, [authUser, loading, router, pathname]);
 
-  // Show loading screen during initial state load
-  if (loading) {
+  // Global loading state for hydration and initial auth check
+  if (loading || !isReady) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
         <Logo />
         <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">Securing session...</p>
+        <p className="text-muted-foreground mt-2">Securing professional session...</p>
       </div>
     );
   }
   
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isVerifyPage = pathname.startsWith('/verify-email');
-
-  // Determine if content should be rendered
-  const shouldShowContent = 
-    (!authUser && (isAuthPage || isVerifyPage)) || 
-    (authUser && !authUser.emailVerified && isVerifyPage) ||
-    (authUser && authUser.emailVerified && !isAuthPage && !isVerifyPage);
-
-  if (shouldShowContent) {
-    return <>{children}</>;
-  }
-
-  // Fallback UI while router executes redirects
-  return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <Logo />
-        <Loader2 className="h-8 w-8 animate-spin text-primary mt-4" />
-        <p className="text-muted-foreground mt-2">Redirecting to safe zone...</p>
-      </div>
-    );
+  return <>{children}</>;
 };
 
 export default AuthGuard;

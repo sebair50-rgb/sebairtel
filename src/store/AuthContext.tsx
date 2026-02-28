@@ -14,7 +14,7 @@ import {
   browserLocalPersistence,
   type User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   authUser: FirebaseUser | null;
@@ -46,13 +46,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // 1. Update Profile first so the AuthGuard sees the name immediately
+        // 1. Update Profile so the AuthGuard and UI see the name immediately
         await updateProfile(cred.user, { 
             displayName: name,
             photoURL: `https://placehold.co/128x128/793EF6/ffffff?text=${encodeURIComponent(name.charAt(0))}`
         });
 
-        // 2. Create Firestore user document
+        // 2. Create the primary User document in Firestore immediately
+        // This is atomic - we ensure this is set before finishing the signup process
         await setDoc(doc(db, 'users', cred.user.uid), {
             id: cred.user.uid,
             name, 
@@ -77,7 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // 3. Send verification email
         await sendEmailVerification(cred.user);
 
-        // We do NOT sign out here anymore. The AuthGuard will handle the unverified state.
         return cred;
       } catch (error) {
           console.error("Signup process failed:", error);
@@ -91,15 +91,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Check verification - if not verified, we sign out to maintain strict access control
         if (!cred.user.emailVerified) {
             const emailAddr = cred.user.email;
-            // For login, we do sign out if not verified to prevent accessing the app
             await signOut(auth);
             const error = new Error("Email not verified.");
             (error as any).code = 'auth/email-not-verified';
             (error as any).email = emailAddr;
             throw error;
         }
+        
+        // Update online status
+        const userRef = doc(db, 'users', cred.user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+            await setDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() }, { merge: true });
+        }
+
         return cred;
     } finally {
         setLoading(false);
@@ -109,6 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
       setLoading(true);
       try {
+          if (auth.currentUser) {
+              await setDoc(doc(db, 'users', auth.currentUser.uid), { 
+                  isOnline: false, 
+                  lastSeen: serverTimestamp() 
+              }, { merge: true });
+          }
           await signOut(auth);
       } finally {
           setLoading(false);

@@ -1,11 +1,12 @@
 
+"use client";
+
 import type { User, Post, Notification, Call, Chat, Message } from './types';
-import { Timestamp } from 'firebase/firestore';
 
-// THIS FILE IS NOW DEPRECATED FOR MOST DATA.
-// Data is now fetched from Firestore. This file can be used for initial/mock data if needed.
-
-export const CURRENT_USER: User = { id: '100', name: 'You', avatar: '👤' };
+/**
+ * @fileOverview Standardized production data schema.
+ * All dynamic data is now handled exclusively via Firestore listeners.
+ */
 
 export const initialUsers: User[] = [];
 export const initialFriendRequests: User[] = [];
