@@ -14,6 +14,8 @@ import { updateProfile } from 'firebase/auth';
 import { textToSpeech } from '@/ai/flows/tts-flow';
 import { smartReplySuggestions } from '@/ai/flows/smart-reply';
 import { useTranslation } from './LanguageContext';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 export interface AppSettings {
     theme: 'light' | 'dark' | 'system';
@@ -135,7 +137,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // Set a baseline user from Auth data immediately to prevent load hangs
     const baselineUser: User = {
         id: authUser.uid,
         name: authUser.displayName || 'User',
@@ -164,6 +165,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             }
         }
         setIsLoadingProfile(false);
+    }, (error) => {
+        const permissionError = new FirestorePermissionError({
+            path: `users/${authUser.uid}`,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
     });
 
     const unsubPosts = onSnapshot(query(collection(db, 'posts'), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
@@ -231,6 +238,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const updateUserProfile = async (data: Partial<User>, files?: { avatar?: File }) => {
     if (!auth.currentUser) return;
     const updatePayload: any = { ...data };
+    
     if (files?.avatar) {
         const sRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
         await uploadBytes(sRef, files.avatar);
@@ -238,8 +246,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         updatePayload.avatar = url;
         await updateProfile(auth.currentUser, { photoURL: url });
     }
+    
     if (data.name) await updateProfile(auth.currentUser, { displayName: data.name });
-    await updateDoc(doc(db, 'users', auth.currentUser.uid), { ...updatePayload, settings });
+    
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const finalData = { ...updatePayload, settings };
+
+    // Use setDoc with merge: true for atomic updates and automatic document creation if missing
+    setDoc(userRef, finalData, { merge: true })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'write',
+          requestResourceData: finalData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      });
   };
 
   const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => {

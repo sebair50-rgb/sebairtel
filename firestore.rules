@@ -15,11 +15,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || (
-        isSignedIn() && 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendRequestsReceived', 'friendRequestsSent', 'friends'])
-      );
+      // Allow creation and comprehensive updates by the owner
+      allow create, update: if isOwner(userId);
+      
+      // Allow friends to update specific fields for friend requests
+      allow update: if isSignedIn() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendRequestsReceived', 'friendRequestsSent', 'friends']);
       
       match /notifications/{notifId} {
         allow read, delete: if isOwner(userId);
@@ -50,7 +51,7 @@ service cloud.firestore {
 
     match /news/{newsId} {
       allow read: if isSignedIn();
-      allow write: if false; // Only admin via console/internal tools
+      allow write: if false; 
     }
 
     match /market_items/{itemId} {

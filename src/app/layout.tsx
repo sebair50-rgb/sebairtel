@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AppContextProvider } from '@/store/AppContext';
 import { AuthProvider } from '@/store/AuthContext';
 import { LanguageProvider } from '@/store/LanguageContext';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
   title: 'SebairTel AI Communicator',
@@ -34,7 +35,9 @@ export default function RootLayout({
         <AuthProvider>
           <LanguageProvider>
             <AppContextProvider>
-                {children}
+                <FirebaseErrorListener>
+                    {children}
+                </FirebaseErrorListener>
                 <Toaster />
             </AppContextProvider>
           </LanguageProvider>
