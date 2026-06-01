@@ -7,10 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { generateAgenticResponse } from '@/ai/flows/agentic-app-creator-flow';
-import type { AgenticRequest } from '@/ai/flows/agentic-app-creator-flow';
-import type { Files } from '@/ai/flows/agentic-app-creator-schemas';
+import type { AgenticRequest, Files } from '@/ai/flows/agentic-app-creator-schemas';
 import { 
-    Bot, Download, Share2, CodeXml, Eye, Github, RefreshCw, Wand2, Loader2, Send, Split, PanelLeft, X, BrainCircuit
+    Bot, CodeXml, Eye, RefreshCw, Loader2, Send, Split, PanelLeft, BrainCircuit
 } from 'lucide-react';
 import Image from 'next/image';
 import CodeBlock from '../chat/CodeBlock';
@@ -40,8 +39,8 @@ const AppCreator = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [generatedFiles, setGeneratedFiles] = useState<Files | null>(null);
     const [previewContent, setPreviewContent] = useState<string>('');
-    const [activeFile, setActiveFile] = useState<string>('src/app/page.tsx');
-    const [model, setModel] = useState('googleai/gemini-1.5-flash');
+    const [activeFile, setActiveFile] = useState<keyof Files>('src/app/page.tsx');
+    const [model, setModel] = useState('googleai/gemini-2.5-flash');
     
     const [viewMode, setViewMode] = useState<ViewMode>('preview');
     const [mobileView, setMobileView] = useState<MobileView>('chat');
@@ -122,13 +121,6 @@ const AppCreator = () => {
         setPreviewContent('');
     };
 
-    const handleFeatureSoon = (featureName: string) => {
-        toast({
-            title: `Coming Soon: ${featureName}`,
-            description: "We're working hard to add this feature. Stay tuned!",
-        });
-    };
-
     const ChatMessage = ({ role, content }: { role: 'user' | 'model', content: string }) => (
         <div className={cn("flex items-start gap-3 my-4", role === 'user' ? 'justify-end' : 'justify-start')}>
             {role === 'model' && <Avatar className="w-8 h-8"><AvatarImage src="/bot-avatar.png" /><AvatarFallback>AI</AvatarFallback></Avatar>}
@@ -152,8 +144,6 @@ const AppCreator = () => {
                             <PanelLeft/>
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" onClick={() => handleFeatureSoon('Download ZIP')}><Download/></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFeatureSoon('Deploy')}><Github/></Button>
                 </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden">
@@ -168,7 +158,7 @@ const AppCreator = () => {
                                 <iframe srcDoc={previewContent} className="w-full h-full border rounded-lg bg-white" sandbox="allow-scripts" />
                            )}
                            {(viewMode === 'code' || viewMode === 'split') && (
-                                <Tabs value={activeFile} onValueChange={setActiveFile} className="w-full h-full flex flex-col border rounded-lg">
+                                <Tabs value={activeFile} onValueChange={(value) => setActiveFile(value as keyof Files)} className="w-full h-full flex flex-col border rounded-lg">
                                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 shrink-0">
                                         {Object.keys(generatedFiles).map(filename => (
                                             <TabsTrigger key={filename} value={filename}>{filename.replace('src/app/', '')}</TabsTrigger>
@@ -210,8 +200,8 @@ const AppCreator = () => {
                             <SelectValue placeholder="Select a model" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="googleai/gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
-                            <SelectItem value="googleai/gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                            <SelectItem value="googleai/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                            <SelectItem value="googleai/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
                         </SelectContent>
                     </Select>
                     <Button variant="ghost" size="icon" onClick={handleReset} disabled={isLoading}>
@@ -223,7 +213,7 @@ const AppCreator = () => {
                 <AnimatePresence>
                     {conversation.map((msg, index) => (
                         <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                            <ChatMessage role={msg.role} content={msg.content as string} />
+                            <ChatMessage role={msg.role} content={msg.content} />
                         </motion.div>
                     ))}
                 </AnimatePresence>

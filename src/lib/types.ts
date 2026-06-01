@@ -31,7 +31,7 @@ export interface User {
   friendRequestsSent?: string[];
   isOnline?: boolean;
   lastSeen?: Timestamp;
-  settings?: any;
+  settings?: import('@/store/AppContext').AppSettings;
   links?: UserLink[];
   workExperience?: WorkExperience[];
   education?: Education[];

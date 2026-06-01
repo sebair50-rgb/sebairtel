@@ -5,13 +5,27 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, Hand, UserX, Save } from 'lucide-react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, ArrowLeft, Send, Maximize, Minimize, MessageSquare, MessageSquareOff, UserPlus, X, UserX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppContext } from '@/store/AppContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { User } from '@/lib/types';
+
+type LiveChatMessage = {
+    id: number;
+    user: { name: string };
+    text: string;
+};
+
+type LiveChatPanelProps = {
+    messages: LiveChatMessage[];
+    newMessage: string;
+    setNewMessage: React.Dispatch<React.SetStateAction<string>>;
+    handleSendMessage: (event: React.FormEvent<HTMLFormElement>) => void;
+    isOverlay?: boolean;
+};
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -19,16 +33,6 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import placeholderImages from '@/lib/placeholder-images.json';
 
 
@@ -139,7 +143,7 @@ const ParticipantsSheet = ({ onInvite, joinRequests, onAcceptRequest, onDeclineR
     )
 }
 
-const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage, isOverlay = false }) => (
+const LiveChatPanel = ({ messages, newMessage, setNewMessage, handleSendMessage, isOverlay = false }: LiveChatPanelProps) => (
     <div className={cn(
         "flex flex-col",
         isOverlay 
@@ -186,7 +190,7 @@ const LiveStreamPage = () => {
     const { id } = useParams();
     const router = useRouter();
     const { toast } = useToast();
-    const { currentUser, users, friends, suggestedUsers } = useAppContext();
+    const { currentUser, users } = useAppContext();
     const videoRef = useRef<HTMLVideoElement>(null);
     const videoContainerRef = useRef<HTMLDivElement>(null);
 
@@ -199,17 +203,10 @@ const LiveStreamPage = () => {
     const [showChatInFullScreen, setShowChatInFullScreen] = useState(true);
     const [coHosts, setCoHosts] = useState<User[]>([]);
     const [joinRequests, setJoinRequests] = useState<User[]>([]);
-    const [hasRequestedToJoin, setHasRequestedToJoin] = useState(false);
-    const [showSaveDialog, setShowSaveDialog] = useState(false);
 
     const isMyStream = id === 'me';
     
-    // Mock chat messages
-    const [messages, setMessages] = useState([
-        { id: 1, user: { name: "Ali" }, text: "Great stream!" },
-        { id: 2, user: { name: "Fatima" }, text: "Thanks for the valuable info." },
-        { id: 3, user: { name: "Mohammed" }, text: "Can you explain the last point again?" },
-    ]);
+    const [messages, setMessages] = useState<LiveChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState("");
 
     const handleSendMessage = (e: React.FormEvent) => {
@@ -224,15 +221,11 @@ const LiveStreamPage = () => {
     useEffect(() => {
         if(isMyStream) {
             setStreamer(currentUser);
-            // Simulate a co-host & join request for demo purposes
-            if (friends.length > 0) setCoHosts([friends[0]]);
-            if (suggestedUsers.length > 0) setJoinRequests([suggestedUsers[0]]);
-            
         } else {
             const foundUser = users.find(u => (id as string).includes(u.id));
             setStreamer(foundUser || null);
         }
-    }, [id, currentUser, users, isMyStream, friends, suggestedUsers]);
+    }, [id, currentUser, users, isMyStream]);
 
 
     useEffect(() => {
@@ -306,21 +299,8 @@ const LiveStreamPage = () => {
         toast({ title: "Removed", description: `${user.name} has been removed from the stream.`, variant: "destructive" });
     }
 
-    const handleRequestToJoin = () => {
-        setHasRequestedToJoin(true);
-        toast({
-            title: "Your request has been sent",
-            description: "You have sent a request to join the stream as a co-host."
-        });
-        // In a real app, this would send a request to the streamer
-    }
-
     const handleExitActions = () => {
-        if (isMyStream) {
-            setShowSaveDialog(true);
-        } else {
-            forceExit();
-        }
+        forceExit();
     };
     
     const forceExit = () => {
@@ -328,14 +308,6 @@ const LiveStreamPage = () => {
             document.exitFullscreen();
         }
         router.back();
-    };
-
-    const handleSaveStream = () => {
-        toast({
-            title: "Stream Saved",
-            description: "Your live stream has been saved to your profile.",
-        });
-        forceExit();
     };
 
     const handleToggleFullScreen = () => {
@@ -396,27 +368,6 @@ const LiveStreamPage = () => {
 
     return (
         <div className="w-full h-screen bg-black flex flex-col md:flex-row-reverse items-center justify-center text-white">
-             {showSaveDialog && (
-                <AlertDialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>End Live Stream?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Would you like to save and publish this live stream to your profile?
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={forceExit}>
-                                Exit Without Saving
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleSaveStream}>
-                                <Save className="mr-2 h-4 w-4" />
-                                Save and Exit
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
             <div className="flex-1 w-full h-full flex flex-col items-center justify-center p-4 relative">
                 <Button 
                     variant="ghost" 
@@ -535,20 +486,7 @@ const LiveStreamPage = () => {
                                     onRemoveCoHost={handleRemoveCoHost}
                                 />
                             </>
-                        ) : (
-                             <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className={cn(
-                                    "bg-white/20 hover:bg-white/30 text-white rounded-full w-16 h-16",
-                                    hasRequestedToJoin && "bg-yellow-500/30 text-yellow-400 hover:bg-yellow-500/40"
-                                )}
-                                onClick={handleRequestToJoin}
-                                disabled={hasRequestedToJoin}
-                            >
-                                <Hand size={28} />
-                            </Button>
-                        )}
+                        ) : null}
 
                         <Button size="icon" className="bg-destructive hover:bg-destructive/90 rounded-full w-20 h-16" onClick={handleExitActions}>
                             <PhoneOff size={28} />

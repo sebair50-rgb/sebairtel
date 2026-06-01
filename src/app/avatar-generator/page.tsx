@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ArrowLeft, Wand2, Check, Camera, Sparkles, Pencil, X } from 'lucide-react';
+import { Loader2, ArrowLeft, Wand2, Check, Sparkles, Pencil, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateAvatar } from '@/ai/flows/avatar-flow';
 import { useAppContext } from '@/store/AppContext';
@@ -57,7 +57,10 @@ const AvatarGeneratorPage = () => {
         if (!imageUrl || !currentUser) return;
         setIsSaving(true);
         try {
-            await updateUserProfile({}, { avatar: imageUrl });
+            const avatarResponse = await fetch(imageUrl);
+            const avatarBlob = await avatarResponse.blob();
+            const avatarFile = new File([avatarBlob], 'generated-avatar.png', { type: avatarBlob.type || 'image/png' });
+            await updateUserProfile({}, { avatar: avatarFile });
             toast({
                 title: "Avatar Saved!",
                 description: "Your new AI-generated avatar has been set.",
@@ -75,13 +78,6 @@ const AvatarGeneratorPage = () => {
         }
     }
     
-    const handleFeatureSoon = () => {
-        toast({
-            title: "Coming Soon!",
-            description: "This feature is currently in development and will be available shortly.",
-        });
-    }
-
     const renderSelectionScreen = () => (
         <div className="relative h-screen w-screen flex flex-col">
              <Button variant="ghost" size="icon" onClick={() => router.back()} className="absolute top-4 right-4 z-20 bg-black/20 text-white rounded-full">
@@ -98,11 +94,7 @@ const AvatarGeneratorPage = () => {
                     </p>
                 </div>
                 <div className="space-y-3">
-                    <Button size="lg" className="w-full" onClick={handleFeatureSoon}>
-                         <Camera className="mr-2 h-5 w-5" />
-                         إنشاء من سيلفي
-                    </Button>
-                     <Button size="lg" variant="secondary" className="w-full" onClick={() => setMode('ai')}>
+<Button size="lg" variant="secondary" className="w-full" onClick={() => setMode('ai')}>
                          <Sparkles className="mr-2 h-5 w-5" />
                          إنشاء بالذكاء الاصطناعي
                     </Button>
