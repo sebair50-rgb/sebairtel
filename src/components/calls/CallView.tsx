@@ -110,10 +110,10 @@ const CallView: React.FC<CallViewProps> = ({ status, user, type, onAnswer, onEnd
             {type === 'video' && status === 'connected' && (
                 <>
                 <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                    {!isVideoOff && <Image src={placeholderImages.call.remote.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.remote.hint} />}
+                    {!isVideoOff && <Image src={placeholderImages.call.remote.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.remote.hint} alt="Remote caller video" />}
                 </div>
                 <div className="absolute top-4 left-4 w-32 h-48 rounded-lg overflow-hidden border-2 border-white/50">
-                     <Image src={placeholderImages.call.local.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.local.hint} />
+                     <Image src={placeholderImages.call.local.src} layout="fill" objectFit="cover" data-ai-hint={placeholderImages.call.local.hint} alt="Local caller video" />
                 </div>
                 </>
             )}

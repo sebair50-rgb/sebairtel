@@ -3,13 +3,11 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Video, Mic, BookOpen, Brush, LayoutTemplate, Bot } from 'lucide-react';
+import { BrainCircuit, Image as ImageIcon, Sparkles, Code, Video, Mic, BookOpen, Bot } from 'lucide-react';
 import AppHeader from '../layout/AppHeader';
-import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 
-type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'design' | 'editor' | 'app' | 'website';
+type AITool = 'code' | 'image' | 'sticker' | 'tts' | 'video' | 'tutor' | 'app';
 
 interface ToolConfig {
     id: AITool;
@@ -17,31 +15,15 @@ interface ToolConfig {
     title: string;
     description: string;
     href: string;
-    comingSoon?: boolean;
 }
 
-const AIToolCard = ({ icon, title, description, onSelect, comingSoon = false }: { icon: React.ElementType, title: string, description: string, onSelect: () => void, comingSoon?: boolean }) => {
+const AIToolCard = ({ icon, title, description, onSelect }: { icon: React.ElementType, title: string, description: string, onSelect: () => void }) => {
     const Icon = icon;
-    const { toast } = useToast();
-    
-    const handleSelect = () => {
-        if(comingSoon) {
-            toast({
-                title: 'Coming Soon!',
-                description: `The "${title}" service is currently in development.`
-            });
-        } else {
-            onSelect();
-        }
-    }
 
     return (
         <Card 
-            onClick={handleSelect} 
-            className={cn(
-                "h-full transition-all duration-300",
-                comingSoon ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-primary'
-            )}
+            onClick={onSelect} 
+            className="h-full transition-all duration-300 cursor-pointer hover:border-primary"
         >
             <CardHeader className="flex flex-row items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-lg">
@@ -79,12 +61,9 @@ const AIView = () => {
         dev: [
             { id: 'app', icon: Bot, title: 'App Creator', description: 'Build an entire app from a prompt.', href: '/ai-tools/app-creator' },
             { id: 'code', icon: Code, title: 'Code Assistant', description: 'Explain, fix, and optimize code.', href: '/ai-tools/code-assistant' },
-            { id: 'website', icon: LayoutTemplate, title: 'Website Builder', description: 'Build landing pages.', href: '#', comingSoon: true },
         ],
         content: [
             { id: 'tutor', icon: BookOpen, title: 'AI Tutor', description: 'Ask questions and learn new topics.', href: '/ai-tools/tutor' },
-            { id: 'design', icon: Brush, title: 'Design Ideas', description: 'Get UI/UX mockups and ideas.', href: '#', comingSoon: true },
-            { id: 'editor', icon: Video, title: 'Video Editor', description: 'AI-powered video editing assistance.', href: '#', comingSoon: true },
         ]
     };
 
@@ -109,7 +88,6 @@ const AIView = () => {
                                     title={tool.title}
                                     description={tool.description}
                                     onSelect={() => router.push(tool.href)}
-                                    comingSoon={tool.comingSoon}
                                 />
                             ))}
                         </ToolSection>

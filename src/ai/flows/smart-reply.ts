@@ -28,7 +28,7 @@ export async function smartReplySuggestions(input: SmartReplyInput): Promise<Sma
 
 const smartReplyPrompt = ai.definePrompt({
     name: 'smartReplyPrompt',
-    model: 'googleai/gemini-1.5-flash-preview',
+    model: 'googleai/gemini-2.5-flash',
     output: {
         schema: SmartReplyOutputSchema,
         format: 'json',

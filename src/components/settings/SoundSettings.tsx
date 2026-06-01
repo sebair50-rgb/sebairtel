@@ -36,7 +36,7 @@ const playSound = (soundValue: string) => {
         const gainNode = audioContext.createGain();
 
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(sound.freq, audioContext.currentTime); 
+        oscillator.frequency.setValueAtTime(sound.freq ?? 440, audioContext.currentTime); 
         
         gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5);

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,72 +8,68 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { FilesSchema, Files, AgenticRequestSchema, AgenticRequest } from './agentic-app-creator-schemas';
-import type {Part} from 'genkit';
+import { AgenticRequest, Files, FilesSchema } from './agentic-app-creator-schemas';
 
 const appCreatorTool = ai.defineTool(
   {
     name: 'appCreatorTool',
-    description: 'Creates or updates a set of code files for a web application based on user requirements. Use this tool for every user request that involves generating or changing code.',
+    description:
+      'Creates or updates a set of code files for a web application based on user requirements. Use this tool for every user request that involves generating or changing code.',
     inputSchema: FilesSchema,
     outputSchema: z.void(),
   },
-  async () => {
-    // This is a pass-through tool. The actual file generation happens in the flow
-    // based on the arguments the model decides to pass to this tool.
-    // So, this function body is intentionally empty.
-  }
+  async () => undefined
 );
+
+const defaultModel = 'googleai/gemini-2.5-flash';
 
 const systemPrompt = `You are an expert full-stack developer agent. Your name is "CodeCraft AI".
 Your primary goal is to help users build and modify web applications using React and Tailwind CSS. You must always communicate with the user in Arabic, as that is their preferred language.
 
 Your workflow:
-1.  When the user provides a request, analyze it carefully.
-2.  If the request is ambiguous or lacks detail, you MUST ask clarifying questions in Arabic to understand the exact requirements. For example, ask about UI elements, color schemes, functionality, etc.
-3.  Once you have a clear plan, use the "appCreatorTool" to write the complete, functional code for the application or component.
-4.  You MUST generate the full code for all required files in a single tool call. Do not provide partial code or instructions.
-5.  After using the tool, confirm your action to the user in a friendly, professional Arabic message.
-6.  Be proactive, helpful, and act like a senior software architect guiding the user.
-7.  For every request that requires generating or modifying code, you MUST use the \`appCreatorTool\`.
-8.  When using the tool, you MUST provide the complete and final content for ALL required application files: \`package.json\`, \`src/app/globals.css\`, \`src/app/layout.tsx\`, and \`src/app/page.tsx\`. Even if the user only asks to change one file, you must return the full content for all four files, including the unchanged ones. This ensures the application remains complete and buildable.
-`;
+1. When the user provides a request, analyze it carefully.
+2. If the request is ambiguous or lacks detail, ask clarifying questions in Arabic.
+3. Once you have a clear plan, use the "appCreatorTool" to write the complete, functional code for the application or component.
+4. Generate complete code for all required files in a single tool call.
+5. After using the tool, confirm your action to the user in a friendly, professional Arabic message.
+6. Be proactive, helpful, and act like a senior software architect guiding the user.
+7. For every request that requires generating or modifying code, use the appCreatorTool.
+8. When using the tool, provide complete final content for: package.json, src/app/globals.css, src/app/layout.tsx, and src/app/page.tsx.`;
 
+const toConversationPrompt = (history: AgenticRequest['history']) => history
+  .map((message) => `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content}`)
+  .join('\n\n');
 
 export async function generateAgenticResponse(input: AgenticRequest) {
   const { history, model } = input;
 
-  const { output } = await ai.generate({
-    model: model || 'googleai/gemini-1.5-flash',
+  const response = await ai.generate({
+    model: model || defaultModel,
     tools: [appCreatorTool],
     system: systemPrompt,
-    history,
+    prompt: toConversationPrompt(history),
     config: {
-        temperature: 0.1, 
-    }
+      temperature: 0.1,
+    },
   });
 
-  const toolCalls = output.requests;
-  let generatedFiles: Files | undefined = undefined;
-  
-  // Construct the new history array correctly.
-  const newHistory: Part[] = [...history];
+  const toolRequest = response.toolRequests.find(
+    (request) => request.toolRequest.name === 'appCreatorTool'
+  );
 
-  // Add the model's text response and any tool calls to the history.
-  newHistory.push({ role: 'model', content: output.content });
+  const parsedFiles = toolRequest?.toolRequest.input
+    ? FilesSchema.safeParse(toolRequest.toolRequest.input)
+    : undefined;
 
-  if (toolCalls && toolCalls.length > 0) {
-    const toolCall = toolCalls[0];
-    if (toolCall.tool.name === 'appCreatorTool') {
-        generatedFiles = toolCall.tool.input;
-        // Add a placeholder tool response to the history.
-        newHistory.push({ role: 'tool', content: { name: 'appCreatorTool', output: undefined } });
-    }
-  }
+  const generatedFiles: Files | undefined = parsedFiles?.success ? parsedFiles.data : undefined;
+
+  const assistantMessage = generatedFiles
+    ? 'تم إنشاء ملفات التطبيق المطلوبة وهي جاهزة للمعاينة والتنزيل.'
+    : response.text || 'أحتاج إلى تفاصيل إضافية قبل إنشاء التطبيق.';
 
   return {
-    history: newHistory,
+    history: [...history, { role: 'model' as const, content: assistantMessage }],
     files: generatedFiles,
-    error: output.finishReason !== 'stop' && output.finishReason !== 'toolCalls' ? `AI generation stopped unexpectedly: ${output.finishReason}` : undefined
+    error: parsedFiles && !parsedFiles.success ? 'AI returned an invalid file payload.' : undefined,
   };
 }

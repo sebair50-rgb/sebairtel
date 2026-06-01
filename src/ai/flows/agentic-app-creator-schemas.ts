@@ -1,4 +1,3 @@
-
 import { z } from 'genkit';
 
 /**
@@ -7,17 +6,24 @@ import { z } from 'genkit';
  */
 
 export const FilesSchema = z.object({
-    'package.json': z.string().describe("The full content of the package.json file. Do not add comments."),
-    'src/app/globals.css': z.string().describe("The full content of the globals.css file."),
-    'src/app/layout.tsx': z.string().describe("The full content of the layout.tsx file."),
-    'src/app/page.tsx': z.string().describe("The full content of the page.tsx file."),
+    'package.json': z.string().describe('The full content of the package.json file. Do not add comments.'),
+    'src/app/globals.css': z.string().describe('The full content of the globals.css file.'),
+    'src/app/layout.tsx': z.string().describe('The full content of the layout.tsx file.'),
+    'src/app/page.tsx': z.string().describe('The full content of the page.tsx file.'),
 });
 
 export type Files = z.infer<typeof FilesSchema>;
 
+export const AgenticMessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+
+export type AgenticMessage = z.infer<typeof AgenticMessageSchema>;
+
 export const AgenticRequestSchema = z.object({
-  history: z.array(z.any()).describe("The history of the conversation between the user and the AI agent."),
-  model: z.string().optional().describe("The AI model to use for the generation."),
+  history: z.array(AgenticMessageSchema).describe('The serializable conversation between the user and the AI agent.'),
+  model: z.string().optional().describe('The AI model to use for the generation.'),
 });
 
 export type AgenticRequest = z.infer<typeof AgenticRequestSchema>;

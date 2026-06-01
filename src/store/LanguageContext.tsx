@@ -6,7 +6,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 type LanguageOption = 'en' | 'ar' | 'system';
 type Language = 'en' | 'ar';
 type Direction = 'ltr' | 'rtl';
-type Translations = { [key: string]: any };
+type TranslationValue = string | { [key: string]: TranslationValue };
+type Translations = { [key: string]: TranslationValue };
 
 interface LanguageContextType {
   language: Language;
@@ -67,25 +68,35 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       return ''; 
     }
     const keys = key.split('.');
-    let result = keys.reduce((acc, currentKey) => {
-        if (acc && typeof acc === 'object' && acc[currentKey] !== undefined) {
-            return acc[currentKey];
+    let result: TranslationValue | undefined = translations;
+
+    for (const currentKey of keys) {
+        if (result && typeof result === 'object' && currentKey in result) {
+            result = result[currentKey];
+        } else {
+            result = undefined;
+            break;
         }
-        return undefined;
-    }, translations);
+    }
     
     if (result === undefined) {
         console.warn(`Translation not found for key: ${key}`);
-        return key; 
+        return key;
     }
 
-    if (typeof result === 'string' && options) {
+    if (typeof result !== 'string') {
+        console.warn(`Translation value is not a string for key: ${key}`);
+        return key;
+    }
+
+    let translated = result;
+    if (options) {
         Object.keys(options).forEach(optKey => {
-            result = result.replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(options[optKey]));
+            translated = translated.replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(options[optKey]));
         });
     }
 
-    return result;
+    return translated;
   };
 
   const value = { language, setLanguage, direction, t };

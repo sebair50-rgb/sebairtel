@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useRef } from 'react';
 import type { User, Post, Call, Chat, Message, CallState, Notification, NewsItem, MarketItem, Store } from '@/lib/types';
-import { db, auth } from '@/lib/firebase';
+import { app, db, auth } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
 import { 
   collection, onSnapshot, doc, query, orderBy, addDoc, serverTimestamp, deleteDoc, 
@@ -52,7 +52,7 @@ interface AppContextType {
   news: NewsItem[];
   marketItems: MarketItem[];
   stores: Store[];
-  addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => Promise<void>;
+  addPost: (post: { content: string, mediaType?: 'image' | 'video' | 'code' | 'text', mediaFile?: File }) => Promise<void>;
   updatePost: (postId: string, data: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   addComment: (postId: string, commentText: string) => Promise<void>;
@@ -91,6 +91,7 @@ interface AppContextType {
   smartReplies: string[];
   fetchSmartReplies: () => Promise<void>;
   clearSmartReplies: () => void;
+  setChats: React.Dispatch<React.SetStateAction<Chat[]>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -126,8 +127,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  const storage = getStorage();
 
   useEffect(() => {
     if (authLoading) return;
@@ -215,8 +214,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() } as User)).filter(u => u.id !== authUser.uid));
     });
 
+    const unsubCalls = onSnapshot(query(collection(db, `users/${authUser.uid}/calls`), orderBy('timestamp', 'desc'), limit(50)), (snap) => {
+        setCalls(snap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            time: d.data().timestamp?.toDate().toLocaleTimeString() || '',
+        } as Call)));
+    });
+
     return () => {
-        unsubUser(); unsubPosts(); unsubNews(); unsubMarket(); unsubStores(); unsubChats(); unsubNotifs(); unsubUsers();
+        unsubUser(); unsubPosts(); unsubNews(); unsubMarket(); unsubStores(); unsubChats(); unsubNotifs(); unsubUsers(); unsubCalls();
     };
   }, [authUser, authLoading, setLanguage]);
 
@@ -240,7 +247,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const updatePayload: any = { ...data };
     
     if (files?.avatar) {
-        const sRef = ref(storage, `avatars/${auth.currentUser.uid}/${Date.now()}`);
+        const sRef = ref(getStorage(app), `avatars/${auth.currentUser.uid}/${Date.now()}`);
         await uploadBytes(sRef, files.avatar);
         const url = await getDownloadURL(sRef);
         updatePayload.avatar = url;
@@ -253,7 +260,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const finalData = { ...updatePayload, settings };
 
     // Use setDoc with merge: true for atomic updates and automatic document creation if missing
-    setDoc(userRef, finalData, { merge: true })
+    await setDoc(userRef, finalData, { merge: true })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: userRef.path,
@@ -264,11 +271,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       });
   };
 
-  const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code', mediaFile?: File }) => {
+  const addPost = async (data: { content: string, mediaType?: 'image' | 'video' | 'code' | 'text', mediaFile?: File }) => {
     if (!currentUser) return;
     let mUrl = undefined;
     if (data.mediaFile) {
-        const sRef = ref(storage, `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
+        const sRef = ref(getStorage(app), `posts/${currentUser.id}/${Date.now()}_${data.mediaFile.name}`);
         await uploadBytes(sRef, data.mediaFile);
         mUrl = await getDownloadURL(sRef);
     }
@@ -347,7 +354,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addMessage = async (chatId: string, msg: any) => {
+  const addMessage = async (chatId: string, msg: Omit<Message, 'id' | 'timestamp' | 'time'>) => {
     if (!currentUser) return;
     const cRef = doc(db, 'chats', chatId);
     await addDoc(collection(cRef, 'messages'), { ...msg, timestamp: serverTimestamp(), userId: currentUser.id, user: currentUser.name, avatar: currentUser.avatar });
@@ -355,6 +362,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const oId = snap.data()?.users.find((id: string) => id !== currentUser.id);
     await updateDoc(cRef, { lastMessageTimestamp: serverTimestamp(), lastMessageText: msg.text || 'Sent an attachment', [`unreadCount.${oId}`]: increment(1) });
   };
+
+
 
   const markNotificationsAsRead = async () => {
     if (!currentUser) return;
@@ -399,7 +408,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AppContext.Provider value={{
         currentUser, isLoadingProfile, updateUserProfile, posts, news, marketItems, stores, addPost, updatePost: (id, data) => updateDoc(doc(db, "posts", id), data), deletePost: (id) => deleteDoc(doc(db, 'posts', id)), addComment,
-        calls, settings, setSettings, chats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
+        calls, settings, setSettings, chats, setChats, selectedChatId, setSelectedChatId, activeTab, setActiveTab, initialContactTab, setInitialContactTab,
         addMessage, deleteMessage: (cid, mid) => deleteDoc(doc(db, 'chats', cid, 'messages', mid)), updateMessage: (cid, mid, data) => updateDoc(doc(db, "chats", cid, "messages", mid), data), users, friends, suggestedUsers, friendRequests, sendFriendRequest, acceptFriendRequest, declineFriendRequest: (u) => {
             const batch = writeBatch(db);
             batch.update(doc(db, 'users', currentUser!.id), { friendRequestsReceived: arrayRemove(u.id) });

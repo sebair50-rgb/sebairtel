@@ -9,6 +9,7 @@ import '@/ai/flows/avatar-flow.ts';
 import '@/ai/flows/tts-flow.ts';
 import '@/ai/flows/video-flow.ts';
 import '@/ai/flows/tutor-flow.ts';
+import '@/ai/flows/smart-reply.ts';
 import '@/ai/flows/agentic-app-creator-flow.ts';
 
 
