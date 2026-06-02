@@ -1,0 +1,34 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "deploy": {
+      "description": "رفع التعديلات إلى GitHub ونشر Firebase",
+      "prompt": "نفذ الخطوات التالية: (1) git add -A (2) git commit مع وصف مناسب (3) git push (4) firebase deploy"
+    },
+    "git-push": {
+      "description": "رفع التعديلات إلى GitHub",
+      "prompt": "نفذ: git add -A، git commit -m مع وصف مناسب، git push"
+    },
+    "firebase-deploy": {
+      "description": "نشر التحديثات على Firebase",
+      "prompt": "نفذ: firebase deploy"
+    },
+    "firestore-query": {
+      "description": "تنفيذ استعلام على Firestore",
+      "prompt": "نفذ استعلام Firestore باستخدام firebase-admin أو Firebase CLI حسب الطلب. استخدم Service Account Key من .env.local للتحقق."
+    },
+    "firebase-auth": {
+      "description": "إدارة مستخدمي Firebase Authentication",
+      "prompt": "نفذ العملية المطلوبة على Firebase Auth باستخدام Admin SDK. استخدم Service Account Key من .env.local."
+    }
+  },
+  "permission": {
+    "bash": {
+      "git *": "allow",
+      "git push": "ask",
+      "firebase *": "allow",
+      "npm *": "allow",
+      "*": "ask"
+    }
+  }
+}
